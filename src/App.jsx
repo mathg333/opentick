@@ -15,6 +15,7 @@ import SearchModal from './components/SearchModal';
 import AlarmOverlayModal from './components/AlarmOverlayModal';
 import { soundManager } from './utils/audio';
 import { getCustomAudioFile } from './utils/audioStorage';
+import { syncTasksToNativeAlarmManager, stopNativeAlarm } from './utils/nativeAlarm';
 import { 
   Menu, 
   CheckSquare, 
@@ -60,6 +61,27 @@ export default function App() {
       if (record) setCustomAudioInfo(record);
     });
   }, []);
+
+  // Synchronize scheduled alarms to Android native AlarmManager (Exact, Doze-proof, Lock-screen ready)
+  useEffect(() => {
+    syncTasksToNativeAlarmManager(state.tasks);
+  }, [state.tasks]);
+
+  // Listen for native Android alarm wake-up events (triggered on lock screen or over other apps)
+  useEffect(() => {
+    const handleNativeAlarm = (e) => {
+      const { taskId, taskTitle } = e.detail || {};
+      const foundTask = state.tasks.find(t => t.id === taskId) || {
+        id: taskId || 'alarm-lockscreen',
+        title: taskTitle || 'Lembrete OpenTick'
+      };
+      setAlarmActiveTask(foundTask);
+      setIsAlarmModalOpen(true);
+    };
+
+    window.addEventListener('nativeAlarmTriggered', handleNativeAlarm);
+    return () => window.removeEventListener('nativeAlarmTriggered', handleNativeAlarm);
+  }, [state.tasks]);
 
   // Alarm Ticker: Checks every 5 seconds if a scheduled task has reached its time
   useEffect(() => {
@@ -133,12 +155,14 @@ export default function App() {
 
   const handleStopAlarm = () => {
     soundManager.stopContinuousAlarm();
+    stopNativeAlarm();
     setIsAlarmModalOpen(false);
     setAlarmActiveTask(null);
   };
 
   const handleSnoozeAlarm = () => {
     soundManager.stopContinuousAlarm();
+    stopNativeAlarm();
     setIsAlarmModalOpen(false);
     if (alarmActiveTask && alarmActiveTask.id !== 'test-alarm') {
       const now = new Date(Date.now() + 5 * 60 * 1000); // +5 minutes

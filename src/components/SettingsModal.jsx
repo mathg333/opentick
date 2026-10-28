@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { soundManager } from '../utils/audio';
 import { saveCustomAudioFile, getCustomAudioFile, removeCustomAudioFile } from '../utils/audioStorage';
+import { requestOverlayPermission, requestExactAlarmPermission } from '../utils/nativeAlarm';
 
 export default function SettingsModal({ 
   isOpen, 
@@ -321,6 +322,40 @@ export default function SettingsModal({
         {/* ================= SUB-SCREEN: SONS E NOTIFICAÇÕES (ALARMES LONGOS E ÁUDIO DO CELULAR) ================= */}
         {activeScreen === 'sound' && (
           <div className="space-y-4 animate-in fade-in">
+            {/* LOCK SCREEN & OVERLAY PERMISSIONS CARD */}
+            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3 shadow-xl">
+              <div className="flex items-center gap-2.5 text-white">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#ff6b00] to-[#ea580c] flex items-center justify-center text-white shadow-md shadow-[#ff6b00]/30 shrink-0">
+                  <Smartphone className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold">Tela de Bloqueio & Sobre Outros Apps</h3>
+                  <span className="text-[10px] text-emerald-400 font-bold block">
+                    ✓ Despertador Nativo Android Ativado
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-neutral-400">
+                O alarme acorda a tela do celular mesmo bloqueado e sobrepõe qualquer aplicativo em uso (WhatsApp, YouTube, jogos, etc.).
+              </p>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={requestOverlayPermission}
+                  className="py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-[#ff6b00]/50 text-[#ff6b00] rounded-xl text-xs font-bold text-center active:scale-95 transition-transform"
+                >
+                  Permitir Sobre Apps
+                </button>
+                <button
+                  type="button"
+                  onClick={requestExactAlarmPermission}
+                  className="py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-emerald-500/50 text-emerald-400 rounded-xl text-xs font-bold text-center active:scale-95 transition-transform"
+                >
+                  Permitir Alarme Exato
+                </button>
+              </div>
+            </div>
+
             {/* Mode: Contínuo vs Curto */}
             <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
               <span className="text-sm font-bold text-white block">Estilo do Toque</span>
