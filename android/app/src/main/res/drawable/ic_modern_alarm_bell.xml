@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Top Ring Handle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,12 C44,12 39,17 39,23 L43,23 C43,19 46,16 50,16 C54,16 57,19 57,23 L61,23 C61,17 56,12 50,12 Z" />
+
+    <!-- Left Acoustic Soundwave -->
+    <path
+        android:fillColor="#FFA74F"
+        android:pathData="M24,42 C20,47 20,53 24,58 L20,61 C15,53 15,47 20,39 Z" />
+    <path
+        android:fillColor="#FF7A00"
+        android:pathData="M16,36 C10,44 10,56 16,64 L12,67 C5,56 5,44 12,33 Z" />
+
+    <!-- Right Acoustic Soundwave -->
+    <path
+        android:fillColor="#FFA74F"
+        android:pathData="M76,42 C80,47 80,53 76,58 L80,61 C85,53 85,47 80,39 Z" />
+    <path
+        android:fillColor="#FF7A00"
+        android:pathData="M84,36 C90,44 90,56 84,64 L88,67 C95,56 95,44 88,33 Z" />
+
+    <!-- Bell Dome Body (Sleek Modern Profile) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M50,22 C37,22 28,32 28,45 L28,62 L22,69 L22,72 L78,72 L78,69 L72,62 L72,45 C72,32 63,22 50,22 Z" />
+
+    <!-- Inner Bell Highlight Shadow -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M50,22 C53,22 62,24 67,31 C63,26 57,24 50,24 C43,24 37,26 33,31 C38,24 47,22 50,22 Z" />
+
+    <!-- Clapper / Striker Ball -->
+    <path
+        android:fillColor="#FFD8B0"
+        android:pathData="M43,74 C43,78 46,81 50,81 C54,81 57,78 57,74 Z" />
+
+    <!-- Central Accent Sparkle Star -->
+    <path
+        android:fillColor="#FF7A00"
+        android:pathData="M50,44 L51.5,49 L56,50.5 L51.5,52 L50,57 L48.5,52 L44,50.5 L48.5,49 Z" />
+</vector>

@@ -20,17 +20,17 @@
 
     <!-- Ambient Neon Orange Radial Glow -->
     <View
-        android:layout_width="320dp"
-        android:layout_height="320dp"
+        android:layout_width="340dp"
+        android:layout_height="340dp"
         android:layout_gravity="center_horizontal|top"
-        android:layout_marginTop="80dp"
+        android:layout_marginTop="70dp"
         android:background="@drawable/bg_ambient_glow" />
 
     <View
-        android:layout_width="260dp"
-        android:layout_height="260dp"
+        android:layout_width="280dp"
+        android:layout_height="280dp"
         android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="90dp"
+        android:layout_marginBottom="80dp"
         android:background="@drawable/bg_ambient_glow" />
 
     <!-- Main Foreground Content Layout -->
@@ -41,8 +41,8 @@
         android:gravity="center_horizontal"
         android:paddingStart="22dp"
         android:paddingEnd="22dp"
-        android:paddingTop="42dp"
-        android:paddingBottom="42dp">
+        android:paddingTop="36dp"
+        android:paddingBottom="36dp">
 
         <!-- Top Frosted Status Pill -->
         <LinearLayout
@@ -77,70 +77,70 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.8" />
+            android:layout_weight="0.6" />
 
-        <!-- Concentric Glass Soundwave Rings + Pulsing Bell -->
+        <!-- Concentric Glass Soundwave Rings + Pulsing Modern Bell -->
         <RelativeLayout
-            android:layout_width="160dp"
-            android:layout_height="160dp"
+            android:layout_width="168dp"
+            android:layout_height="168dp"
             android:gravity="center">
 
             <!-- Outer Glass Ring Ripple -->
             <View
                 android:id="@+id/alarm_outer_ripple"
-                android:layout_width="160dp"
-                android:layout_height="160dp"
+                android:layout_width="168dp"
+                android:layout_height="168dp"
                 android:layout_centerInParent="true"
                 android:background="@drawable/bg_bell_ripple" />
 
             <!-- Mid Glass Ring Ripple -->
             <View
                 android:id="@+id/alarm_mid_ripple"
-                android:layout_width="128dp"
-                android:layout_height="128dp"
+                android:layout_width="134dp"
+                android:layout_height="134dp"
                 android:layout_centerInParent="true"
                 android:background="@drawable/bg_bell_ripple" />
 
-            <!-- Center Radiant Glowing Sphere -->
+            <!-- Center Radiant Glowing Sphere with Custom Modern Alarm Bell -->
             <RelativeLayout
                 android:id="@+id/alarm_bell_container"
-                android:layout_width="96dp"
-                android:layout_height="96dp"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
                 android:layout_centerInParent="true"
                 android:gravity="center"
                 android:background="@drawable/bg_alarm_bell_circle">
 
                 <ImageView
                     android:id="@+id/alarm_bell_icon"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:src="@android:drawable/ic_lock_idle_alarm"
-                    android:tint="#ffffff" />
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/ic_modern_alarm_bell" />
             </RelativeLayout>
         </RelativeLayout>
 
-        <!-- Giant Minimalist Digital Clock -->
+        <!-- Giant Minimalist Digital Clock (Larger, Ultra-stylish sans-serif-black) -->
         <TextView
             android:id="@+id/alarm_clock_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="10dp"
             android:text="00:00"
             android:textColor="#FFFFFF"
-            android:textSize="58sp"
+            android:textSize="84sp"
             android:textStyle="bold"
-            android:fontFamily="monospace"
-            android:shadowColor="#80FF6B00"
+            android:fontFamily="sans-serif-black"
+            android:letterSpacing="-0.02"
+            android:shadowColor="#B3FF6B00"
             android:shadowDx="0"
             android:shadowDy="0"
-            android:shadowRadius="14" />
+            android:shadowRadius="24" />
 
         <!-- Date Pill -->
         <TextView
             android:id="@+id/alarm_clock_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:background="@drawable/bg_glass_pill"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
@@ -154,7 +154,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.6" />
+            android:layout_weight="0.5" />
 
         <!-- Ultra-luxurious Frosted Glass Card -->
         <LinearLayout
@@ -220,7 +220,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1.0" />
+            android:layout_weight="0.9" />
 
         <!-- Action Controls -->
         <!-- Big Liquid Neon Orange Stop Button -->
