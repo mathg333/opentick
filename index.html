@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenTick - TickTick 100% Free & Dark</title>
+    <meta name="description" content="TickTick Dark Edition - 100% gratuito, ilimitado e offline-first." />
+    <meta name="theme-color" content="#0c0c0e" />
+  </head>
+  <body class="bg-[#0c0c0e] text-neutral-100 antialiased selection:bg-neutral-700 selection:text-white">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration error:', err));
+        });
+      }
+    </script>
+  </body>
+</html>
