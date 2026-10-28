@@ -8,6 +8,7 @@ import EisenhowerMatrix from './components/EisenhowerMatrix';
 import HabitTracker from './components/HabitTracker';
 import PomodoroTimer from './components/PomodoroTimer';
 import ProductivityStats from './components/ProductivityStats';
+import ProfileCustomizeModal from './components/ProfileCustomizeModal';
 import TickTickSyncModal from './components/TickTickSyncModal';
 import GlobalQuickAddModal from './components/GlobalQuickAddModal';
 import SettingsModal from './components/SettingsModal';
@@ -39,6 +40,7 @@ export default function App() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeTaskForPomodoro, setActiveTaskForPomodoro] = useState(null);
 
@@ -419,6 +421,10 @@ export default function App() {
             setIsMobileDrawerOpen(false);
             setIsSearchOpen(true);
           }}
+          onOpenProfileModal={() => {
+            setIsMobileDrawerOpen(false);
+            setIsProfileModalOpen(true);
+          }}
         />
       </div>
 
@@ -572,7 +578,15 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)}
         store={store}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
         onTriggerTestAlarm={handleTriggerTestAlarm}
+      />
+
+      {/* Profile & Cover Customization Modal */}
+      <ProfileCustomizeModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        store={store}
       />
 
       {/* Search Modal */}

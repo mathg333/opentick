@@ -127,18 +127,13 @@ public class AlarmActivity extends Activity {
     }
 
     private void configureWindowAndLockScreen() {
-        // Lock screen display & wakeup
+        // Display directly over lock screen and wake up screen without triggering PIN bouncer
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true);
             setTurnScreenOn(true);
-            KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-            if (km != null) {
-                km.requestDismissKeyguard(this, null);
-            }
         } else {
             getWindow().addFlags(
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
             );
         }
@@ -146,12 +141,6 @@ public class AlarmActivity extends Activity {
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         );
-
-        // Android 12+ (API 31+) Native Frosted Glass Window Blur
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
-            getWindow().getAttributes().setBlurBehindRadius(75);
-        }
 
         // Edge-to-edge transparent system bars
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

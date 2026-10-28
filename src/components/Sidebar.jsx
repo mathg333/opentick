@@ -27,15 +27,19 @@ import {
   Crown,
   Sparkles,
   CheckCircle2,
-  Folder
+  Folder,
+  Camera
 } from 'lucide-react';
+import RankShield2D from './RankShield2D';
+import { calculateGamification } from '../utils/gamification';
 
 export default function Sidebar({ 
   store, 
   onCloseMobileDrawer,
   onOpenSyncModal, 
   onOpenSettingsModal,
-  onOpenSearchModal
+  onOpenSearchModal,
+  onOpenProfileModal
 }) {
   const { state, activeView, setActiveView, addProject, deleteProject } = store;
   const [isAddingProject, setIsAddingProject] = useState(false);
@@ -49,6 +53,36 @@ export default function Sidebar({
   const todayTasksCount = state.tasks.filter(t => !t.completed && (t.dueDate === todayStr || (t.recurringDates && t.recurringDates.includes(todayStr)))).length;
   const inboxTasksCount = state.tasks.filter(t => !t.completed && (t.projectId === 'inbox' || !t.projectId)).length;
   const completedTasksCount = state.tasks.filter(t => t.completed).length;
+
+  const profile = state.userProfile || {
+    name: 'Mathx',
+    title: 'Mestre da Produtividade',
+    avatar: '🐺',
+    avatarType: 'emoji',
+    coverPreset: 'rain_glass',
+    coverImage: null
+  };
+
+  const gamificationStats = calculateGamification(state);
+
+  const getCoverBg = () => {
+    if (profile.coverImage) {
+      return { backgroundImage: `url(${profile.coverImage})` };
+    }
+    if (profile.coverPreset === 'rain_glass') {
+      return { backgroundImage: "url('/images/bg_rain_glass_dark.png')" };
+    }
+    if (profile.coverPreset === 'sunset_lava') {
+      return { background: 'linear-gradient(135deg, #ff7a00, #ff3d00, #991b1b)' };
+    }
+    if (profile.coverPreset === 'cyber_neon') {
+      return { background: 'linear-gradient(135deg, #1e1b4b, #4338ca, #3b82f6)' };
+    }
+    if (profile.coverPreset === 'sapphire_deep') {
+      return { background: 'linear-gradient(135deg, #0f172a, #1e3a8a, #2563eb)' };
+    }
+    return { background: 'linear-gradient(135deg, #18181b, #27272a, #3f3f46)' };
+  };
 
   const handleSelectView = (viewId) => {
     setActiveView(viewId);
@@ -69,20 +103,84 @@ export default function Sidebar({
 
   return (
     <aside className="w-[310px] max-w-[85vw] md:w-68 bg-[#121214] border-r border-[#242428] flex flex-col h-full select-none shadow-2xl md:shadow-none text-neutral-100">
-      {/* Profile Header (Larger, prominent avatar requested by user, with PRO status) */}
-      <div className="p-4 pt-5 pb-4 border-b border-[#242428] flex items-center justify-between shrink-0 bg-[#0e0e10]">
+      {/* Profile Header with Cover Banner & Gamified Rank Shield */}
+      <div 
+        className="relative border-b border-[#242428] shrink-0 bg-[#0e0e10] overflow-hidden"
+      >
+        {/* Profile Cover Banner */}
+        <div 
+          className="h-16 w-full bg-cover bg-center relative"
+          style={getCoverBg()}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-[#0e0e10]" />
+          
+          {/* Top Header Actions (Search, Settings, Close) */}
+          <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+            <button
+              onClick={() => {
+                if (onOpenSearchModal) onOpenSearchModal();
+                if (onCloseMobileDrawer) onCloseMobileDrawer();
+              }}
+              className="p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
+              title="Pesquisar"
+            >
+              <Search className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => {
+                if (onOpenProfileModal) {
+                  onOpenProfileModal();
+                } else if (onOpenSettingsModal) {
+                  onOpenSettingsModal();
+                }
+                if (onCloseMobileDrawer) onCloseMobileDrawer();
+              }}
+              className="p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
+              title="Personalizar Perfil"
+            >
+              <Camera className="w-3.5 h-3.5 text-[#ff6b00]" />
+            </button>
+            <button
+              onClick={() => {
+                if (onOpenSettingsModal) onOpenSettingsModal();
+                if (onCloseMobileDrawer) onCloseMobileDrawer();
+              }}
+              className="p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
+              title="Configurações"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={onCloseMobileDrawer}
+              className="md:hidden p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
+              title="Fechar menu"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Profile Info Row */}
         <div 
           onClick={() => {
-            if (onOpenSettingsModal) onOpenSettingsModal();
+            if (onOpenProfileModal) {
+              onOpenProfileModal();
+            } else if (onOpenSettingsModal) {
+              onOpenSettingsModal();
+            }
             if (onCloseMobileDrawer) onCloseMobileDrawer();
           }}
-          className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
+          className="p-3 pt-0 pb-3 flex items-center gap-3 cursor-pointer hover:bg-white/2 transition-colors relative"
         >
-          {/* Much Larger Avatar with Iridescent Glowing Gradient Ring */}
-          <div className="relative shrink-0">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 via-amber-500 to-[#ff6b00] p-1 shadow-lg shadow-[#ff6b00]/25">
-              <div className="w-full h-full rounded-full bg-[#1c1c1e] flex items-center justify-center font-black text-white text-2xl select-none">
-                🐸
+          {/* Larger Avatar with Iridescent Glowing Gradient Ring */}
+          <div className="relative shrink-0 -mt-6">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 via-amber-500 to-[#ff6b00] p-1 shadow-xl ring-2 ring-[#0e0e10]">
+              <div className="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center font-black text-white text-2xl select-none">
+                {profile.avatarType === 'image' && profile.avatar ? (
+                  <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  profile.avatar || '🐺'
+                )}
               </div>
             </div>
             {/* Gold Crown Badge */}
@@ -91,51 +189,30 @@ export default function Sidebar({
             </span>
           </div>
 
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1 pt-1">
             <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-base text-white tracking-tight truncate">Mathx</span>
+              <span className="font-extrabold text-base text-white tracking-tight truncate">
+                {profile.name || 'Mathx'}
+              </span>
               <span className="text-[9px] bg-[#ff6b00]/20 text-[#ff6b00] font-black px-1.5 py-0.5 rounded border border-[#ff6b00]/30 shrink-0">
-                PRO FREE
+                PRO
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 mt-1">
-              <span className="bg-emerald-950 text-emerald-300 font-bold px-1.5 py-0.2 rounded font-mono text-[10px]">
-                Lv.5
+            <div className="flex items-center gap-2 text-[11px] text-neutral-400 mt-0.5">
+              <div className="flex items-center gap-1">
+                <RankShield2D tier={gamificationStats.currentRank.tier} size={18} />
+                <span className="font-bold text-neutral-300 text-[10px]">
+                  {gamificationStats.currentRank.shortName}
+                </span>
+              </div>
+              <span className="bg-[#1c1c22] border border-[#2c2c34] text-amber-300 font-bold px-1.5 py-0.2 rounded font-mono text-[9px]">
+                Nv.{gamificationStats.level}
               </span>
-              <span className="truncate">⭐ 12 crachás</span>
+              <span className="text-neutral-500 text-[10px] font-mono truncate">
+                {gamificationStats.totalXp} XP
+              </span>
             </div>
           </div>
-        </div>
-
-        {/* Top Header Actions: Search, Settings, Close */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => {
-              if (onOpenSearchModal) onOpenSearchModal();
-              if (onCloseMobileDrawer) onCloseMobileDrawer();
-            }}
-            className="p-2 text-neutral-400 hover:text-white rounded-xl active:bg-neutral-800 transition-colors"
-            title="Pesquisar"
-          >
-            <Search className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => {
-              if (onOpenSettingsModal) onOpenSettingsModal();
-              if (onCloseMobileDrawer) onCloseMobileDrawer();
-            }}
-            className="p-2 text-neutral-400 hover:text-white rounded-xl active:bg-neutral-800 transition-colors"
-            title="Configurações"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-          <button
-            onClick={onCloseMobileDrawer}
-            className="md:hidden p-2 text-neutral-400 hover:text-white rounded-xl active:bg-neutral-800"
-            title="Fechar menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
       </div>
 
@@ -196,6 +273,23 @@ export default function Sidebar({
               <span className="text-sm">Etiquetas</span>
             </div>
             <ChevronRight className="w-4 h-4 text-neutral-500" />
+            <button
+              onClick={() => {
+                if (onOpenSettingsModal) onOpenSettingsModal();
+                if (onCloseMobileDrawer) onCloseMobileDrawer();
+              }}
+              className="p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
+              title="Configurações"
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={onCloseMobileDrawer}
+              className="md:hidden p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
+              title="Fechar menu"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 

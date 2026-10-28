@@ -24,6 +24,16 @@ export function useAppStore() {
           return {
             ...parsed,
             tasks: uniqueTasks,
+            userProfile: {
+              name: 'Mathx',
+              title: 'Mestre da Produtividade',
+              avatar: '🐺',
+              avatarType: 'emoji',
+              coverPreset: 'rain_glass',
+              coverImage: null,
+              ...(parsed.userProfile || {})
+            },
+            bonusXp: parsed.bonusXp || 450,
             settings: {
               theme: 'amoled',
               accentColor: '#ff6b00',
@@ -50,6 +60,15 @@ export function useAppStore() {
       tasks: INITIAL_TASKS,
       habits: INITIAL_HABITS,
       pomodoroSessions: INITIAL_POMODORO_SESSIONS,
+      userProfile: {
+        name: 'Mathx',
+        title: 'Mestre da Produtividade',
+        avatar: '🐺',
+        avatarType: 'emoji',
+        coverPreset: 'rain_glass',
+        coverImage: null
+      },
+      bonusXp: 450,
       settings: {
         theme: 'amoled',
         accentColor: '#ff6b00', // Vibrant Orange
@@ -409,12 +428,38 @@ export function useAppStore() {
     }
   };
 
+  const updateUserProfile = (updates) => {
+    setState(prev => ({
+      ...prev,
+      userProfile: {
+        ...(prev.userProfile || {
+          name: 'Mathx',
+          title: 'Mestre da Produtividade',
+          avatar: '🐺',
+          avatarType: 'emoji',
+          coverPreset: 'rain_glass',
+          coverImage: null
+        }),
+        ...updates
+      }
+    }));
+  };
+
+  const addBonusXp = (amount = 50) => {
+    setState(prev => ({
+      ...prev,
+      bonusXp: (prev.bonusXp || 0) + amount
+    }));
+  };
+
   return {
     state,
     activeView,
     setActiveView,
     selectedTaskId,
     setSelectedTaskId,
+    updateUserProfile,
+    addBonusXp,
     addTask,
     addTasksForMultipleDates,
     updateTask,

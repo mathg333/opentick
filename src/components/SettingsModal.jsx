@@ -27,16 +27,28 @@ import {
 import { soundManager } from '../utils/audio';
 import { saveCustomAudioFile, getCustomAudioFile, removeCustomAudioFile } from '../utils/audioStorage';
 import { requestOverlayPermission, requestExactAlarmPermission } from '../utils/nativeAlarm';
+import RankShield2D from './RankShield2D';
+import { calculateGamification } from '../utils/gamification';
 
 export default function SettingsModal({ 
   isOpen, 
   onClose, 
   store, 
   onOpenSyncModal,
+  onOpenProfileModal,
   onTriggerTestAlarm
 }) {
   const { state, updateSettings, exportData, importData } = store;
   const settings = state.settings || {};
+  const profile = state.userProfile || {
+    name: 'Mathx',
+    title: 'Mestre da Produtividade',
+    avatar: '🐺',
+    avatarType: 'emoji',
+    coverPreset: 'rain_glass',
+    coverImage: null
+  };
+  const stats = calculateGamification(state);
 
   const [activeScreen, setActiveScreen] = useState('main'); // 'main', 'appearance', 'datetime', 'sound', 'tabs', 'ai', 'general', 'sync'
   const [testPlaying, setTestPlaying] = useState(false);
@@ -172,30 +184,48 @@ export default function SettingsModal({
         {/* ================= MAIN SCREEN ================= */}
         {activeScreen === 'main' && (
           <>
-            {/* Profile Card */}
-            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#1c1c1e] border border-[#28282b]">
+            {/* Profile Card with Customization Action */}
+            <div 
+              onClick={() => {
+                if (onOpenProfileModal) onOpenProfileModal();
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-[#1c1c1e] border border-[#28282b] hover:bg-[#222226] cursor-pointer transition-colors shadow-lg"
+            >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-600 via-amber-600 to-[#ff6b00] p-0.5">
-                  <div className="w-full h-full rounded-full bg-[#1c1c1e] flex items-center justify-center font-bold text-white text-base">
-                    🐸
+                <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-600 via-amber-600 to-[#ff6b00] p-0.5 shadow-md">
+                  <div className="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center font-bold text-white text-xl select-none">
+                    {profile.avatarType === 'image' && profile.avatar ? (
+                      <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      profile.avatar || '🐺'
+                    )}
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-bold text-white">Mathx</span>
+                    <span className="text-base font-bold text-white">{profile.name || 'Mathx'}</span>
                     <span className="text-[10px] bg-[#ff6b00]/20 text-[#ff6b00] font-bold px-1.5 py-0.2 rounded border border-[#ff6b00]/30">
                       👑 PRO
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-neutral-400 mt-1">
-                    <span className="bg-emerald-950 text-emerald-300 px-1.5 py-0.5 rounded text-[10px] font-bold">
-                      Lv.5
+                  <div className="flex items-center gap-2 text-xs text-neutral-400 mt-1">
+                    <div className="flex items-center gap-1">
+                      <RankShield2D tier={stats.currentRank.tier} size={16} />
+                      <span className="text-[10px] font-bold text-neutral-300">{stats.currentRank.shortName}</span>
+                    </div>
+                    <span className="bg-amber-950 text-amber-300 px-1.5 py-0.2 rounded text-[9px] font-mono font-bold">
+                      Nv.{stats.level}
                     </span>
-                    <span className="bg-neutral-800 text-neutral-300 px-1.5 py-0.5 rounded text-[10px]">
-                      ⭐ 12 crachás
+                    <span className="text-[10px] text-neutral-500 font-mono">
+                      {stats.totalXp} XP
                     </span>
                   </div>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-1 text-xs text-[#ff6b00] font-bold">
+                <span>Personalizar</span>
+                <ChevronRight className="w-4 h-4 text-neutral-500" />
               </div>
             </div>
 

@@ -2,9 +2,23 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#D0050508">
+    android:background="@android:color/transparent">
 
-    <!-- Ambient Neon Orange Radial Glow (Refracted through translucent frosted glass) -->
+    <!-- User-selected Moody Rain Drops on Blurred Glass Pane Background -->
+    <ImageView
+        android:id="@+id/alarm_rain_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/bg_rain_glass_dark" />
+
+    <!-- Subtle Dark Filter to preserve text contrast while keeping raindrops vivid -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#59000000" />
+
+    <!-- Ambient Neon Orange Radial Glow -->
     <View
         android:layout_width="320dp"
         android:layout_height="320dp"
@@ -16,7 +30,7 @@
         android:layout_width="260dp"
         android:layout_height="260dp"
         android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="100dp"
+        android:layout_marginBottom="90dp"
         android:background="@drawable/bg_ambient_glow" />
 
     <!-- Main Foreground Content Layout -->
@@ -119,7 +133,7 @@
             android:shadowColor="#80FF6B00"
             android:shadowDx="0"
             android:shadowDy="0"
-            android:shadowRadius="12" />
+            android:shadowRadius="14" />
 
         <!-- Date Pill -->
         <TextView

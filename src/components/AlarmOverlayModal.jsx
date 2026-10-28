@@ -38,7 +38,14 @@ export default function AlarmOverlayModal({
   const remainingSeconds = Math.max(0, 59 - (secondsElapsed % 60));
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#06060a]/80 backdrop-blur-3xl flex flex-col items-center justify-between p-6 sm:p-10 select-none animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 bg-[#06060a]/85 backdrop-blur-3xl flex flex-col items-center justify-between p-6 sm:p-10 select-none animate-in fade-in duration-300">
+      {/* User-selected Moody Rain Drops on Blurred Glass Background */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity pointer-events-none"
+        style={{ backgroundImage: `url('/images/bg_rain_glass_dark.png')` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#06060a]/90 via-[#06060a]/70 to-[#06060a]/95 pointer-events-none" />
+
       {/* Background Ambient Glowing Orbs */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-[#ff6b00]/15 blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-72 h-72 rounded-full bg-[#ff3d00]/10 blur-3xl pointer-events-none" />

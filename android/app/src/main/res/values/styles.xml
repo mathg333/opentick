@@ -20,7 +20,7 @@
     <!-- Translucent Frosted Glass Lockscreen Alarm Theme (Pinterest / Glassmorphic) -->
     <style name="AppTheme.AlarmTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowBackground">#C706060A</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
