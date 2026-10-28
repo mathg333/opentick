@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
 import { 
-  Plus, 
-  Calendar as CalendarIcon, 
-  Flag, 
-  Tag as TagIcon, 
   Check, 
   Trash2, 
   Clock, 
   Play, 
   ListTree, 
   X,
-  ChevronRight
+  ChevronDown,
+  ChevronRight,
+  MoreVertical,
+  Calendar as CalendarIcon,
+  Flag,
+  ArrowLeft,
+  Plus
 } from 'lucide-react';
 
-export default function TaskView({ store, onStartPomodoroForTask }) {
+export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMenu }) {
   const { 
     state, 
     activeView, 
@@ -28,27 +30,28 @@ export default function TaskView({ store, onStartPomodoroForTask }) {
     deleteSubtask
   } = store;
 
-  const [newTitle, setNewTitle] = useState('');
-  const [newPriority, setNewPriority] = useState(0);
-  const [newDueDate, setNewDueDate] = useState(new Date().toISOString().split('T')[0]);
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [collapsedSections, setCollapsedSections] = useState({
+    noDate: false,
+    today: false,
+    upcoming: false,
+    completed: false
+  });
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Filter tasks based on activeView
-  let viewTitle = 'Minhas Tarefas';
+  // Determine current view title
+  let viewTitle = 'Caixa de Entrada';
   let filteredTasks = state.tasks;
 
   if (activeView === 'tasks-inbox') {
     viewTitle = 'Caixa de Entrada';
     filteredTasks = state.tasks.filter(t => t.projectId === 'inbox');
   } else if (activeView === 'tasks-today') {
-    viewTitle = 'Tarefas de Hoje';
+    viewTitle = 'Hoje';
     filteredTasks = state.tasks.filter(t => t.dueDate === todayStr || (!t.completed && t.dueDate && t.dueDate < todayStr));
-  } else if (activeView === 'tasks-next7') {
-    viewTitle = 'Próximos 7 Dias';
-    const nextWeek = new Date(Date.now() + 86400000 * 7).toISOString().split('T')[0];
-    filteredTasks = state.tasks.filter(t => t.dueDate >= todayStr && t.dueDate <= nextWeek);
+  } else if (activeView === 'tasks-completed') {
+    viewTitle = 'Concluído';
+    filteredTasks = state.tasks.filter(t => t.completed);
   } else if (activeView.startsWith('project-')) {
     const projId = activeView.replace('project-', '');
     const proj = state.projects.find(p => p.id === projId);
@@ -56,29 +59,20 @@ export default function TaskView({ store, onStartPomodoroForTask }) {
     filteredTasks = state.tasks.filter(t => t.projectId === projId);
   }
 
+  // Group tasks into sections like TickTick:
+  // 1. Sem Data (No due date)
+  // 2. Hoje / Atrasadas
+  // 3. Próximas (Upcoming)
+  // 4. Concluído e Não Farei
   const pendingTasks = filteredTasks.filter(t => !t.completed);
   const completedTasks = filteredTasks.filter(t => t.completed);
 
-  const handleQuickAdd = (e) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
+  const noDateTasks = pendingTasks.filter(t => !t.dueDate);
+  const todayTasks = pendingTasks.filter(t => t.dueDate === todayStr || (t.dueDate && t.dueDate < todayStr));
+  const upcomingTasks = pendingTasks.filter(t => t.dueDate && t.dueDate > todayStr);
 
-    let targetProj = 'inbox';
-    if (activeView.startsWith('project-')) {
-      targetProj = activeView.replace('project-', '');
-    }
-
-    addTask({
-      title: newTitle.trim(),
-      projectId: targetProj,
-      priority: newPriority,
-      dueDate: newDueDate,
-      urgent: newPriority >= 2,
-      important: newPriority >= 2
-    });
-
-    setNewTitle('');
-    setNewPriority(0);
+  const toggleSection = (key) => {
+    setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const selectedTask = state.tasks.find(t => t.id === selectedTaskId);
@@ -90,346 +84,402 @@ export default function TaskView({ store, onStartPomodoroForTask }) {
     3: 'text-rose-500'
   };
 
-  const priorityLabels = {
-    0: 'Sem prioridade',
-    1: 'Baixa',
-    2: 'Média',
-    3: 'Alta'
-  };
-
   return (
-    <div className="flex-1 flex h-screen overflow-hidden bg-[#121215]">
+    <div className="flex-1 flex h-full overflow-hidden bg-[#000000]">
       {/* Main Task List Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Header */}
-        <div className="px-8 pt-7 pb-4 flex items-center justify-between border-b border-[#222226]">
-          <div>
-            <h1 className="text-xl font-bold text-neutral-100 flex items-center gap-3">
+        {/* TickTick Top Bar */}
+        <div className="px-4 py-3.5 flex items-center justify-between bg-[#000000] shrink-0 border-b border-[#1c1c1e]">
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-bold text-white tracking-tight truncate max-w-[260px]">
               {viewTitle}
-              <span className="text-[11px] bg-[#1d1d21] text-neutral-400 font-medium px-2.5 py-0.5 rounded-full border border-[#27272a]">
-                {pendingTasks.length} pendentes
-              </span>
             </h1>
           </div>
-        </div>
 
-        {/* Quick Add Bar */}
-        <div className="px-8 py-4">
-          <form 
-            onSubmit={handleQuickAdd}
-            className="flex items-center gap-3 bg-[#09090b] border border-[#27272a] rounded-xl px-4 py-2.5 shadow-sm focus-within:border-neutral-500 transition-colors"
-          >
-            <Plus className="w-4 h-4 text-neutral-400 shrink-0" />
-            <input
-              type="text"
-              placeholder='Adicionar tarefa rápida... (Pressione Enter para salvar)'
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              className="flex-1 bg-transparent text-xs text-neutral-100 placeholder-neutral-500 focus:outline-none"
-            />
-            
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={newDueDate}
-                onChange={(e) => setNewDueDate(e.target.value)}
-                className="bg-[#151518] border border-[#27272a] text-neutral-300 rounded px-2 py-1 text-xs focus:outline-none"
-              />
-
-              <div className="flex items-center gap-1 bg-[#151518] border border-[#27272a] rounded p-0.5">
-                {[0, 1, 2, 3].map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setNewPriority(p)}
-                    className={`p-1 rounded transition-colors ${newPriority === p ? 'bg-[#27272a] text-white' : 'text-neutral-500 hover:text-neutral-300'}`}
-                    title={priorityLabels[p]}
-                  >
-                    <Flag className={`w-3 h-3 ${priorityColors[p]}`} />
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="submit"
-                disabled={!newTitle.trim()}
-                className="bg-neutral-200 hover:bg-white disabled:opacity-30 text-black text-xs font-bold px-3.5 py-1.5 rounded-lg transition-colors"
-              >
-                Adicionar
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Scrollable Tasks List */}
-        <div className="flex-1 overflow-y-auto px-8 pb-12 space-y-4">
-          {/* Pending Tasks */}
-          <div className="space-y-1.5">
-            {pendingTasks.map((task) => {
-              const isSelected = selectedTaskId === task.id;
-              const subtasksDone = (task.subtasks || []).filter(s => s.completed).length;
-              const totalSubtasks = (task.subtasks || []).length;
-
-              return (
-                <div
-                  key={task.id}
-                  onClick={() => setSelectedTaskId(task.id)}
-                  className={`group flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#1b1b20] border-neutral-600 shadow-sm'
-                      : 'bg-[#151518] border-[#222226] hover:bg-[#1a1a1f] hover:border-[#2f2f36]'
-                  }`}
-                >
-                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleTaskCompleted(task.id);
-                      }}
-                      className="w-4 h-4 rounded border border-neutral-600 hover:border-neutral-400 flex items-center justify-center transition-colors shrink-0"
-                    >
-                      {task.completed && <Check className="w-3 h-3 text-neutral-200 stroke-[3]" />}
-                    </button>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-neutral-200 truncate">
-                          {task.title}
-                        </span>
-                        {task.priority > 0 && (
-                          <Flag className={`w-3 h-3 ${priorityColors[task.priority]} shrink-0`} />
-                        )}
-                      </div>
-
-                      {/* Meta badges: DueDate, Subtasks, Time */}
-                      <div className="flex items-center gap-3 mt-1 text-[11px] text-neutral-500">
-                        {task.dueDate && (
-                          <span className={`flex items-center gap-1 ${task.dueDate < todayStr ? 'text-rose-400 font-semibold' : ''}`}>
-                            <CalendarIcon className="w-3 h-3" />
-                            {task.dueDate === todayStr ? 'Hoje' : task.dueDate}
-                          </span>
-                        )}
-                        {task.startTime && (
-                          <span className="flex items-center gap-1 text-neutral-400">
-                            <Clock className="w-3 h-3" />
-                            {task.startTime} - {task.endTime || 'fim'}
-                          </span>
-                        )}
-                        {totalSubtasks > 0 && (
-                          <span className="flex items-center gap-1 text-neutral-400">
-                            <ListTree className="w-3 h-3" />
-                            {subtasksDone}/{totalSubtasks}
-                          </span>
-                        )}
-                        {(task.tags || []).map(tg => (
-                          <span key={tg} className="text-[10px] bg-[#1d1d21] text-neutral-400 px-1.5 py-0.2 rounded border border-[#27272a]">
-                            #{tg}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onStartPomodoroForTask(task);
-                      }}
-                      className="p-1.5 text-neutral-400 hover:text-amber-400 hover:bg-[#222226] rounded-lg transition-colors"
-                      title="Focar com Pomodoro"
-                    >
-                      <Play className="w-3.5 h-3.5" />
-                    </button>
-                    <ChevronRight className="w-4 h-4 text-neutral-600" />
-                  </div>
-                </div>
-              );
-            })}
-
-            {pendingTasks.length === 0 && (
-              <div className="py-12 text-center text-neutral-600">
-                <Check className="w-8 h-8 mx-auto mb-2 text-neutral-700" />
-                <p className="text-xs font-medium">Tudo limpo por aqui!</p>
-                <p className="text-[11px] text-neutral-600 mt-0.5">Nenhuma tarefa pendente neste filtro.</p>
-              </div>
-            )}
+          <div className="flex items-center gap-2">
+            <button 
+              className="p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
+              title="Mais opções"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
           </div>
+        </div>
 
-          {/* Completed Tasks section */}
-          {completedTasks.length > 0 && (
-            <div className="pt-6">
-              <h3 className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-2">
-                Concluídas ({completedTasks.length})
-              </h3>
-              <div className="space-y-1.5 opacity-60">
-                {completedTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-center justify-between p-2.5 rounded-xl border border-[#222226] bg-[#121215]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => toggleTaskCompleted(task.id)}
-                        className="w-4 h-4 rounded bg-emerald-600/30 border border-emerald-500/50 flex items-center justify-center"
-                      >
-                        <Check className="w-3 h-3 text-emerald-400" />
-                      </button>
-                      <span className="text-xs text-neutral-500 line-through">
-                        {task.title}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => deleteTask(task.id)}
-                      className="text-neutral-600 hover:text-rose-400 transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
+        {/* Scrollable Floating Cards Container (TickTick Android Style) */}
+        <div className="flex-1 overflow-y-auto px-3.5 md:px-8 py-4 space-y-3 pb-32">
+          {/* Section: Sem Data */}
+          {noDateTasks.length > 0 && (
+            <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
+              <div 
+                onClick={() => toggleSection('noDate')}
+                className="flex items-center justify-between cursor-pointer select-none pb-2"
+              >
+                <span className="text-sm font-bold text-white">Sem Data</span>
+                <div className="flex items-center gap-1 text-xs text-neutral-400">
+                  <span className="font-mono">{noDateTasks.length}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.noDate ? '-rotate-90' : ''}`} />
+                </div>
               </div>
+
+              {!collapsedSections.noDate && (
+                <div className="space-y-3 pt-2">
+                  {noDateTasks.map(task => (
+                    <div
+                      key={task.id}
+                      onClick={() => setSelectedTaskId(task.id)}
+                      className="flex items-center justify-between gap-3 cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                        {/* TickTick rounded checkbox */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTaskCompleted(task.id);
+                          }}
+                          className="w-5 h-5 rounded-md border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                        >
+                          {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                        </button>
+
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-neutral-100 truncate block">
+                            {task.title}
+                          </span>
+                        </div>
+                      </div>
+
+                      {task.priority > 0 && (
+                        <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Section: Hoje / Atrasadas */}
+          {todayTasks.length > 0 && (
+            <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
+              <div 
+                onClick={() => toggleSection('today')}
+                className="flex items-center justify-between cursor-pointer select-none pb-2"
+              >
+                <span className="text-sm font-bold text-white">Hoje</span>
+                <div className="flex items-center gap-1 text-xs text-neutral-400">
+                  <span className="font-mono">{todayTasks.length}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.today ? '-rotate-90' : ''}`} />
+                </div>
+              </div>
+
+              {!collapsedSections.today && (
+                <div className="space-y-3 pt-2">
+                  {todayTasks.map(task => (
+                    <div
+                      key={task.id}
+                      onClick={() => setSelectedTaskId(task.id)}
+                      className="flex items-center justify-between gap-3 cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTaskCompleted(task.id);
+                          }}
+                          className="w-5 h-5 rounded-md border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                        >
+                          {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                        </button>
+
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-neutral-100 truncate block">
+                            {task.title}
+                          </span>
+                          {task.startTime && (
+                            <span className="text-xs text-[#4c82f7] flex items-center gap-1 mt-0.5 font-medium">
+                              <Clock className="w-3 h-3" />
+                              {task.startTime}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {task.priority > 0 && (
+                          <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStartPomodoroForTask(task);
+                          }}
+                          className="p-1 text-neutral-400 hover:text-amber-400 rounded transition-colors"
+                          title="Foco"
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Section: Próximas (Upcoming) */}
+          {upcomingTasks.length > 0 && (
+            <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
+              <div 
+                onClick={() => toggleSection('upcoming')}
+                className="flex items-center justify-between cursor-pointer select-none pb-2"
+              >
+                <span className="text-sm font-bold text-white">Próximos Dias</span>
+                <div className="flex items-center gap-1 text-xs text-neutral-400">
+                  <span className="font-mono">{upcomingTasks.length}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.upcoming ? '-rotate-90' : ''}`} />
+                </div>
+              </div>
+
+              {!collapsedSections.upcoming && (
+                <div className="space-y-3 pt-2">
+                  {upcomingTasks.map(task => (
+                    <div
+                      key={task.id}
+                      onClick={() => setSelectedTaskId(task.id)}
+                      className="flex items-center justify-between gap-3 cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTaskCompleted(task.id);
+                          }}
+                          className="w-5 h-5 rounded-md border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                        >
+                          {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                        </button>
+
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-neutral-100 truncate block">
+                            {task.title}
+                          </span>
+                          <span className="text-xs text-neutral-400 mt-0.5 block">
+                            {task.dueDate}
+                          </span>
+                        </div>
+                      </div>
+
+                      {task.priority > 0 && (
+                        <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Section: Concluído e Não Farei (Matching photo_2026-10-28_00-42-45.jpg) */}
+          {completedTasks.length > 0 && (
+            <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
+              <div 
+                onClick={() => toggleSection('completed')}
+                className="flex items-center justify-between cursor-pointer select-none pb-2"
+              >
+                <span className="text-sm font-bold text-neutral-300">Concluído e Não Farei.</span>
+                <div className="flex items-center gap-1 text-xs text-neutral-400">
+                  <span className="font-mono">{completedTasks.length}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.completed ? '-rotate-90' : ''}`} />
+                </div>
+              </div>
+
+              {!collapsedSections.completed && (
+                <div className="space-y-3 pt-2">
+                  {completedTasks.map(task => (
+                    <div
+                      key={task.id}
+                      onClick={() => setSelectedTaskId(task.id)}
+                      className="flex items-start justify-between gap-3 cursor-pointer opacity-75 hover:opacity-100 transition-opacity"
+                    >
+                      <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                        {/* Checked tick or X icon */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleTaskCompleted(task.id);
+                          }}
+                          className="mt-0.5 w-5 h-5 rounded-md bg-neutral-700/60 border border-neutral-600 flex items-center justify-center transition-colors shrink-0"
+                        >
+                          <Check className="w-3 h-3 text-neutral-300 stroke-[3]" />
+                        </button>
+
+                        <div className="flex-1 min-w-0">
+                          <span className="text-xs font-medium text-neutral-300 uppercase tracking-wide block truncate line-through">
+                            {task.title}
+                          </span>
+                          {task.description && (
+                            <p className="text-[11px] text-neutral-500 truncate mt-0.5">
+                              {task.description}
+                            </p>
+                          )}
+                          <span className="text-[11px] text-neutral-500 mt-1 block">
+                            {task.dueDate ? `Concluído: ${task.dueDate}` : 'Concluído'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteTask(task.id);
+                        }}
+                        className="text-neutral-500 hover:text-rose-400 p-1 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {pendingTasks.length === 0 && completedTasks.length === 0 && (
+            <div className="py-20 text-center text-neutral-500">
+              <Check className="w-10 h-10 mx-auto mb-3 text-neutral-600 stroke-[1.5]" />
+              <p className="text-sm font-semibold text-neutral-300">Tudo limpo por aqui</p>
+              <p className="text-xs text-neutral-500 mt-1">Toque no botão azul (+) para adicionar uma nova tarefa.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Task Detail Drawer */}
+      {/* Task Detail Fullscreen Sheet / Drawer */}
       {selectedTask && (
-        <div className="w-96 bg-[#0c0c0e] border-l border-[#222226] flex flex-col h-full overflow-hidden shadow-2xl">
-          <div className="p-4 border-b border-[#222226] flex items-center justify-between">
-            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
+        <div className="fixed inset-0 z-50 md:static md:w-96 md:z-auto bg-[#000000] border-l border-[#1c1c1e] flex flex-col h-full overflow-hidden shadow-2xl">
+          <div className="p-4 border-b border-[#1c1c1e] flex items-center justify-between bg-[#141416]">
+            <button
+              onClick={() => setSelectedTaskId(null)}
+              className="flex items-center gap-1.5 text-xs text-neutral-300 hover:text-white px-2.5 py-1.5 rounded-xl bg-[#1c1c1e] border border-[#2c2c2e]"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Voltar</span>
+            </button>
+            <span className="text-xs font-bold text-neutral-400">
               Detalhes da Tarefa
             </span>
             <button
-              onClick={() => setSelectedTaskId(null)}
-              className="text-neutral-400 hover:text-white p-1 rounded-lg"
+              onClick={() => deleteTask(selectedTask.id)}
+              className="text-neutral-400 hover:text-rose-400 p-1.5 rounded-lg"
+              title="Excluir"
             >
-              <X className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 pb-28 md:pb-8">
             {/* Title & Checkbox */}
-            <div className="flex items-start gap-3">
+            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] flex items-start gap-3">
               <button
                 type="button"
                 onClick={() => toggleTaskCompleted(selectedTask.id)}
-                className={`mt-1 w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                  selectedTask.completed ? 'bg-neutral-200 border-white text-black' : 'border-neutral-600'
+                className={`mt-1 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
+                  selectedTask.completed ? 'bg-[#4c82f7] border-[#4c82f7] text-white' : 'border-neutral-500'
                 }`}
               >
-                {selectedTask.completed && <Check className="w-3 h-3 stroke-[3]" />}
+                {selectedTask.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
               </button>
               <input
                 type="text"
                 value={selectedTask.title}
                 onChange={(e) => updateTask(selectedTask.id, { title: e.target.value })}
-                className="flex-1 bg-transparent text-sm font-semibold text-neutral-100 focus:outline-none border-b border-transparent focus:border-neutral-500"
+                className="flex-1 bg-transparent text-sm font-semibold text-white focus:outline-none"
               />
             </div>
 
-            {/* Description */}
-            <div className="space-y-1.5">
-              <label className="text-xs text-neutral-400 font-medium">Descrição / Notas</label>
+            {/* Description Notes */}
+            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-1.5">
+              <label className="text-xs text-neutral-400 font-medium">Notas / Descrição</label>
               <textarea
                 rows={3}
-                placeholder="Adicione notas, links ou detalhes aqui..."
+                placeholder="Adicione anotações, links ou detalhes..."
                 value={selectedTask.description || ''}
                 onChange={(e) => updateTask(selectedTask.id, { description: e.target.value })}
-                className="w-full bg-[#151518] border border-[#27272a] rounded-lg p-3 text-xs text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-neutral-500"
+                className="w-full bg-[#141416] border border-[#2c2c2e] rounded-xl p-3 text-xs text-white placeholder-neutral-500 focus:outline-none"
               />
             </div>
 
-            {/* Date and Time Blocking */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
-                  <CalendarIcon className="w-3.5 h-3.5 text-neutral-400" />
-                  Vencimento
-                </label>
+            {/* Date & Time */}
+            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-blue-400" />
+                  Data de Vencimento
+                </span>
                 <input
                   type="date"
                   value={selectedTask.dueDate || ''}
                   onChange={(e) => updateTask(selectedTask.id, { dueDate: e.target.value })}
-                  className="w-full bg-[#151518] border border-[#27272a] rounded-lg px-2.5 py-1.5 text-xs text-neutral-200 focus:outline-none"
+                  className="bg-[#141416] border border-[#2c2c2e] rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-neutral-400" />
-                  Time-Blocking
-                </label>
-                <div className="flex gap-1 items-center">
-                  <input
-                    type="time"
-                    value={selectedTask.startTime || ''}
-                    onChange={(e) => updateTask(selectedTask.id, { startTime: e.target.value })}
-                    className="w-1/2 bg-[#151518] border border-[#27272a] rounded-lg px-1.5 py-1.5 text-xs text-neutral-200 focus:outline-none"
-                  />
-                  <span className="text-neutral-600">-</span>
-                  <input
-                    type="time"
-                    value={selectedTask.endTime || ''}
-                    onChange={(e) => updateTask(selectedTask.id, { endTime: e.target.value })}
-                    className="w-1/2 bg-[#151518] border border-[#27272a] rounded-lg px-1.5 py-1.5 text-xs text-neutral-200 focus:outline-none"
-                  />
-                </div>
+              <div className="flex items-center justify-between pt-2 border-t border-[#262629]">
+                <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-yellow-400" />
+                  Horário (Time-Block)
+                </span>
+                <input
+                  type="time"
+                  value={selectedTask.startTime || ''}
+                  onChange={(e) => updateTask(selectedTask.id, { startTime: e.target.value })}
+                  className="bg-[#141416] border border-[#2c2c2e] rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none"
+                />
               </div>
             </div>
 
-            {/* Matriz de Eisenhower Quadrants Toggle */}
-            <div className="p-3 bg-[#151518] rounded-xl border border-[#27272a] space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-neutral-300">
-                  Matriz de Eisenhower
-                </span>
-                <span className="text-[9px] bg-neutral-800 text-neutral-400 px-1.5 py-0.2 rounded font-bold">
-                  PRO FREE
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => updateTask(selectedTask.id, { urgent: !selectedTask.urgent })}
-                  className={`p-2 rounded-lg border text-left font-medium transition-colors ${
-                    selectedTask.urgent
-                      ? 'bg-rose-500/20 border-rose-500/40 text-rose-300'
-                      : 'bg-[#09090b] border-[#27272a] text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  ⚡ {selectedTask.urgent ? 'É Urgente' : 'Não é Urgente'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateTask(selectedTask.id, { important: !selectedTask.important })}
-                  className={`p-2 rounded-lg border text-left font-medium transition-colors ${
-                    selectedTask.important
-                      ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
-                      : 'bg-[#09090b] border-[#27272a] text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  🎯 {selectedTask.important ? 'É Importante' : 'Não é Importante'}
-                </button>
+            {/* Priority */}
+            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
+              <label className="text-xs text-neutral-400 font-medium">Prioridade</label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[0, 1, 2, 3].map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => updateTask(selectedTask.id, { priority: p })}
+                    className={`py-2 text-xs rounded-xl border flex items-center justify-center gap-1.5 transition-colors ${
+                      selectedTask.priority === p
+                        ? 'bg-[#28282e] border-neutral-400 text-white font-bold'
+                        : 'border-[#262629] bg-[#141416] text-neutral-400'
+                    }`}
+                  >
+                    <Flag className={`w-3.5 h-3.5 ${priorityColors[p]}`} />
+                    <span>{p === 0 ? 'Sem' : p === 1 ? 'Baixa' : p === 2 ? 'Média' : 'Alta'}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Subtasks (Ilimitadas) */}
-            <div className="space-y-2">
+            {/* Subtasks */}
+            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
               <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
-                <ListTree className="w-3.5 h-3.5 text-neutral-400" />
+                <ListTree className="w-4 h-4 text-neutral-400" />
                 Subtarefas
               </label>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {(selectedTask.subtasks || []).map((sub) => (
-                  <div key={sub.id} className="flex items-center justify-between gap-2 p-1.5 bg-[#151518] rounded-lg border border-[#222226]">
+                  <div key={sub.id} className="flex items-center justify-between gap-2 p-2 bg-[#141416] rounded-xl border border-[#262629]">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <button
                         onClick={() => toggleSubtask(selectedTask.id, sub.id)}
-                        className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
-                          sub.completed ? 'bg-neutral-200 border-white text-black' : 'border-neutral-600'
+                        className={`w-4 h-4 rounded border flex items-center justify-center ${
+                          sub.completed ? 'bg-[#4c82f7] border-[#4c82f7] text-white' : 'border-neutral-500'
                         }`}
                       >
                         {sub.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -440,59 +490,38 @@ export default function TaskView({ store, onStartPomodoroForTask }) {
                     </div>
                     <button
                       onClick={() => deleteSubtask(selectedTask.id, sub.id)}
-                      className="text-neutral-600 hover:text-rose-400"
+                      className="text-neutral-500 hover:text-rose-400 p-1"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 ))}
 
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!newSubtaskTitle.trim()) return;
-                    addSubtask(selectedTask.id, newSubtaskTitle.trim());
-                    setNewSubtaskTitle('');
+                <button
+                  onClick={() => {
+                    const title = prompt('Título da subtarefa:');
+                    if (title && title.trim()) addSubtask(selectedTask.id, title.trim());
                   }}
-                  className="flex gap-2"
+                  className="w-full py-2 bg-[#141416] hover:bg-[#222226] text-neutral-300 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-[#262629]"
                 >
-                  <input
-                    type="text"
-                    placeholder="Adicionar subtarefa..."
-                    value={newSubtaskTitle}
-                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                    className="flex-1 bg-[#151518] border border-[#27272a] rounded-lg px-2.5 py-1 text-xs text-neutral-200 placeholder-neutral-600 focus:outline-none focus:border-neutral-500"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-[#27272a] hover:bg-[#323238] text-white px-2.5 py-1 rounded-lg text-xs"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </form>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Adicionar subtarefa</span>
+                </button>
               </div>
             </div>
 
-            {/* Actions: Start Pomodoro & Delete */}
-            <div className="pt-4 border-t border-[#222226] space-y-2">
-              <button
-                type="button"
-                onClick={() => onStartPomodoroForTask(selectedTask)}
-                className="w-full py-2.5 bg-neutral-200 hover:bg-white text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                Iniciar Pomodoro Nesta Tarefa
-              </button>
-
-              <button
-                type="button"
-                onClick={() => deleteTask(selectedTask.id)}
-                className="w-full py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl text-xs font-medium flex items-center justify-center gap-2 transition-colors border border-rose-500/20"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Excluir Tarefa
-              </button>
-            </div>
+            {/* Pomodoro Focus Action */}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedTaskId(null);
+                onStartPomodoroForTask(selectedTask);
+              }}
+              className="w-full py-3 bg-[#4c82f7] text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-xl active:scale-98"
+            >
+              <Play className="w-4 h-4 fill-current" />
+              Iniciar Pomodoro Nesta Tarefa
+            </button>
           </div>
         </div>
       )}

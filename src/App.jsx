@@ -9,14 +9,36 @@ import PomodoroTimer from './components/PomodoroTimer';
 import ProductivityStats from './components/ProductivityStats';
 import TickTickSyncModal from './components/TickTickSyncModal';
 import GlobalQuickAddModal from './components/GlobalQuickAddModal';
+import SettingsModal from './components/SettingsModal';
+import SearchModal from './components/SearchModal';
+import { 
+  Menu, 
+  CheckSquare, 
+  Calendar as CalendarIcon, 
+  Grid, 
+  Flame, 
+  Clock, 
+  Plus, 
+  BarChart3,
+  Search,
+  MoreHorizontal,
+  Settings,
+  MoreVertical
+} from 'lucide-react';
 
 export default function App() {
   const store = useAppStore();
-  const { activeView, setActiveView, setSelectedTaskId } = store;
+  const { activeView, setActiveView, setSelectedTaskId, state } = store;
 
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeTaskForPomodoro, setActiveTaskForPomodoro] = useState(null);
+
+  const today = new Date();
+  const currentDayNumber = today.getDate();
 
   // Request browser notification permissions on mount
   useEffect(() => {
@@ -28,13 +50,14 @@ export default function App() {
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't trigger shortcuts if user is typing in an input or textarea
       const tag = e.target.tagName.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') {
         if (e.key === 'Escape') {
           e.target.blur();
           setIsQuickAddOpen(false);
           setIsSyncModalOpen(false);
+          setIsSettingsOpen(false);
+          setIsSearchOpen(false);
           setSelectedTaskId(null);
         }
         return;
@@ -58,6 +81,9 @@ export default function App() {
       } else if (e.key === 'Escape') {
         setIsQuickAddOpen(false);
         setIsSyncModalOpen(false);
+        setIsSettingsOpen(false);
+        setIsSearchOpen(false);
+        setIsMobileDrawerOpen(false);
         setSelectedTaskId(null);
       }
     };
@@ -73,49 +99,221 @@ export default function App() {
 
   const isTaskView = activeView.startsWith('tasks-') || activeView.startsWith('project-');
 
+  // Title for Mobile Top Bar
+  const getHeaderTitle = () => {
+    if (activeView === 'tasks-today') return 'Hoje';
+    if (activeView === 'tasks-inbox') return 'Caixa de Entrada';
+    if (activeView === 'tasks-completed') return 'Concluído';
+    if (activeView === 'calendar') return 'Calendário';
+    if (activeView === 'eisenhower') return 'Matriz';
+    if (activeView === 'habits') return 'Hábitos';
+    if (activeView === 'pomodoro') return 'Foco';
+    if (activeView === 'stats') return 'Estatísticas';
+    if (activeView.startsWith('project-')) {
+      const projId = activeView.replace('project-', '');
+      const proj = state.projects.find(p => p.id === projId);
+      return proj ? proj.name : 'Lista';
+    }
+    return 'OpenTick';
+  };
+
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0c0c0e] text-neutral-100 font-sans">
-      {/* Navigation Sidebar */}
-      <Sidebar
-        store={store}
-        onOpenSyncModal={() => setIsSyncModalOpen(true)}
-        onOpenExportModal={() => setIsSyncModalOpen(true)}
-      />
+    <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-[#000000] text-neutral-100 font-sans select-none">
+      {/* MOBILE TOP BAR (Exact TickTick Android Bar with Hamburger, Title, and Action icons) */}
+      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-[#000000] border-b border-[#141416] z-30 shrink-0">
+        <div className="flex items-center gap-3.5">
+          <button
+            onClick={() => setIsMobileDrawerOpen(true)}
+            className="p-1 -ml-1 text-white hover:text-neutral-300 active:scale-95 transition-transform"
+            title="Abrir Menu de Listas"
+          >
+            <Menu className="w-6 h-6 stroke-[2]" />
+          </button>
+          <h1 className="text-lg font-bold text-white tracking-tight truncate max-w-[210px]">
+            {getHeaderTitle()}
+          </h1>
+        </div>
 
-      {/* Main View Area */}
-      <main className="flex-1 flex overflow-hidden bg-[#121215]">
-        {isTaskView && (
-          <TaskView
-            store={store}
-            onStartPomodoroForTask={handleStartPomodoroForTask}
-          />
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
+            title="Pesquisar"
+          >
+            <Search className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
+            title="Configurações"
+          >
+            <MoreVertical className="w-5 h-5" />
+          </button>
+        </div>
+      </header>
 
-        {activeView === 'calendar' && (
-          <CalendarView store={store} />
-        )}
+      {/* MOBILE DRAWER BACKDROP (Fundo escuro suave para fechar o menu) */}
+      {isMobileDrawerOpen && (
+        <div 
+          onClick={() => setIsMobileDrawerOpen(false)}
+          className="md:hidden fixed inset-0 bg-black/75 z-40 backdrop-blur-xs transition-opacity duration-200"
+        />
+      )}
 
-        {activeView === 'eisenhower' && (
-          <EisenhowerMatrix store={store} />
-        )}
+      {/* SIDEBAR DRAWER (Desliza suavemente no celular, fica fixo no desktop) */}
+      <div className={`
+        fixed inset-y-0 left-0 z-50 transform md:relative md:translate-x-0 transition-transform duration-250 ease-in-out
+        ${isMobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <Sidebar
+          store={store}
+          onCloseMobileDrawer={() => setIsMobileDrawerOpen(false)}
+          onOpenSyncModal={() => {
+            setIsMobileDrawerOpen(false);
+            setIsSyncModalOpen(true);
+          }}
+          onOpenSettingsModal={() => {
+            setIsMobileDrawerOpen(false);
+            setIsSettingsOpen(true);
+          }}
+          onOpenSearchModal={() => {
+            setIsMobileDrawerOpen(false);
+            setIsSearchOpen(true);
+          }}
+        />
+      </div>
 
-        {activeView === 'habits' && (
-          <HabitTracker store={store} />
-        )}
+      {/* MAIN VIEW CONTENT AREA */}
+      <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#000000] relative">
+        <div className="flex-1 overflow-hidden flex">
+          {isTaskView && (
+            <TaskView
+              store={store}
+              onStartPomodoroForTask={handleStartPomodoroForTask}
+              onOpenMobileMenu={() => setIsMobileDrawerOpen(true)}
+            />
+          )}
 
-        {activeView === 'pomodoro' && (
-          <PomodoroTimer
-            store={store}
-            activeTask={activeTaskForPomodoro}
-          />
-        )}
+          {activeView === 'calendar' && (
+            <CalendarView store={store} />
+          )}
 
-        {activeView === 'stats' && (
-          <ProductivityStats store={store} />
-        )}
+          {activeView === 'eisenhower' && (
+            <EisenhowerMatrix store={store} />
+          )}
+
+          {activeView === 'habits' && (
+            <HabitTracker store={store} />
+          )}
+
+          {activeView === 'pomodoro' && (
+            <PomodoroTimer
+              store={store}
+              activeTask={activeTaskForPomodoro}
+            />
+          )}
+
+          {activeView === 'stats' && (
+            <ProductivityStats store={store} />
+          )}
+        </div>
+
+        {/* MOBILE FLOATING ACTION BUTTON (FAB: Botão Azul Circular com +) matching photo_2026-10-28_00-42-45.jpg */}
+        <button
+          onClick={() => setIsQuickAddOpen(true)}
+          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-[#4c82f7] hover:bg-[#3b72e7] active:scale-95 text-white rounded-full shadow-2xl flex items-center justify-center z-30 transition-transform"
+          title="Nova Tarefa (Rápida)"
+        >
+          <Plus className="w-7 h-7 stroke-[2.5]" />
+        </button>
+
+        {/* MOBILE BOTTOM NAVIGATION BAR (Exact TickTick Android Bottom Bar) */}
+        <nav className="md:hidden flex items-center justify-around bg-[#000000] border-t border-[#18181c] py-2 px-1 z-30 shrink-0">
+          {/* Tab 1: Checkbox / Tarefas */}
+          <button
+            onClick={() => {
+              setActiveView('tasks-today');
+              setSelectedTaskId(null);
+            }}
+            className="flex items-center justify-center p-2 rounded-xl"
+            title="Tarefas"
+          >
+            {isTaskView ? (
+              <div className="w-7 h-7 rounded-lg bg-[#4c82f7] flex items-center justify-center shadow-md">
+                <CheckSquare className="w-5 h-5 text-white stroke-[2.5]" />
+              </div>
+            ) : (
+              <div className="w-7 h-7 rounded-lg border border-neutral-600 flex items-center justify-center text-neutral-500">
+                <CheckSquare className="w-4 h-4" />
+              </div>
+            )}
+          </button>
+
+          {/* Tab 2: Calendário with Current Day Number (e.g. 28) */}
+          <button
+            onClick={() => {
+              setActiveView('calendar');
+              setSelectedTaskId(null);
+            }}
+            className="flex items-center justify-center p-2 rounded-xl"
+            title="Calendário"
+          >
+            {activeView === 'calendar' ? (
+              <div className="w-7 h-7 rounded-lg bg-[#4c82f7] flex items-center justify-center text-white font-black text-xs shadow-md">
+                {currentDayNumber}
+              </div>
+            ) : (
+              <div className="w-7 h-7 rounded-lg border border-neutral-600 flex items-center justify-center text-neutral-400 font-bold text-xs">
+                {currentDayNumber}
+              </div>
+            )}
+          </button>
+
+          {/* Tab 3: Matriz / Hábitos */}
+          <button
+            onClick={() => {
+              if (activeView === 'eisenhower') {
+                setActiveView('habits');
+              } else {
+                setActiveView('eisenhower');
+              }
+              setSelectedTaskId(null);
+            }}
+            className="flex items-center justify-center p-2 rounded-xl"
+            title="Matriz & Hábitos"
+          >
+            {activeView === 'eisenhower' || activeView === 'habits' ? (
+              <div className="w-7 h-7 rounded-lg bg-[#4c82f7] flex items-center justify-center shadow-md">
+                <Grid className="w-4 h-4 text-white stroke-[2.5]" />
+              </div>
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-[#1c1c1e] flex items-center justify-center text-neutral-400 font-bold text-xs">
+                L
+              </div>
+            )}
+          </button>
+
+          {/* Tab 4: Pesquisar */}
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="flex items-center justify-center p-2 rounded-xl text-neutral-400 hover:text-white"
+            title="Pesquisar"
+          >
+            <Search className="w-6 h-6 stroke-[1.8]" />
+          </button>
+
+          {/* Tab 5: Mais (•••) */}
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="flex items-center justify-center p-2 rounded-xl text-neutral-400 hover:text-white"
+            title="Mais Opções & Configurações"
+          >
+            <MoreHorizontal className="w-6 h-6 stroke-[1.8]" />
+          </button>
+        </nav>
       </main>
 
-      {/* Global Quick Add Modal (Atalho Q) */}
+      {/* Global Quick Add Modal */}
       <GlobalQuickAddModal
         store={store}
         isOpen={isQuickAddOpen}
@@ -127,6 +325,21 @@ export default function App() {
         store={store}
         isOpen={isSyncModalOpen}
         onClose={() => setIsSyncModalOpen(false)}
+      />
+
+      {/* Settings Modal (Matching TickTick Android settings screens) */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        store={store}
+        onOpenSyncModal={() => setIsSyncModalOpen(true)}
+      />
+
+      {/* Search Modal */}
+      <SearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        store={store}
       />
     </div>
   );

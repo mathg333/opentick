@@ -5,92 +5,86 @@ const inTwoDays = new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0
 
 export const INITIAL_PROJECTS = [
   { id: 'inbox', name: 'Caixa de Entrada', color: '#3b82f6', isDefault: true, icon: 'Inbox' },
-  { id: 'work', name: 'Trabalho / Projetos', color: '#8b5cf6', icon: 'Briefcase' },
-  { id: 'personal', name: 'Pessoal & Casa', color: '#10b981', icon: 'Home' },
-  { id: 'study', name: 'Estudos & Tech', color: '#f59e0b', icon: 'BookOpen' }
+  { id: 'proj-tech', name: 'Trilha Tecnologia — Aprender...', color: '#ef4444', icon: 'BookOpen' },
+  { id: 'proj-sprint', name: 'Sprint de dias — Limpeza e Neg...', color: '#f59e0b', icon: 'Rocket' },
+  { id: 'proj-alta', name: 'Alta Prioridade', color: '#ef4444', icon: 'Flame' },
+  { id: 'proj-media', name: 'Média Prioridade', color: '#f59e0b', icon: 'Zap' },
+  { id: 'proj-leitura', name: 'Leitura', color: '#10b981', icon: 'BookOpen' },
+  { id: 'proj-nao-fazer', name: 'O QUE NÃO FAZER', color: '#6b7280', icon: 'Slash' }
 ];
 
 export const INITIAL_TASKS = [
   {
     id: 't-1',
-    title: 'Lançar versão gratuita ilimitada do TickTick (OpenTick)',
-    description: 'Testar todos os recursos premium: Calendário, Matriz de Eisenhower, Hábitos e Pomodoro.',
-    projectId: 'work',
-    priority: 3, // 0: None, 1: Low, 2: Medium, 3: High
-    urgent: true,
-    important: true,
-    dueDate: today,
-    startTime: '09:00',
-    endTime: '11:00',
+    title: 'organize as que ja estao criadas',
+    description: 'Revisar tarefas da Caixa de Entrada e categorizar nas listas correspondentes.',
+    projectId: 'inbox',
+    priority: 0,
+    urgent: false,
+    important: false,
+    dueDate: '',
     completed: false,
-    tags: ['dev', 'produtividade'],
-    subtasks: [
-      { id: 'st-1', title: 'Verificar conexão com a API do TickTick', completed: true },
-      { id: 'st-2', title: 'Implementar visualizador de Calendário e Time-Blocking', completed: true },
-      { id: 'st-3', title: 'Configurar Matriz de Eisenhower com 4 quadrantes', completed: true },
-      { id: 'st-4', title: 'Adicionar Habit Tracker com streaks infinitos', completed: false }
-    ],
+    tags: [],
+    subtasks: [],
     createdAt: new Date().toISOString()
   },
   {
     id: 't-2',
-    title: 'Planejar arquitetura de sincronização Supabase / SQLite',
-    description: 'Definir sincronização offline-first para acessar as tarefas do celular e do desktop.',
-    projectId: 'study',
-    priority: 2,
+    title: 'semana 3',
+    description: 'Acompanhamento do cronograma e entregas da semana 3.',
+    projectId: 'inbox',
+    priority: 0,
     urgent: false,
-    important: true,
-    dueDate: tomorrow,
-    startTime: '14:00',
-    endTime: '15:30',
+    important: false,
+    dueDate: '',
     completed: false,
-    tags: ['arquitetura', 'sync'],
+    tags: [],
     subtasks: [],
     createdAt: new Date().toISOString()
   },
   {
     id: 't-3',
-    title: 'Responder mensagens pendentes no Telegram e emails',
-    description: 'Delegar ou resolver pendências rápidas do dia.',
-    projectId: 'work',
-    priority: 1,
+    title: 'TRABALHO COP',
+    description: 'Sessão diária de trabalho operacional com foco total.',
+    projectId: 'proj-alta',
+    priority: 3,
     urgent: true,
-    important: false,
+    important: true,
     dueDate: today,
-    startTime: '16:00',
-    endTime: '16:45',
+    startTime: '16:20',
+    endTime: '18:00',
     completed: false,
-    tags: ['comms'],
+    tags: ['foco', 'trabalho'],
     subtasks: [],
     createdAt: new Date().toISOString()
   },
   {
     id: 't-4',
-    title: 'Organizar pastas e backups antigos',
-    description: 'Limpeza periódica de arquivos e dados temporários.',
-    projectId: 'personal',
-    priority: 0,
-    urgent: false,
+    title: 'ORGANIZAR LISTA DE POSSÍVEIS CLIENTES GOOGLE MAPS - SAÚDE',
+    description: '- [] Live Estética Recife Centro de saúde e bem-estar',
+    projectId: 'inbox',
+    priority: 2,
+    urgent: true,
     important: false,
-    dueDate: inTwoDays,
-    completed: false,
-    tags: ['organizacao'],
+    dueDate: yesterday,
+    startTime: '23:30',
+    completed: true,
+    tags: ['prospeccao'],
     subtasks: [],
     createdAt: new Date().toISOString()
   },
   {
     id: 't-5',
-    title: 'Treino de Força / Mobilidade',
-    description: '30 minutos de exercício físico.',
-    projectId: 'personal',
+    title: 'CONCLUIR ORGANIZAÇÃO AUDIO BOOTCAMP/ ESTUDAR',
+    description: 'Finalizar anotações dos áudios e revisar os tópicos principais.',
+    projectId: 'proj-tech',
     priority: 2,
-    urgent: true,
+    urgent: false,
     important: true,
-    dueDate: today,
-    startTime: '18:00',
-    endTime: '19:00',
+    dueDate: yesterday,
+    startTime: '16:30',
     completed: true,
-    tags: ['saude'],
+    tags: ['estudos'],
     subtasks: [],
     createdAt: new Date().toISOString()
   }
@@ -99,107 +93,44 @@ export const INITIAL_TASKS = [
 export const INITIAL_HABITS = [
   {
     id: 'h-1',
-    name: 'Treinar / Exercício Diário',
-    icon: 'Activity',
-    color: '#ef4444',
+    name: 'Estudo Diário (1h)',
+    color: '#3b82f6',
     frequency: 'daily',
-    targetDays: [0, 1, 2, 3, 4, 5, 6],
-    currentStreak: 12,
-    bestStreak: 28,
     checkIns: {
       [today]: true,
-      [yesterday]: true,
-      [new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0]]: true,
-      [new Date(Date.now() - 86400000 * 3).toISOString().split('T')[0]]: true,
-      [new Date(Date.now() - 86400000 * 4).toISOString().split('T')[0]]: true
-    }
+      [yesterday]: true
+    },
+    currentStreak: 5,
+    bestStreak: 14
   },
   {
     id: 'h-2',
-    name: 'Leitura de Livros Técnicos (20 min)',
-    icon: 'BookOpen',
-    color: '#3b82f6',
+    name: 'Treino de Força',
+    color: '#10b981',
     frequency: 'daily',
-    targetDays: [0, 1, 2, 3, 4, 5, 6],
-    currentStreak: 5,
-    bestStreak: 19,
     checkIns: {
-      [today]: false,
-      [yesterday]: true,
-      [new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0]]: true
-    }
+      [yesterday]: true
+    },
+    currentStreak: 3,
+    bestStreak: 12
   },
   {
     id: 'h-3',
-    name: 'Beber 2.5L de Água',
-    icon: 'Droplet',
-    color: '#06b6d4',
+    name: 'Leitura 20 Páginas',
+    color: '#f59e0b',
     frequency: 'daily',
-    targetDays: [0, 1, 2, 3, 4, 5, 6],
-    currentStreak: 8,
-    bestStreak: 15,
-    checkIns: {
-      [today]: true,
-      [yesterday]: true
-    }
-  },
-  {
-    id: 'h-4',
-    name: 'Sessão de Foco / Pomodoro (Deep Work)',
-    icon: 'Flame',
-    color: '#f97316',
-    frequency: 'weekdays',
-    targetDays: [1, 2, 3, 4, 5],
-    currentStreak: 7,
-    bestStreak: 21,
-    checkIns: {
-      [today]: true,
-      [yesterday]: true
-    }
-  },
-  {
-    id: 'h-5',
-    name: 'Planejamento Diário Matinal',
-    icon: 'Compass',
-    color: '#8b5cf6',
-    frequency: 'daily',
-    targetDays: [0, 1, 2, 3, 4, 5, 6],
-    currentStreak: 14,
-    bestStreak: 30,
-    checkIns: {
-      [today]: true,
-      [yesterday]: true
-    }
-  },
-  {
-    id: 'h-6',
-    name: 'Revisão Noturna e Desconexão Digital',
-    icon: 'Moon',
-    color: '#6366f1',
-    frequency: 'daily',
-    targetDays: [0, 1, 2, 3, 4, 5, 6],
-    currentStreak: 3,
-    bestStreak: 10,
-    checkIns: {
-      [today]: false,
-      [yesterday]: true
-    }
+    checkIns: {},
+    currentStreak: 2,
+    bestStreak: 8
   }
 ];
 
 export const INITIAL_POMODORO_SESSIONS = [
   {
     id: 'p-1',
-    taskId: 't-1',
-    taskTitle: 'Lançar versão gratuita ilimitada do TickTick (OpenTick)',
+    taskId: 't-3',
+    taskTitle: 'TRABALHO COP',
     durationMinutes: 25,
-    completedAt: new Date(Date.now() - 3600000 * 2).toISOString()
-  },
-  {
-    id: 'p-2',
-    taskId: 't-1',
-    taskTitle: 'Lançar versão gratuita ilimitada do TickTick (OpenTick)',
-    durationMinutes: 25,
-    completedAt: new Date(Date.now() - 3600000).toISOString()
+    completedAt: new Date().toISOString()
   }
 ];

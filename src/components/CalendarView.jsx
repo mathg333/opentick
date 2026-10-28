@@ -3,50 +3,74 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Clock, 
-  Calendar as CalendarIcon, 
-  Plus, 
   Check, 
-  Flag 
+  Flag,
+  MoreVertical,
+  Repeat,
+  Bell,
+  Calendar as CalendarIcon,
+  Columns,
+  Grid3X3,
+  List,
+  CalendarDays
 } from 'lucide-react';
 
 export default function CalendarView({ store }) {
   const { state, addTask, toggleTaskCompleted, setSelectedTaskId } = store;
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState('week'); // 'month', 'week', 'day'
+  const [selectedDayDate, setSelectedDayDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState('list'); // 'list' (Agenda/Lista as in screenshot), 'month', 'week', 'day'
+  const [isViewMenuOpen, setIsViewMenuOpen] = useState(false);
   const [quickTitle, setQuickTitle] = useState('');
-  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedSlotHour, setSelectedSlotHour] = useState(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
   const prevPeriod = () => {
     const d = new Date(currentDate);
-    if (viewMode === 'month') d.setMonth(d.getMonth() - 1);
-    else if (viewMode === 'week') d.setDate(d.getDate() - 7);
-    else d.setDate(d.getDate() - 1);
+    if (viewMode === 'month') {
+      d.setMonth(d.getMonth() - 1);
+    } else if (viewMode === 'week') {
+      d.setDate(d.getDate() - 7);
+    } else {
+      d.setDate(d.getDate() - 7);
+      setSelectedDayDate(d);
+    }
     setCurrentDate(d);
   };
 
   const nextPeriod = () => {
     const d = new Date(currentDate);
-    if (viewMode === 'month') d.setMonth(d.getMonth() + 1);
-    else if (viewMode === 'week') d.setDate(d.getDate() + 7);
-    else d.setDate(d.getDate() + 1);
+    if (viewMode === 'month') {
+      d.setMonth(d.getMonth() + 1);
+    } else if (viewMode === 'week') {
+      d.setDate(d.getDate() + 7);
+    } else {
+      d.setDate(d.getDate() + 7);
+      setSelectedDayDate(d);
+    }
     setCurrentDate(d);
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
   const formatDate = (d) => {
+    if (!d) return '';
     const yr = d.getFullYear();
     const mo = String(d.getMonth() + 1).padStart(2, '0');
     const dy = String(d.getDate()).padStart(2, '0');
     return `${yr}-${mo}-${dy}`;
   };
 
+  const selectedDayStr = formatDate(selectedDayDate);
+
+  // Return the 7 days of the currently focused week starting on Sunday
   const getWeekDays = () => {
     const curr = new Date(currentDate);
-    const first = curr.getDate() - curr.getDay();
+    const dayOfWeek = curr.getDay(); // 0 is Sunday
+    const first = curr.getDate() - dayOfWeek;
     const days = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(curr);
@@ -56,341 +80,297 @@ export default function CalendarView({ store }) {
     return days;
   };
 
-  const getMonthDays = () => {
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const days = [];
-    
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
-    }
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(new Date(year, month, i));
-    }
-    return days;
-  };
+  const weekDays = getWeekDays();
 
-  const hours = Array.from({ length: 15 }, (_, i) => i + 8);
+  // Tasks for selected day
+  const selectedDayTasks = state.tasks.filter(t => t.dueDate === selectedDayStr);
 
-  const handleAddAtSlot = (dateStr, hour) => {
+  const monthNamesLower = [
+    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+  ];
+  const currentMonthName = monthNamesLower[currentDate.getMonth()];
+
+  const handleAddQuickAtSlot = (hour) => {
     if (!quickTitle.trim()) return;
     const startTime = `${String(hour).padStart(2, '0')}:00`;
     const endTime = `${String(hour + 1).padStart(2, '0')}:00`;
     addTask({
       title: quickTitle.trim(),
-      dueDate: dateStr,
+      dueDate: selectedDayStr,
       startTime,
       endTime,
-      priority: 1
+      priority: 2
     });
     setQuickTitle('');
-    setSelectedSlot(null);
-  };
-
-  const priorityColors = {
-    0: 'border-[#27272a] bg-[#1a1a1e] text-neutral-300',
-    1: 'border-blue-500/40 bg-[#131b2e] text-blue-200',
-    2: 'border-amber-500/40 bg-[#251e13] text-amber-200',
-    3: 'border-rose-500/40 bg-[#2b1418] text-rose-200'
+    setSelectedSlotHour(null);
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#121215]">
-      {/* Calendar Header */}
-      <div className="px-8 pt-6 pb-4 border-b border-[#222226] flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-neutral-300" />
-            <h1 className="text-xl font-bold text-neutral-100">
-              Calendário & Time-Blocking
-            </h1>
-          </div>
-          <span className="text-[10px] bg-neutral-800 text-neutral-300 font-bold px-2 py-0.5 rounded border border-neutral-700">
-            PRO GRATUITO
-          </span>
-        </div>
-
-        {/* View Mode Switcher & Date Controls */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center bg-[#09090b] border border-[#27272a] rounded-lg p-1">
-            <button
-              onClick={() => setViewMode('month')}
-              className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                viewMode === 'month' ? 'bg-[#27272a] text-white' : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              Mês
-            </button>
-            <button
-              onClick={() => setViewMode('week')}
-              className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                viewMode === 'week' ? 'bg-[#27272a] text-white' : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              Semana (Time-Block)
-            </button>
-            <button
-              onClick={() => setViewMode('day')}
-              className={`px-3 py-1 rounded text-xs font-semibold transition-colors ${
-                viewMode === 'day' ? 'bg-[#27272a] text-white' : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              Dia
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#000000] relative">
+      {/* TickTick Top Bar matching photo_2026-10-28_00-42-49.jpg */}
+      <div className="px-4 py-3 flex items-center justify-between bg-[#000000] shrink-0 border-b border-[#141416]">
+        {/* Month Name: e.g. "outubro" in lowercase bold white */}
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-bold text-white tracking-tight capitalize">
+            {currentMonthName}
+          </h1>
+          <div className="flex items-center gap-1">
+            <button 
               onClick={prevPeriod}
-              className="p-1.5 rounded-lg bg-[#09090b] border border-[#27272a] text-neutral-400 hover:text-white hover:bg-[#151518]"
+              className="p-1 text-neutral-400 hover:text-white"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-xs font-semibold text-neutral-200 min-w-36 text-center capitalize">
-              {currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-            </span>
-            <button
+            <button 
               onClick={nextPeriod}
-              className="p-1.5 rounded-lg bg-[#09090b] border border-[#27272a] text-neutral-400 hover:text-white hover:bg-[#151518]"
+              className="p-1 text-neutral-400 hover:text-white"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => setCurrentDate(new Date())}
-              className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[#1f1f23] text-neutral-300 hover:text-white border border-[#27272a]"
-            >
-              Hoje
-            </button>
           </div>
+        </div>
+
+        {/* Action icons on top right: View switcher popup, options, more dots */}
+        <div className="flex items-center gap-1 relative">
+          <button
+            onClick={() => setIsViewMenuOpen(!isViewMenuOpen)}
+            className="p-2 text-neutral-300 hover:text-white rounded-lg active:bg-neutral-800 transition-colors"
+            title="Alternar Modo de Visualização"
+          >
+            <Columns className="w-5 h-5" />
+          </button>
+
+          <button
+            onClick={() => {
+              const now = new Date();
+              setCurrentDate(now);
+              setSelectedDayDate(now);
+            }}
+            className="text-xs px-2.5 py-1 text-neutral-300 bg-[#1c1c1e] hover:bg-[#2c2c2e] rounded-lg font-semibold border border-[#2c2c2e]"
+          >
+            Hoje
+          </button>
+
+          <button
+            className="p-2 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
+          >
+            <MoreVertical className="w-5 h-5" />
+          </button>
+
+          {/* View Switcher Dropdown Modal matching photo_2026-10-28_00-42-34.jpg */}
+          {isViewMenuOpen && (
+            <div 
+              onClick={() => setIsViewMenuOpen(false)}
+              className="fixed inset-0 z-40 bg-transparent"
+            >
+              <div 
+                onClick={(e) => e.stopPropagation()}
+                className="absolute top-14 right-4 z-50 w-44 bg-[#1c1c1e] border border-[#2c2c2e] rounded-2xl shadow-2xl py-2 overflow-hidden animate-in fade-in"
+              >
+                {[
+                  { id: 'list', label: 'Lista', icon: List },
+                  { id: 'month', label: 'Mês', icon: CalendarDays },
+                  { id: 'week', label: 'Semana', icon: Columns },
+                  { id: 'day', label: 'Dia', icon: CalendarIcon }
+                ].map(item => {
+                  const Icon = item.icon;
+                  const isChecked = viewMode === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setViewMode(item.id);
+                        setIsViewMenuOpen(false);
+                      }}
+                      className="w-full px-4 py-2.5 text-left text-xs font-medium flex items-center justify-between text-neutral-200 hover:bg-[#28282e] transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className={`w-4 h-4 ${isChecked ? 'text-[#4c82f7]' : 'text-neutral-400'}`} />
+                        <span className={isChecked ? 'text-[#4c82f7] font-bold' : ''}>{item.label}</span>
+                      </div>
+                      {isChecked && <Check className="w-4 h-4 text-[#4c82f7] stroke-[2.5]" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Main Calendar Body */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {/* MONTH VIEW */}
-        {viewMode === 'month' && (
-          <div className="h-full flex flex-col">
-            <div className="grid grid-cols-7 gap-px mb-2 text-center text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
-              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
-                <div key={d} className="py-1">{d}</div>
-              ))}
-            </div>
-            <div className="grid grid-cols-7 gap-2 flex-1 auto-rows-fr">
-              {getMonthDays().map((day, idx) => {
-                if (!day) return <div key={idx} className="bg-[#09090b]/30 rounded-xl p-2 border border-dashed border-[#1e1e24]" />;
-                const dStr = formatDate(day);
-                const isToday = dStr === todayStr;
-                const tasksForDay = state.tasks.filter(t => t.dueDate === dStr);
+      {/* WEEKLY STRIP matching photo_2026-10-28_00-42-49.jpg */}
+      <div className="bg-[#000000] border-b border-[#18181c] px-3 py-2.5 shrink-0">
+        <div className="grid grid-cols-7 gap-1 text-center">
+          {/* Day Names Row (dom. seg. ter. qua. qui. sex. sáb.) */}
+          {['dom.', 'seg.', 'ter.', 'qua.', 'qui.', 'sex.', 'sáb.'].map(d => (
+            <span key={d} className="text-[11px] text-neutral-400 font-medium">
+              {d}
+            </span>
+          ))}
 
-                return (
-                  <div
-                    key={dStr}
-                    className={`min-h-28 rounded-xl p-2 flex flex-col justify-between border transition-all ${
-                      isToday
-                        ? 'bg-[#18181c] border-neutral-500 shadow-sm'
-                        : 'bg-[#0e0e11] border-[#222226] hover:border-[#2f2f36]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${
-                        isToday ? 'bg-white text-black' : 'text-neutral-400'
-                      }`}>
-                        {day.getDate()}
-                      </span>
-                      {tasksForDay.length > 0 && (
-                        <span className="text-[10px] text-neutral-500 font-mono">
-                          {tasksForDay.length}
-                        </span>
-                      )}
-                    </div>
+          {/* Day Numbers & Dots Row */}
+          {weekDays.map(day => {
+            const dStr = formatDate(day);
+            const isSelected = dStr === selectedDayStr;
+            const hasTasks = state.tasks.some(t => t.dueDate === dStr && !t.completed);
 
-                    <div className="space-y-1 overflow-y-auto max-h-24">
-                      {tasksForDay.slice(0, 3).map(task => (
-                        <div
-                          key={task.id}
-                          onClick={() => setSelectedTaskId(task.id)}
-                          className={`text-[11px] px-2 py-0.5 rounded truncate border cursor-pointer ${
-                            task.completed
-                              ? 'line-through text-neutral-600 border-[#222226] bg-[#0c0c0e]'
-                              : priorityColors[task.priority] || 'border-[#27272a] bg-[#1a1a1e] text-neutral-200'
-                          }`}
-                        >
-                          {task.startTime && `${task.startTime} `}{task.title}
-                        </div>
-                      ))}
-                      {tasksForDay.length > 3 && (
-                        <span className="text-[10px] text-neutral-500 pl-1">
-                          +{tasksForDay.length - 3} mais...
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+            return (
+              <button
+                key={dStr}
+                onClick={() => {
+                  setSelectedDayDate(day);
+                  setCurrentDate(day);
+                }}
+                className="flex flex-col items-center justify-center py-1 rounded-xl transition-all"
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                  isSelected
+                    ? 'bg-[#4c82f7] text-white shadow-lg'
+                    : 'text-neutral-200 hover:bg-[#1c1c1e]'
+                }`}>
+                  {day.getDate()}
+                </div>
+                {/* Indicator dot underneath */}
+                <div className="h-1.5 flex items-center justify-center mt-0.5">
+                  {hasTasks && (
+                    <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-[#4c82f7]'}`} />
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-        {/* WEEK VIEW (TIME-BLOCKING) */}
-        {viewMode === 'week' && (
-          <div className="flex flex-col min-w-[750px]">
-            {/* Day Header Row */}
-            <div className="grid grid-cols-8 gap-2 border-b border-[#222226] pb-3 mb-3">
-              <div className="text-center text-xs text-neutral-500 font-semibold pt-1">Hora</div>
-              {getWeekDays().map(day => {
-                const dStr = formatDate(day);
-                const isToday = dStr === todayStr;
-                return (
-                  <div key={dStr} className="text-center">
-                    <span className="text-[10px] font-bold text-neutral-500 uppercase">
-                      {day.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                    </span>
-                    <div className={`mt-0.5 mx-auto text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${
-                      isToday ? 'bg-white text-black' : 'text-neutral-200'
-                    }`}>
-                      {day.getDate()}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+      {/* TIMELINE / EVENT LISTING AREA */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-32">
+        {/* Day Group Heading matching screenshot: "Hoje" or date title */}
+        <div className="flex items-center justify-between pb-1">
+          <span className="text-base font-bold text-white capitalize">
+            {selectedDayStr === todayStr ? 'Hoje' : selectedDayDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </span>
+          <span className="text-xs text-neutral-500 font-mono">
+            {selectedDayTasks.length} {selectedDayTasks.length === 1 ? 'evento' : 'eventos'}
+          </span>
+        </div>
 
-            {/* Hourly Grid */}
-            <div className="space-y-1">
-              {hours.map(hour => {
-                const hourFormatted = `${String(hour).padStart(2, '0')}:00`;
-                return (
-                  <div key={hour} className="grid grid-cols-8 gap-2 min-h-12 border-t border-[#1e1e24] py-1">
-                    <div className="text-[11px] text-neutral-500 font-mono text-center pt-1">
-                      {hourFormatted}
-                    </div>
+        {/* Selected Day Event Cards matching photo_2026-10-28_00-42-49.jpg */}
+        <div className="space-y-2.5">
+          {selectedDayTasks.map(task => {
+            // Priority border color (e.g. pink/red for high, blue for medium)
+            const leftBarColor = task.priority === 3 ? 'bg-rose-500' : task.priority === 2 ? 'bg-amber-500' : task.priority === 1 ? 'bg-[#4c82f7]' : 'bg-neutral-600';
 
-                    {getWeekDays().map(day => {
-                      const dStr = formatDate(day);
-                      const tasksInSlot = state.tasks.filter(t => {
-                        if (t.dueDate !== dStr) return false;
-                        if (!t.startTime) return false;
-                        const taskHour = parseInt(t.startTime.split(':')[0], 10);
-                        return taskHour === hour;
-                      });
+            return (
+              <div
+                key={task.id}
+                onClick={() => setSelectedTaskId(task.id)}
+                className="bg-[#1c1c1e] rounded-xl overflow-hidden flex items-stretch border border-[#28282b] shadow-lg cursor-pointer hover:border-neutral-500 transition-all active:scale-[0.99]"
+              >
+                {/* Left vertical colored accent line */}
+                <div className={`w-1.5 shrink-0 ${leftBarColor}`} />
 
-                      const isSelected = selectedSlot?.dateStr === dStr && selectedSlot?.hour === hour;
-
-                      return (
-                        <div
-                          key={dStr}
-                          onClick={() => setSelectedSlot({ dateStr: dStr, hour })}
-                          className={`rounded-lg p-1 min-h-10 border transition-all cursor-pointer relative group ${
-                            isSelected
-                              ? 'bg-[#1b1b20] border-neutral-500'
-                              : 'bg-[#0a0a0c]/60 border-transparent hover:border-[#27272a] hover:bg-[#121215]'
-                          }`}
-                        >
-                          {tasksInSlot.map(task => (
-                            <div
-                              key={task.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedTaskId(task.id);
-                              }}
-                              className={`p-1.5 rounded text-xs font-medium border mb-1 shadow-sm ${
-                                priorityColors[task.priority]
-                              }`}
-                            >
-                              <div className="flex items-center justify-between text-[9px] opacity-75">
-                                <span>{task.startTime} - {task.endTime || 'fim'}</span>
-                              </div>
-                              <div className="font-semibold truncate text-[11px]">{task.title}</div>
-                            </div>
-                          ))}
-
-                          {isSelected && (
-                            <div 
-                              onClick={e => e.stopPropagation()} 
-                              className="absolute top-0 left-0 right-0 z-20 bg-[#09090b] border border-neutral-500 rounded-lg p-2 shadow-2xl"
-                            >
-                              <input
-                                type="text"
-                                placeholder="Bloco de tempo..."
-                                value={quickTitle}
-                                onChange={(e) => setQuickTitle(e.target.value)}
-                                autoFocus
-                                className="w-full bg-[#151518] border border-[#27272a] text-xs text-white rounded p-1.5 mb-2 focus:outline-none"
-                              />
-                              <div className="flex justify-between items-center">
-                                <span className="text-[10px] text-neutral-400">{hourFormatted}</span>
-                                <div className="flex gap-1">
-                                  <button
-                                    onClick={() => setSelectedSlot(null)}
-                                    className="text-[10px] px-2 py-0.5 text-neutral-400 hover:text-white"
-                                  >
-                                    Cancelar
-                                  </button>
-                                  <button
-                                    onClick={() => handleAddAtSlot(dStr, hour)}
-                                    className="text-[10px] px-2.5 py-0.5 bg-white text-black rounded font-bold"
-                                  >
-                                    Salvar
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* DAY VIEW */}
-        {viewMode === 'day' && (
-          <div className="max-w-2xl mx-auto space-y-3">
-            <h2 className="text-sm font-bold text-neutral-200">
-              Agenda do Dia: {currentDate.toLocaleDateString('pt-BR', { dateStyle: 'full' })}
-            </h2>
-            <div className="space-y-2">
-              {hours.map(hour => {
-                const hourFormatted = `${String(hour).padStart(2, '0')}:00`;
-                const dStr = formatDate(currentDate);
-                const tasksInSlot = state.tasks.filter(t => {
-                  if (t.dueDate !== dStr) return false;
-                  if (!t.startTime) return false;
-                  return parseInt(t.startTime.split(':')[0], 10) === hour;
-                });
-
-                return (
-                  <div key={hour} className="flex gap-4 p-3 bg-[#0e0e11] rounded-xl border border-[#222226]">
-                    <span className="text-xs font-mono text-neutral-500 w-16 pt-1 font-bold">
-                      {hourFormatted}
-                    </span>
-                    <div className="flex-1 space-y-2">
-                      {tasksInSlot.map(t => (
-                        <div
-                          key={t.id}
-                          onClick={() => setSelectedTaskId(t.id)}
-                          className={`p-2.5 rounded-lg border cursor-pointer ${priorityColors[t.priority]}`}
-                        >
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="font-bold">{t.title}</span>
-                            <span>{t.startTime} às {t.endTime}</span>
-                          </div>
-                          {t.description && <p className="text-xs opacity-75 mt-1">{t.description}</p>}
-                        </div>
-                      ))}
-                      {tasksInSlot.length === 0 && (
-                        <span className="text-xs text-neutral-600 italic">Livre para foco</span>
+                <div className="flex-1 p-3.5 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-bold text-white tracking-wide truncate">
+                      {task.title}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-[#4c82f7] font-medium">
+                      <span>{selectedDayStr === todayStr ? 'Hoje' : task.dueDate}</span>
+                      {task.startTime && (
+                        <span>• {task.startTime}{task.endTime ? ` - ${task.endTime}` : ''}</span>
                       )}
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="flex items-center gap-2 text-neutral-400 shrink-0">
+                    <Repeat className="w-4 h-4 text-neutral-500" />
+                    <Bell className="w-4 h-4 text-neutral-500" />
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTaskCompleted(task.id);
+                      }}
+                      className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
+                        task.completed ? 'bg-[#4c82f7] border-[#4c82f7] text-white' : 'border-neutral-500'
+                      }`}
+                    >
+                      {task.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {selectedDayTasks.length === 0 && (
+            <div className="py-14 text-center text-neutral-500">
+              <CalendarIcon className="w-10 h-10 mx-auto mb-2 text-neutral-600 stroke-[1.5]" />
+              <p className="text-sm font-semibold text-neutral-300">Nenhum evento neste dia</p>
+              <p className="text-xs text-neutral-500 mt-1">Toque em qualquer horário abaixo ou no botão (+) para agendar.</p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Hourly Time-blocking Slots (Tap to schedule) */}
+        <div className="pt-4 border-t border-[#18181c] space-y-2">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block mb-2">
+            Grade de Horários
+          </span>
+          {[8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20].map(hour => {
+            const hourFormatted = `${String(hour).padStart(2, '0')}:00`;
+            const isEditingThisSlot = selectedSlotHour === hour;
+
+            return (
+              <div 
+                key={hour}
+                className="flex items-center gap-3 py-1.5 border-b border-[#141416]"
+              >
+                <span className="w-14 text-xs font-mono font-semibold text-neutral-400">
+                  {hourFormatted}
+                </span>
+
+                <div className="flex-1">
+                  {isEditingThisSlot ? (
+                    <div className="bg-[#1c1c1e] p-2 rounded-xl border border-[#4c82f7] flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder={`Evento às ${hourFormatted}...`}
+                        value={quickTitle}
+                        onChange={(e) => setQuickTitle(e.target.value)}
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleAddQuickAtSlot(hour);
+                          if (e.key === 'Escape') setSelectedSlotHour(null);
+                        }}
+                        className="flex-1 bg-transparent text-xs text-white placeholder-neutral-500 focus:outline-none"
+                      />
+                      <button
+                        onClick={() => handleAddQuickAtSlot(hour)}
+                        className="px-2.5 py-1 bg-[#4c82f7] text-white rounded-lg text-xs font-bold"
+                      >
+                        Salvar
+                      </button>
+                      <button
+                        onClick={() => setSelectedSlotHour(null)}
+                        className="text-xs text-neutral-400 hover:text-white px-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => setSelectedSlotHour(hour)}
+                      className="py-1 px-2 rounded-lg text-xs text-neutral-600 hover:text-neutral-400 hover:bg-[#141416] cursor-pointer transition-colors"
+                    >
+                      + Reservar horário
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
