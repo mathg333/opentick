@@ -4,17 +4,17 @@ import {
   ChevronRight, 
   Clock, 
   Check, 
-  Flag,
-  MoreVertical,
-  Repeat,
-  Bell,
-  Calendar as CalendarIcon,
-  Columns,
-  Grid3X3,
-  List,
-  CalendarDays,
-  LayoutGrid
+  Flag, 
+  MoreVertical, 
+  Repeat, 
+  Bell, 
+  Calendar as CalendarIcon, 
+  Columns, 
+  List, 
+  CalendarDays, 
+  LayoutGrid 
 } from 'lucide-react';
+import TimePickerModal from './TimePickerModal';
 
 export default function CalendarView({ store }) {
   const { state, addTask, toggleTaskCompleted, setSelectedTaskId } = store;
@@ -24,6 +24,8 @@ export default function CalendarView({ store }) {
   const [isViewMenuOpen, setIsViewMenuOpen] = useState(false);
   const [quickTitle, setQuickTitle] = useState('');
   const [selectedSlotHour, setSelectedSlotHour] = useState(null);
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+  const [timePickerTargetDate, setTimePickerTargetDate] = useState('');
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -100,28 +102,25 @@ export default function CalendarView({ store }) {
     return days;
   };
 
-  // Build full 6-week month calendar grid with previous/next month overflow
+  // Build full 6-week month calendar grid
   const getFullMonthGrid = () => {
-    const firstDayIndex = new Date(year, month, 1).getDay(); // Sunday=0
+    const firstDayIndex = new Date(year, month, 1).getDay();
     const prevMonthDays = new Date(year, month, 0).getDate();
     const currentMonthDays = new Date(year, month + 1, 0).getDate();
     
     const cells = [];
-    // Previous month filler days
     for (let i = firstDayIndex - 1; i >= 0; i--) {
       cells.push({
         date: new Date(year, month - 1, prevMonthDays - i),
         isCurrentMonth: false
       });
     }
-    // Current month days
     for (let i = 1; i <= currentMonthDays; i++) {
       cells.push({
         date: new Date(year, month, i),
         isCurrentMonth: true
       });
     }
-    // Next month filler days (fill up to 35 or 42 cells)
     const totalCells = cells.length > 35 ? 42 : 35;
     const remaining = totalCells - cells.length;
     for (let i = 1; i <= remaining; i++) {
@@ -139,7 +138,16 @@ export default function CalendarView({ store }) {
 
   const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
 
-  const selectedDayTasks = state.tasks.filter(t => t.dueDate === selectedDayStr);
+  // Match tasks that are scheduled for dStr directly OR via recurringDates!
+  const getTasksForDate = (dStr) => {
+    return state.tasks.filter(t => {
+      const isDue = t.dueDate === dStr;
+      const isRecur = t.recurringDates && t.recurringDates.includes(dStr);
+      return isDue || isRecur;
+    });
+  };
+
+  const selectedDayTasks = getTasksForDate(selectedDayStr);
 
   const monthNamesLower = [
     'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
@@ -154,6 +162,7 @@ export default function CalendarView({ store }) {
     addTask({
       title: quickTitle.trim(),
       dueDate: targetDateStr,
+      recurringDates: [targetDateStr],
       startTime,
       endTime,
       priority: 2
@@ -164,9 +173,9 @@ export default function CalendarView({ store }) {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#000000] relative select-none">
-      {/* Top Header matching photo_2026-10-28_00-42-49.jpg & media_1793160069391_067f42d6.jpg */}
+      {/* Top Header */}
       <div className="px-4 py-3 flex items-center justify-between bg-[#000000] shrink-0 border-b border-[#141416]">
-        {/* Month Name & Today Shortcut Tooltip */}
+        {/* Month Name & Today Shortcut */}
         <div className="flex items-center gap-3">
           <div className="relative flex items-center gap-2">
             <h1 className="text-xl font-bold text-white tracking-tight capitalize">
@@ -191,8 +200,8 @@ export default function CalendarView({ store }) {
           </div>
         </div>
 
-        {/* Action icons on top right: View switcher dropdown, Hoje, options */}
-        <div className="flex items-center gap-1 relative">
+        {/* Action icons on top right: Hoje, View switcher, options */}
+        <div className="flex items-center gap-1.5 relative">
           <button
             onClick={() => {
               const now = new Date();
@@ -208,7 +217,7 @@ export default function CalendarView({ store }) {
           {/* View switcher dropdown icon */}
           <button
             onClick={() => setIsViewMenuOpen(!isViewMenuOpen)}
-            className="p-2 text-neutral-300 hover:text-white rounded-lg active:bg-neutral-800 transition-colors"
+            className="p-2 text-neutral-300 hover:text-[#ff6b00] rounded-lg active:bg-neutral-800 transition-colors"
             title="Alternar Modo de Visualização"
           >
             <Columns className="w-5 h-5" />
@@ -220,7 +229,7 @@ export default function CalendarView({ store }) {
             <MoreVertical className="w-5 h-5" />
           </button>
 
-          {/* View Switcher Dropdown Modal matching photo_2026-10-28_00-42-34.jpg */}
+          {/* View Switcher Dropdown Modal */}
           {isViewMenuOpen && (
             <div 
               onClick={() => setIsViewMenuOpen(false)}
@@ -250,10 +259,10 @@ export default function CalendarView({ store }) {
                       className="w-full px-4 py-2.5 text-left text-xs font-medium flex items-center justify-between text-neutral-200 hover:bg-[#28282e] transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <Icon className={`w-4 h-4 ${isChecked ? 'text-[#4c82f7]' : 'text-neutral-400'}`} />
-                        <span className={isChecked ? 'text-[#4c82f7] font-bold' : ''}>{item.label}</span>
+                        <Icon className={`w-4 h-4 ${isChecked ? 'text-[#ff6b00]' : 'text-neutral-400'}`} />
+                        <span className={isChecked ? 'text-[#ff6b00] font-bold' : ''}>{item.label}</span>
                       </div>
-                      {isChecked && <Check className="w-4 h-4 text-[#4c82f7] stroke-[2.5]" />}
+                      {isChecked && <Check className="w-4 h-4 text-[#ff6b00] stroke-[2.5]" />}
                     </button>
                   );
                 })}
@@ -263,7 +272,7 @@ export default function CalendarView({ store }) {
         </div>
       </div>
 
-      {/* VIEW 1: LISTA (Standard TickTick Mobile View with Weekly Strip) */}
+      {/* VIEW 1: LISTA (Orange accents) */}
       {viewMode === 'list' && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Weekly Strip */}
@@ -278,7 +287,7 @@ export default function CalendarView({ store }) {
               {weekDays.map(day => {
                 const dStr = formatDate(day);
                 const isSelected = dStr === selectedDayStr;
-                const hasTasks = state.tasks.some(t => t.dueDate === dStr && !t.completed);
+                const hasTasks = getTasksForDate(dStr).some(t => !t.completed);
 
                 return (
                   <button
@@ -291,14 +300,14 @@ export default function CalendarView({ store }) {
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
                       isSelected
-                        ? 'bg-[#4c82f7] text-white shadow-lg'
+                        ? 'bg-[#ff6b00] text-white shadow-lg'
                         : 'text-neutral-200 hover:bg-[#1c1c1e]'
                     }`}>
                       {day.getDate()}
                     </div>
                     <div className="h-1.5 flex items-center justify-center mt-0.5">
                       {hasTasks && (
-                        <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-[#4c82f7]'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#ff6b00]'}`} />
                       )}
                     </div>
                   </button>
@@ -320,7 +329,7 @@ export default function CalendarView({ store }) {
 
             <div className="space-y-2.5">
               {selectedDayTasks.map(task => {
-                const leftBarColor = task.priority === 3 ? 'bg-rose-500' : task.priority === 2 ? 'bg-amber-500' : task.priority === 1 ? 'bg-[#4c82f7]' : 'bg-neutral-600';
+                const leftBarColor = task.priority === 3 ? 'bg-rose-500' : task.priority === 2 ? 'bg-[#ff6b00]' : task.priority === 1 ? 'bg-blue-500' : 'bg-neutral-600';
                 return (
                   <div
                     key={task.id}
@@ -333,10 +342,16 @@ export default function CalendarView({ store }) {
                         <h3 className="text-sm font-bold text-white tracking-wide truncate">
                           {task.title}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-[#4c82f7] font-medium">
+                        <div className="flex items-center gap-2 mt-1 text-xs text-[#ff6b00] font-semibold">
                           <span>{selectedDayStr === todayStr ? 'Hoje' : task.dueDate}</span>
                           {task.startTime && (
                             <span>• {task.startTime}{task.endTime ? ` - ${task.endTime}` : ''}</span>
+                          )}
+                          {task.recurringDates && task.recurringDates.length > 1 && (
+                            <span className="text-[10px] text-neutral-400 font-normal flex items-center gap-0.5">
+                              <Repeat className="w-2.5 h-2.5" />
+                              {task.recurringDates.length} dias
+                            </span>
                           )}
                         </div>
                       </div>
@@ -350,7 +365,7 @@ export default function CalendarView({ store }) {
                             toggleTaskCompleted(task.id);
                           }}
                           className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                            task.completed ? 'bg-[#4c82f7] border-[#4c82f7] text-white' : 'border-neutral-500'
+                            task.completed ? 'bg-[#ff6b00] border-[#ff6b00] text-white' : 'border-neutral-500'
                           }`}
                         >
                           {task.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -388,7 +403,7 @@ export default function CalendarView({ store }) {
                     </span>
                     <div className="flex-1">
                       {isEditingThisSlot ? (
-                        <div className="bg-[#1c1c1e] p-2 rounded-xl border border-[#4c82f7] flex items-center gap-2">
+                        <div className="bg-[#1c1c1e] p-2 rounded-xl border border-[#ff6b00] flex items-center gap-2">
                           <input
                             type="text"
                             placeholder={`Evento às ${hourFormatted}...`}
@@ -403,7 +418,7 @@ export default function CalendarView({ store }) {
                           />
                           <button
                             onClick={() => handleAddQuickAtSlot(hour)}
-                            className="px-2.5 py-1 bg-[#4c82f7] text-white rounded-lg text-xs font-bold"
+                            className="px-2.5 py-1 bg-[#ff6b00] text-white rounded-lg text-xs font-bold"
                           >
                             Salvar
                           </button>
@@ -431,7 +446,7 @@ export default function CalendarView({ store }) {
         </div>
       )}
 
-      {/* VIEW 2: MÊS (Exact Reproduction of media_1793160069391_067f42d6.jpg) */}
+      {/* VIEW 2: MÊS (Exact Reproduction of media_1793160069391_067f42d6.jpg in Orange) */}
       {viewMode === 'month' && (
         <div className="flex-1 flex flex-col overflow-y-auto px-4 py-2 pb-32">
           {/* Day of week header row */}
@@ -447,7 +462,7 @@ export default function CalendarView({ store }) {
               const dStr = formatDate(item.date);
               const isSelected = dStr === selectedDayStr;
               const isToday = dStr === todayStr;
-              const hasTasks = state.tasks.some(t => t.dueDate === dStr && !t.completed);
+              const hasTasks = getTasksForDate(dStr).some(t => !t.completed);
 
               return (
                 <button
@@ -462,18 +477,18 @@ export default function CalendarView({ store }) {
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
                     isSelected
-                      ? 'bg-[#4c82f7] text-white font-bold shadow-lg scale-105'
+                      ? 'bg-[#ff6b00] text-white font-bold shadow-lg scale-105'
                       : !item.isCurrentMonth
                       ? 'text-neutral-600'
                       : isToday
-                      ? 'text-[#4c82f7] font-bold'
+                      ? 'text-[#ff6b00] font-bold ring-1 ring-[#ff6b00]'
                       : 'text-neutral-200 hover:bg-[#1c1c1e]'
                   }`}>
                     {item.date.getDate()}
                   </div>
                   <div className="h-1.5 flex items-center justify-center mt-0.5">
                     {hasTasks && (
-                      <span className={`w-1 h-1 rounded-full ${isSelected ? 'bg-white' : 'bg-[#4c82f7]'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#ff6b00]'}`} />
                     )}
                   </div>
                 </button>
@@ -500,7 +515,7 @@ export default function CalendarView({ store }) {
                         {t.title}
                       </span>
                       {t.startTime && (
-                        <div className="text-[11px] text-[#4c82f7] mt-0.5 font-medium">
+                        <div className="text-[11px] text-[#ff6b00] mt-0.5 font-medium">
                           {t.startTime} - {t.endTime || ''}
                         </div>
                       )}
@@ -511,7 +526,7 @@ export default function CalendarView({ store }) {
                         toggleTaskCompleted(t.id);
                       }}
                       className={`w-5 h-5 rounded-md border flex items-center justify-center ${
-                        t.completed ? 'bg-[#4c82f7] border-[#4c82f7] text-white' : 'border-neutral-500'
+                        t.completed ? 'bg-[#ff6b00] border-[#ff6b00] text-white' : 'border-neutral-500'
                       }`}
                     >
                       {t.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -520,7 +535,7 @@ export default function CalendarView({ store }) {
                 ))}
               </div>
             ) : (
-              /* Empty state from screenshot media_1793160069391_067f42d6.jpg */
+              /* Empty state */
               <div className="py-8 text-center text-neutral-500">
                 <div className="w-16 h-16 rounded-2xl bg-[#141416] border border-[#262629] mx-auto mb-3 flex items-center justify-center">
                   <CalendarIcon className="w-8 h-8 text-neutral-600" />
@@ -540,7 +555,7 @@ export default function CalendarView({ store }) {
             <div className="grid grid-cols-8 gap-1 border-b border-[#222226] pb-2 text-center text-xs text-neutral-400 font-semibold sticky top-0 bg-[#000000] z-10">
               <div>Hora</div>
               {weekDays.map(d => (
-                <div key={formatDate(d)} className={formatDate(d) === selectedDayStr ? 'text-[#4c82f7] font-bold' : ''}>
+                <div key={formatDate(d)} className={formatDate(d) === selectedDayStr ? 'text-[#ff6b00] font-bold' : ''}>
                   <div>{d.toLocaleDateString('pt-BR', { weekday: 'short' })}</div>
                   <div>{d.getDate()}</div>
                 </div>
@@ -554,7 +569,7 @@ export default function CalendarView({ store }) {
                 </div>
                 {weekDays.map(d => {
                   const dStr = formatDate(d);
-                  const tasks = state.tasks.filter(t => t.dueDate === dStr && parseInt(t.startTime?.split(':')[0], 10) === hour);
+                  const tasks = getTasksForDate(dStr).filter(t => parseInt(t.startTime?.split(':')[0], 10) === hour);
                   return (
                     <div
                       key={dStr}
@@ -568,7 +583,7 @@ export default function CalendarView({ store }) {
                             e.stopPropagation();
                             setSelectedTaskId(t.id);
                           }}
-                          className="bg-[#4c82f7]/20 border border-[#4c82f7]/40 text-[#4c82f7] rounded p-1 text-[10px] font-bold truncate"
+                          className="bg-[#ff6b00] text-white rounded p-1 text-[10px] font-bold truncate shadow-sm"
                         >
                           {t.title}
                         </div>
@@ -582,14 +597,14 @@ export default function CalendarView({ store }) {
         </div>
       )}
 
-      {/* VIEW 4: 3 DIAS (Optimized for Mobile Multi-Day) */}
+      {/* VIEW 4: 3 DIAS */}
       {viewMode === '3days' && (
         <div className="flex-1 overflow-x-auto pb-32">
           <div className="min-w-[340px] p-3 space-y-2">
             <div className="grid grid-cols-4 gap-2 border-b border-[#222226] pb-2 text-center text-xs text-neutral-400 font-semibold sticky top-0 bg-[#000000] z-10">
               <div>Hora</div>
               {threeDays.map(d => (
-                <div key={formatDate(d)} className={formatDate(d) === selectedDayStr ? 'text-[#4c82f7] font-bold' : ''}>
+                <div key={formatDate(d)} className={formatDate(d) === selectedDayStr ? 'text-[#ff6b00] font-bold' : ''}>
                   <div>{d.toLocaleDateString('pt-BR', { weekday: 'short' })}</div>
                   <div>{d.getDate()}</div>
                 </div>
@@ -603,7 +618,7 @@ export default function CalendarView({ store }) {
                 </div>
                 {threeDays.map(d => {
                   const dStr = formatDate(d);
-                  const tasks = state.tasks.filter(t => t.dueDate === dStr && parseInt(t.startTime?.split(':')[0], 10) === hour);
+                  const tasks = getTasksForDate(dStr).filter(t => parseInt(t.startTime?.split(':')[0], 10) === hour);
                   return (
                     <div
                       key={dStr}
@@ -617,7 +632,7 @@ export default function CalendarView({ store }) {
                             e.stopPropagation();
                             setSelectedTaskId(t.id);
                           }}
-                          className="bg-[#4c82f7] text-white rounded p-1 text-[11px] font-semibold truncate shadow-sm mb-1"
+                          className="bg-[#ff6b00] text-white rounded p-1 text-[11px] font-semibold truncate shadow-sm mb-1"
                         >
                           {t.title}
                         </div>
@@ -631,7 +646,7 @@ export default function CalendarView({ store }) {
         </div>
       )}
 
-      {/* VIEW 5: DIA (Single Day Detailed Timeline) */}
+      {/* VIEW 5: DIA */}
       {viewMode === 'day' && (
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 pb-32">
           <div className="text-sm font-bold text-white mb-2">
@@ -653,7 +668,7 @@ export default function CalendarView({ store }) {
                       className="bg-[#1c1c1e] border border-[#2c2c2e] p-3 rounded-xl flex items-center justify-between cursor-pointer"
                     >
                       <span className="text-xs font-bold text-white">{t.title}</span>
-                      <span className="text-[11px] text-[#4c82f7] font-mono">{t.startTime} - {t.endTime || ''}</span>
+                      <span className="text-[11px] text-[#ff6b00] font-mono">{t.startTime} - {t.endTime || ''}</span>
                     </div>
                   ))}
                   {tasksInSlot.length === 0 && (
@@ -671,7 +686,7 @@ export default function CalendarView({ store }) {
         </div>
       )}
 
-      {/* VIEW 6: ANO (12 Months Overview) */}
+      {/* VIEW 6: ANO */}
       {viewMode === 'year' && (
         <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pb-32">
           {monthNamesLower.map((mName, mIdx) => (

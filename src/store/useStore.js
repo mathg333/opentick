@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { INITIAL_PROJECTS, INITIAL_TASKS, INITIAL_HABITS, INITIAL_POMODORO_SESSIONS } from './initialData';
 
-const STORAGE_KEY = 'opentick_app_state_v2';
+const STORAGE_KEY = 'opentick_app_state_v3';
 
 export function useAppStore() {
   const [state, setState] = useState(() => {
@@ -10,11 +10,23 @@ export function useAppStore() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.projects && parsed.tasks) {
+          // Deduplicate any tasks with identical title and project
+          const uniqueTasks = [];
+          const seen = new Set();
+          for (const t of parsed.tasks) {
+            const key = `${t.title}-${t.projectId}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              uniqueTasks.push(t);
+            }
+          }
+
           return {
             ...parsed,
+            tasks: uniqueTasks,
             settings: {
               theme: 'amoled',
-              accentColor: '#4c82f7',
+              accentColor: '#ff6b00',
               sound: 'chime',
               volume: 0.8,
               vibration: true,
@@ -24,7 +36,8 @@ export function useAppStore() {
               confirmExit: true,
               defaultDueDate: 'today',
               delayedSection: 'top',
-              ...parsed.settings
+              ...parsed.settings,
+              accentColor: '#ff6b00' // Force orange
             }
           };
         }
@@ -39,7 +52,7 @@ export function useAppStore() {
       pomodoroSessions: INITIAL_POMODORO_SESSIONS,
       settings: {
         theme: 'amoled',
-        accentColor: '#4c82f7',
+        accentColor: '#ff6b00', // Vibrant Orange
         sound: 'chime',
         volume: 0.8,
         vibration: true,
@@ -79,6 +92,7 @@ export function useAppStore() {
       urgent: taskData.urgent ?? false,
       important: taskData.important ?? false,
       dueDate: taskData.dueDate || '',
+      recurringDates: taskData.recurringDates || (taskData.dueDate ? [taskData.dueDate] : []),
       startTime: taskData.startTime || '',
       endTime: taskData.endTime || '',
       completed: false,
@@ -95,20 +109,19 @@ export function useAppStore() {
     return newTask;
   };
 
-  // Add identical task across multiple specific dates (User request: e.g. days 21, 23, 27, 28, 29)
+  // Create ONE single task with multiple scheduled dates (User request: Single clean title in task list!)
   const addTasksForMultipleDates = (taskData, datesList) => {
-    if (!datesList || datesList.length === 0) {
-      return [addTask(taskData)];
-    }
-    const newTasks = datesList.map((dStr, idx) => ({
-      id: 'task-' + Date.now() + '-' + idx,
+    const dates = datesList && datesList.length > 0 ? datesList : (taskData.dueDate ? [taskData.dueDate] : []);
+    const newTask = {
+      id: 'task-' + Date.now(),
       title: taskData.title,
       description: taskData.description || '',
       projectId: taskData.projectId || 'inbox',
       priority: taskData.priority !== undefined ? taskData.priority : 0,
       urgent: taskData.urgent ?? false,
       important: taskData.important ?? false,
-      dueDate: dStr,
+      dueDate: dates[0] || '',
+      recurringDates: dates,
       startTime: taskData.startTime || '',
       endTime: taskData.endTime || '',
       completed: false,
@@ -116,13 +129,13 @@ export function useAppStore() {
       tags: taskData.tags || [],
       subtasks: taskData.subtasks ? JSON.parse(JSON.stringify(taskData.subtasks)) : [],
       createdAt: new Date().toISOString()
-    }));
+    };
 
     setState(prev => ({
       ...prev,
-      tasks: [...newTasks, ...prev.tasks]
+      tasks: [newTask, ...prev.tasks]
     }));
-    return newTasks;
+    return newTask;
   };
 
   const updateTask = (id, updates) => {
@@ -131,11 +144,16 @@ export function useAppStore() {
       tasks: prev.tasks.map(t => {
         if (t.id === id) {
           const updated = { ...t, ...updates };
-          // Keep kanbanStatus and completed in sync
           if (updates.completed !== undefined) {
             updated.kanbanStatus = updates.completed ? 'done' : 'todo';
           } else if (updates.kanbanStatus !== undefined) {
             updated.completed = updates.kanbanStatus === 'done';
+          }
+          // If dueDate is updated without recurringDates, sync recurringDates
+          if (updates.dueDate && !updates.recurringDates) {
+            if (!updated.recurringDates || updated.recurringDates.length <= 1) {
+              updated.recurringDates = [updates.dueDate];
+            }
           }
           return updated;
         }
@@ -218,7 +236,7 @@ export function useAppStore() {
       id: 'habit-' + Date.now(),
       name: habitData.name,
       icon: habitData.icon || 'Flame',
-      color: habitData.color || '#3b82f6',
+      color: habitData.color || '#ff6b00',
       frequency: habitData.frequency || 'daily',
       targetDays: habitData.targetDays || [0, 1, 2, 3, 4, 5, 6],
       currentStreak: 0,
@@ -285,7 +303,7 @@ export function useAppStore() {
     const newProj = {
       id: 'proj-' + Date.now(),
       name: projectData.name,
-      color: projectData.color || '#3b82f6',
+      color: projectData.color || '#ff6b00',
       icon: projectData.icon || 'Folder'
     };
     setState(prev => ({ ...prev, projects: [...prev.projects, newProj] }));
@@ -300,7 +318,7 @@ export function useAppStore() {
   };
 
   const deleteProject = (id) => {
-    if (id === 'inbox') return; // Cannot delete default inbox
+    if (id === 'inbox') return;
     setState(prev => ({
       ...prev,
       projects: prev.projects.filter(p => p.id !== id),
@@ -308,7 +326,6 @@ export function useAppStore() {
     }));
   };
 
-  // Settings Updater
   const updateSettings = (updates) => {
     setState(prev => ({
       ...prev,
@@ -316,7 +333,6 @@ export function useAppStore() {
     }));
   };
 
-  // TickTick API Sync / Import
   const setTickTickConfig = (cfg) => {
     setState(prev => ({ ...prev, ticktickConfig: { ...prev.ticktickConfig, ...cfg } }));
   };
@@ -332,7 +348,7 @@ export function useAppStore() {
       const newProjects = projects.map(p => ({
         id: 'tt-proj-' + p.id,
         name: p.name,
-        color: p.color || '#3b82f6',
+        color: p.color || '#ff6b00',
         icon: 'Folder'
       }));
 
@@ -354,6 +370,7 @@ export function useAppStore() {
                 urgent: t.priority === 3 || t.priority === 5,
                 important: t.priority >= 2,
                 dueDate: t.dueDate ? t.dueDate.split('T')[0] : '',
+                recurringDates: t.dueDate ? [t.dueDate.split('T')[0]] : [],
                 completed: t.status === 2,
                 kanbanStatus: t.status === 2 ? 'done' : 'todo',
                 tags: t.tags || [],

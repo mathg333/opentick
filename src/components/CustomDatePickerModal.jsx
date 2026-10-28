@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Clock, Check, Calendar as CalendarIcon, Repeat } from 'lucide-react';
+import TimePickerModal from './TimePickerModal';
 
-export default function CustomDatePickerModal({ isOpen, onClose, onSelectDates, initialDate }) {
+export default function CustomDatePickerModal({ isOpen, onClose, onSelectDates, initialDate, initialTime = '' }) {
   const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
   const [selectedDates, setSelectedDates] = useState(initialDate ? [initialDate] : []);
-  const [selectedTime, setSelectedTime] = useState('');
-  const [mode, setMode] = useState('custom'); // 'single', 'custom' (multiple dates), 'daily', 'weekdays'
+  const [selectedTime, setSelectedTime] = useState(initialTime);
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -54,7 +55,7 @@ export default function CustomDatePickerModal({ isOpen, onClose, onSelectDates, 
     for (let i = 1; i <= daysInMonth; i++) {
       const d = new Date(year, month, i);
       const day = d.getDay();
-      if (day >= 1 && day <= 5) { // Mon-Fri
+      if (day >= 1 && day <= 5) {
         weekdays.push(formatDateStr(i));
       }
     }
@@ -83,7 +84,7 @@ export default function CustomDatePickerModal({ isOpen, onClose, onSelectDates, 
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-[#28282b]">
           <div className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-[#4c82f7]" />
+            <CalendarIcon className="w-5 h-5 text-[#ff6b00]" />
             <h2 className="text-base font-bold text-white">Datas e Horários</h2>
           </div>
           <button onClick={onClose} className="p-1 text-neutral-400 hover:text-white">
@@ -91,7 +92,7 @@ export default function CustomDatePickerModal({ isOpen, onClose, onSelectDates, 
           </button>
         </div>
 
-        {/* Quick Presets matching TickTick */}
+        {/* Quick Presets */}
         <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
           <button
             type="button"
@@ -141,7 +142,7 @@ export default function CustomDatePickerModal({ isOpen, onClose, onSelectDates, 
           </div>
         </div>
 
-        {/* Calendar Grid (Multiple Dates Selection) */}
+        {/* Calendar Grid (Multiple Dates Selection highlighted in Orange) */}
         <div>
           <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-neutral-500 font-bold uppercase mb-1">
             {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
@@ -166,7 +167,7 @@ export default function CustomDatePickerModal({ isOpen, onClose, onSelectDates, 
                   onClick={() => toggleDate(dStr)}
                   className={`h-8 w-8 mx-auto rounded-full text-xs font-semibold flex items-center justify-center transition-all ${
                     isSelected
-                      ? 'bg-[#4c82f7] text-white font-bold shadow-md scale-105'
+                      ? 'bg-[#ff6b00] text-white font-bold shadow-md scale-105'
                       : 'text-neutral-200 hover:bg-[#28282e]'
                   }`}
                 >
@@ -177,18 +178,19 @@ export default function CustomDatePickerModal({ isOpen, onClose, onSelectDates, 
           </div>
         </div>
 
-        {/* Time Picker */}
+        {/* Touch-Friendly Time Selector (Opens TimePickerModal on click) */}
         <div className="pt-2 border-t border-[#28282b] flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-neutral-300 font-medium">
-            <Clock className="w-4 h-4 text-amber-400" />
+            <Clock className="w-4 h-4 text-[#ff6b00]" />
             <span>Horário Repetido:</span>
           </div>
-          <input
-            type="time"
-            value={selectedTime}
-            onChange={e => setSelectedTime(e.target.value)}
-            className="bg-[#141416] border border-[#2c2c2e] text-white text-xs rounded-lg px-2 py-1 focus:outline-none"
-          />
+          <button
+            type="button"
+            onClick={() => setIsTimePickerOpen(true)}
+            className="bg-[#141416] hover:bg-[#242428] border border-[#2c2c2e] text-white text-xs font-mono font-bold rounded-xl px-3 py-1.5 focus:outline-none flex items-center gap-1.5"
+          >
+            <span>{selectedTime || 'Toque p/ definir'}</span>
+          </button>
         </div>
 
         {/* Selected Summary and Confirm Button */}
@@ -205,12 +207,20 @@ export default function CustomDatePickerModal({ isOpen, onClose, onSelectDates, 
           <button
             type="button"
             onClick={handleConfirm}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-[#4c82f7] hover:bg-[#3b72e7] text-white shadow-md shrink-0"
+            className="px-5 py-2 rounded-xl text-xs font-bold bg-[#ff6b00] hover:bg-[#ea580c] text-white shadow-md shrink-0"
           >
             Confirmar
           </button>
         </div>
       </div>
+
+      {/* Touch-Friendly Time Picker Modal */}
+      <TimePickerModal
+        isOpen={isTimePickerOpen}
+        onClose={() => setIsTimePickerOpen(false)}
+        initialTime={selectedTime}
+        onSelectTime={t => setSelectedTime(t)}
+      />
     </div>
   );
 }

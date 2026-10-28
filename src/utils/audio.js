@@ -1,10 +1,17 @@
-// Ambient Noise & Notification Ringtones using pure Web Audio API (Zero external MP3 dependencies)
+// Ambient Noise, Notification Ringtones & Continuous 5-Minute Long Alarms
 class SoundManager {
   constructor() {
     this.ctx = null;
     this.noiseNode = null;
     this.gainNode = null;
-    this.isPlaying = false;
+    this.isPlayingNoise = false;
+
+    // Continuous Alarm State
+    this.currentAudioElement = null;
+    this.alarmInterval = null;
+    this.alarmTimeout = null;
+    this.vibrateInterval = null;
+    this.isAlarmRinging = false;
   }
 
   init() {
@@ -17,14 +24,13 @@ class SoundManager {
     }
   }
 
-  // Play notification tone by name
+  // Play short notification tone by name
   playSound(name = 'chime', vol = 0.5) {
     try {
       this.init();
       const now = this.ctx.currentTime;
 
       if (name === 'chime') {
-        // Melodic Chime
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sine';
@@ -37,7 +43,6 @@ class SoundManager {
         osc.start();
         osc.stop(now + 1.2);
       } else if (name === 'bell') {
-        // Resonant Bell
         const osc1 = this.ctx.createOscillator();
         const osc2 = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -55,7 +60,6 @@ class SoundManager {
         osc1.stop(now + 2.0);
         osc2.stop(now + 2.0);
       } else if (name === 'marimba') {
-        // Warm Marimba chords
         [440, 554.37, 659.25, 880].forEach((freq, i) => {
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
@@ -69,7 +73,6 @@ class SoundManager {
           osc.stop(now + i * 0.08 + 0.4);
         });
       } else if (name === 'digital') {
-        // Dual beep
         [1000, 1500].forEach((freq, i) => {
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
@@ -92,7 +95,175 @@ class SoundManager {
     this.playSound('chime', 0.6);
   }
 
-  // Generate Pink / Brown Noise for Focus / White Noise
+  // ================= CONTINUOUS LONG ALARM ENGINE =================
+  // Rings continuously for up to 5 minutes (or until user stops it)
+  // Supports custom phone MP3/audio files and synthesized loud alarms
+  startContinuousAlarm({
+    sound = 'radar',
+    customAudioUrl = null,
+    volume = 0.8,
+    durationMinutes = 5,
+    vibration = true,
+    onStop = null
+  } = {}) {
+    this.stopContinuousAlarm();
+    this.isAlarmRinging = true;
+
+    // Start repeating vibration if available
+    if (vibration && typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate([600, 250, 600, 250, 600]);
+        this.vibrateInterval = setInterval(() => {
+          try {
+            navigator.vibrate([600, 250, 600, 250, 600]);
+          } catch (e) {}
+        }, 2200);
+      } catch (e) {
+        console.warn('Vibration not supported', e);
+      }
+    }
+
+    // CASE 1: Custom audio file uploaded from phone
+    if (sound === 'custom' && customAudioUrl) {
+      try {
+        const audio = new Audio(customAudioUrl);
+        audio.loop = true;
+        audio.volume = Math.min(1, Math.max(0, volume));
+        audio.play().catch(e => console.warn('Could not auto-play custom audio:', e));
+        this.currentAudioElement = audio;
+      } catch (e) {
+        console.warn('Failed to load custom audio, falling back to radar alarm', e);
+        this.startSynthAlarmLoop('radar', volume);
+      }
+    } else {
+      // CASE 2: Built-in synthesized long alarm
+      this.startSynthAlarmLoop(sound, volume);
+    }
+
+    // Safety timeout: automatically stop after requested duration (default 5 min = 300,000ms)
+    const maxMs = (durationMinutes || 5) * 60 * 1000;
+    this.alarmTimeout = setTimeout(() => {
+      this.stopContinuousAlarm();
+      if (onStop) onStop();
+    }, maxMs);
+  }
+
+  startSynthAlarmLoop(type = 'radar', volume = 0.8) {
+    this.init();
+
+    const triggerCycle = () => {
+      if (!this.isAlarmRinging) return;
+      try {
+        const now = this.ctx.currentTime;
+        const vol = Math.min(1, Math.max(0.1, volume));
+
+        if (type === 'digital' || type === 'digital_alarm') {
+          // 4 rapid digital alarm beeps
+          [0, 0.12, 0.24, 0.36].forEach((offset) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(1400, now + offset);
+            gain.gain.setValueAtTime(vol * 0.35, now + offset);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.08);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + offset);
+            osc.stop(now + offset + 0.08);
+          });
+        } else if (type === 'siren') {
+          // Dynamic wailing siren sweeping 600Hz to 1300Hz
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.linearRampToValueAtTime(1300, now + 0.45);
+          osc.frequency.linearRampToValueAtTime(600, now + 0.9);
+          gain.gain.setValueAtTime(vol * 0.25, now);
+          gain.gain.linearRampToValueAtTime(vol * 0.25, now + 0.85);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.95);
+        } else if (type === 'bell' || type === 'bell_alarm') {
+          // Rapid energetic bell strikes
+          [0, 0.25, 0.5, 0.75].forEach((offset) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, now + offset);
+            gain.gain.setValueAtTime(vol * 0.4, now + offset);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.2);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + offset);
+            osc.stop(now + offset + 0.2);
+          });
+        } else {
+          // Default: RADAR alarm (pulsing energetic tone)
+          [0, 0.15].forEach((offset) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(950, now + offset);
+            osc.frequency.exponentialRampToValueAtTime(1450, now + offset + 0.12);
+            gain.gain.setValueAtTime(vol * 0.5, now + offset);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.12);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + offset);
+            osc.stop(now + offset + 0.12);
+          });
+        }
+      } catch (e) {
+        console.warn('Synth alarm cycle error', e);
+      }
+    };
+
+    // Play first cycle immediately
+    triggerCycle();
+    // Repeat every 1.1s indefinitely until user stops
+    this.alarmInterval = setInterval(triggerCycle, 1100);
+  }
+
+  stopContinuousAlarm() {
+    this.isAlarmRinging = false;
+
+    // Stop HTML5 audio element
+    if (this.currentAudioElement) {
+      try {
+        this.currentAudioElement.pause();
+        this.currentAudioElement.currentTime = 0;
+      } catch (e) {}
+      this.currentAudioElement = null;
+    }
+
+    // Clear alarm interval loop
+    if (this.alarmInterval) {
+      clearInterval(this.alarmInterval);
+      this.alarmInterval = null;
+    }
+
+    // Clear max duration timeout
+    if (this.alarmTimeout) {
+      clearTimeout(this.alarmTimeout);
+      this.alarmTimeout = null;
+    }
+
+    // Stop vibration immediately
+    if (this.vibrateInterval) {
+      clearInterval(this.vibrateInterval);
+      this.vibrateInterval = null;
+    }
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate(0);
+      } catch (e) {}
+    }
+  }
+
+  // ================= FOCUS WHITE/PINK/BROWN NOISE =================
   startNoise(type = 'pink', volume = 0.15) {
     try {
       this.init();
@@ -140,7 +311,7 @@ class SoundManager {
       this.gainNode.connect(this.ctx.destination);
 
       this.noiseNode.start();
-      this.isPlaying = true;
+      this.isPlayingNoise = true;
     } catch (e) {
       console.warn('Error starting noise', e);
     }
@@ -159,7 +330,7 @@ class SoundManager {
         this.noiseNode.disconnect();
         this.noiseNode = null;
       }
-      this.isPlaying = false;
+      this.isPlayingNoise = false;
     } catch (e) {
       console.warn('Error stopping noise', e);
     }

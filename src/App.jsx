@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { App as CapApp } from '@capacitor/app';
 import { useAppStore } from './store/useStore';
 import Sidebar from './components/Sidebar';
@@ -12,6 +12,9 @@ import TickTickSyncModal from './components/TickTickSyncModal';
 import GlobalQuickAddModal from './components/GlobalQuickAddModal';
 import SettingsModal from './components/SettingsModal';
 import SearchModal from './components/SearchModal';
+import AlarmOverlayModal from './components/AlarmOverlayModal';
+import { soundManager } from './utils/audio';
+import { getCustomAudioFile } from './utils/audioStorage';
 import { 
   Menu, 
   CheckSquare, 
@@ -38,6 +41,12 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeTaskForPomodoro, setActiveTaskForPomodoro] = useState(null);
 
+  // Active Continuous Alarm State
+  const [alarmActiveTask, setAlarmActiveTask] = useState(null);
+  const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
+  const [customAudioInfo, setCustomAudioInfo] = useState(null);
+  const triggeredAlarmsRef = useRef(new Set());
+
   const today = new Date();
   const currentDayNumber = today.getDate();
 
@@ -46,7 +55,131 @@ export default function App() {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
+    // Pre-load custom audio info
+    getCustomAudioFile().then(record => {
+      if (record) setCustomAudioInfo(record);
+    });
   }, []);
+
+  // Alarm Ticker: Checks every 5 seconds if a scheduled task has reached its time
+  useEffect(() => {
+    const checkScheduledAlarms = async () => {
+      const now = new Date();
+      const yr = now.getFullYear();
+      const mo = String(now.getMonth() + 1).padStart(2, '0');
+      const dy = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${yr}-${mo}-${dy}`;
+
+      const hr = String(now.getHours()).padStart(2, '0');
+      const mn = String(now.getMinutes()).padStart(2, '0');
+      const currentHHMM = `${hr}:${mn}`;
+
+      const settings = state.settings || {};
+
+      for (const t of state.tasks) {
+        if (t.completed) continue;
+        if (!t.startTime) continue;
+
+        const isToday = t.dueDate === todayStr || (t.recurringDates && t.recurringDates.includes(todayStr));
+        const isTimeMatch = t.startTime === currentHHMM;
+
+        if (isToday && isTimeMatch) {
+          const alarmKey = `${t.id}_${todayStr}_${currentHHMM}`;
+          if (!triggeredAlarmsRef.current.has(alarmKey)) {
+            triggeredAlarmsRef.current.add(alarmKey);
+
+            // Fetch custom audio if configured
+            let customAudioUrl = null;
+            if (settings.sound === 'custom') {
+              const record = await getCustomAudioFile();
+              customAudioUrl = record?.dataUrl || null;
+              if (record) setCustomAudioInfo(record);
+            }
+
+            // Start continuous long alarm (up to 5 min by default)
+            soundManager.startContinuousAlarm({
+              sound: settings.sound || 'radar',
+              customAudioUrl,
+              volume: settings.volume ?? 0.8,
+              durationMinutes: settings.alarmDuration || 5,
+              vibration: settings.vibration !== false,
+              onStop: () => {
+                setIsAlarmModalOpen(false);
+                setAlarmActiveTask(null);
+              }
+            });
+
+            setAlarmActiveTask(t);
+            setIsAlarmModalOpen(true);
+
+            // Native / Browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+              try {
+                new Notification(`⏰ ${t.title}`, {
+                  body: `OpenTick: Alarme agendado para às ${currentHHMM}!`,
+                  icon: '/favicon.ico'
+                });
+              } catch (e) {}
+            }
+            break;
+          }
+        }
+      }
+    };
+
+    const interval = setInterval(checkScheduledAlarms, 5000);
+    return () => clearInterval(interval);
+  }, [state.tasks, state.settings]);
+
+  const handleStopAlarm = () => {
+    soundManager.stopContinuousAlarm();
+    setIsAlarmModalOpen(false);
+    setAlarmActiveTask(null);
+  };
+
+  const handleSnoozeAlarm = () => {
+    soundManager.stopContinuousAlarm();
+    setIsAlarmModalOpen(false);
+    if (alarmActiveTask && alarmActiveTask.id !== 'test-alarm') {
+      const now = new Date(Date.now() + 5 * 60 * 1000); // +5 minutes
+      const hr = String(now.getHours()).padStart(2, '0');
+      const mn = String(now.getMinutes()).padStart(2, '0');
+      const newTime = `${hr}:${mn}`;
+      store.updateTask(alarmActiveTask.id, { startTime: newTime });
+    }
+    setAlarmActiveTask(null);
+  };
+
+  const handleTriggerTestAlarm = async (soundId) => {
+    let customAudioUrl = null;
+    let customName = '';
+    if (soundId === 'custom') {
+      const record = await getCustomAudioFile();
+      customAudioUrl = record?.dataUrl || null;
+      customName = record?.name || 'Música do Celular';
+      if (record) setCustomAudioInfo(record);
+    }
+
+    soundManager.startContinuousAlarm({
+      sound: soundId,
+      customAudioUrl,
+      volume: state.settings?.volume ?? 0.8,
+      durationMinutes: state.settings?.alarmDuration || 5,
+      vibration: state.settings?.vibration !== false,
+      onStop: () => {
+        setIsAlarmModalOpen(false);
+        setAlarmActiveTask(null);
+      }
+    });
+
+    const now = new Date();
+    setAlarmActiveTask({
+      id: 'test-alarm',
+      title: 'Disparo de Alarme de Teste',
+      startTime: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    });
+    setIsAlarmModalOpen(true);
+  };
 
   // Native Android Hardware / Virtual Back Button Handler (Fixes app closing instead of navigating back)
   useEffect(() => {
@@ -300,10 +433,10 @@ export default function App() {
           )}
         </div>
 
-        {/* MOBILE FLOATING ACTION BUTTON (FAB: Botão Azul Circular com +) matching photo_2026-10-28_00-42-45.jpg */}
+        {/* MOBILE FLOATING ACTION BUTTON (FAB: Botão Laranja Circular com +) */}
         <button
           onClick={() => setIsQuickAddOpen(true)}
-          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-[#4c82f7] hover:bg-[#3b72e7] active:scale-95 text-white rounded-full shadow-2xl flex items-center justify-center z-30 transition-transform"
+          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-[#ff6b00] hover:bg-[#ea580c] active:scale-95 text-white rounded-full shadow-[0_0_20px_rgba(255,107,0,0.5)] flex items-center justify-center z-30 transition-transform"
           title="Nova Tarefa (Rápida)"
         >
           <Plus className="w-7 h-7 stroke-[2.5]" />
@@ -321,7 +454,7 @@ export default function App() {
             title="Tarefas"
           >
             {isTaskView ? (
-              <div className="w-7 h-7 rounded-lg bg-[#4c82f7] flex items-center justify-center shadow-md">
+              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center shadow-md">
                 <CheckSquare className="w-5 h-5 text-white stroke-[2.5]" />
               </div>
             ) : (
@@ -341,7 +474,7 @@ export default function App() {
             title="Calendário"
           >
             {activeView === 'calendar' ? (
-              <div className="w-7 h-7 rounded-lg bg-[#4c82f7] flex items-center justify-center text-white font-black text-xs shadow-md">
+              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center text-white font-black text-xs shadow-md">
                 {currentDayNumber}
               </div>
             ) : (
@@ -365,7 +498,7 @@ export default function App() {
             title="Matriz & Hábitos"
           >
             {activeView === 'eisenhower' || activeView === 'habits' ? (
-              <div className="w-7 h-7 rounded-lg bg-[#4c82f7] flex items-center justify-center shadow-md">
+              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center shadow-md">
                 <Grid className="w-4 h-4 text-white stroke-[2.5]" />
               </div>
             ) : (
@@ -415,6 +548,7 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)}
         store={store}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
+        onTriggerTestAlarm={handleTriggerTestAlarm}
       />
 
       {/* Search Modal */}
@@ -422,6 +556,16 @@ export default function App() {
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         store={store}
+      />
+
+      {/* Continuous 5-Minute Long Alarm Screen Overlay */}
+      <AlarmOverlayModal
+        isOpen={isAlarmModalOpen}
+        task={alarmActiveTask}
+        soundName={state.settings?.sound || 'radar'}
+        customAudioName={customAudioInfo?.name || ''}
+        onStopAlarm={handleStopAlarm}
+        onSnoozeAlarm={handleSnoozeAlarm}
       />
     </div>
   );

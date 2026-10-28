@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   ArrowLeft, 
   ChevronRight, 
@@ -16,25 +16,113 @@ import {
   X,
   Volume2,
   Play,
+  Square,
   Download,
   Upload,
-  RotateCcw
+  RotateCcw,
+  Music,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { soundManager } from '../utils/audio';
+import { saveCustomAudioFile, getCustomAudioFile, removeCustomAudioFile } from '../utils/audioStorage';
 
-export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal }) {
+export default function SettingsModal({ 
+  isOpen, 
+  onClose, 
+  store, 
+  onOpenSyncModal,
+  onTriggerTestAlarm
+}) {
   const { state, updateSettings, exportData, importData } = store;
   const settings = state.settings || {};
 
   const [activeScreen, setActiveScreen] = useState('main'); // 'main', 'appearance', 'datetime', 'sound', 'tabs', 'ai', 'general', 'sync'
   const [testPlaying, setTestPlaying] = useState(false);
+  const [customAudio, setCustomAudio] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Load custom audio from IndexedDB when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      getCustomAudioFile().then(record => {
+        if (record) {
+          setCustomAudio(record);
+        }
+      });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleTestSound = (soundName) => {
+  const handleTestSound = (soundId) => {
+    if (testPlaying) {
+      soundManager.stopContinuousAlarm();
+      setTestPlaying(false);
+      return;
+    }
+
     setTestPlaying(true);
-    soundManager.playSound(soundName, settings.volume || 0.8);
-    setTimeout(() => setTestPlaying(false), 1200);
+    if (soundId === 'custom' && customAudio?.dataUrl) {
+      soundManager.startContinuousAlarm({
+        sound: 'custom',
+        customAudioUrl: customAudio.dataUrl,
+        volume: settings.volume ?? 0.8,
+        durationMinutes: 5,
+        vibration: settings.vibration ?? true,
+        onStop: () => setTestPlaying(false)
+      });
+    } else {
+      soundManager.startContinuousAlarm({
+        sound: soundId,
+        volume: settings.volume ?? 0.8,
+        durationMinutes: 5,
+        vibration: settings.vibration ?? true,
+        onStop: () => setTestPlaying(false)
+      });
+    }
+  };
+
+  const handleStopTest = () => {
+    soundManager.stopContinuousAlarm();
+    setTestPlaying(false);
+  };
+
+  const handleAudioFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const saved = await saveCustomAudioFile(file);
+      setCustomAudio(saved);
+      updateSettings({ sound: 'custom' });
+      alert(`Áudio "${file.name}" carregado com sucesso!`);
+    } catch (err) {
+      console.error('Falha ao salvar áudio', err);
+      alert('Erro ao carregar o áudio. Tente outro arquivo (.mp3, .wav, .m4a).');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveCustomAudio = async () => {
+    if (confirm('Deseja remover seu áudio personalizado?')) {
+      await removeCustomAudioFile();
+      setCustomAudio(null);
+      if (settings.sound === 'custom') {
+        updateSettings({ sound: 'radar' });
+      }
+      handleStopTest();
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '';
+    const mb = bytes / (1024 * 1024);
+    if (mb >= 1) return `${mb.toFixed(1)} MB`;
+    return `${Math.round(bytes / 1024)} KB`;
   };
 
   return (
@@ -44,6 +132,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
+              handleStopTest();
               if (activeScreen === 'main') {
                 onClose();
               } else {
@@ -66,7 +155,13 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
           </h1>
         </div>
 
-        <button onClick={onClose} className="p-1.5 text-neutral-400 hover:text-white">
+        <button 
+          onClick={() => {
+            handleStopTest();
+            onClose();
+          }} 
+          className="p-1.5 text-neutral-400 hover:text-white"
+        >
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -79,7 +174,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
             {/* Profile Card */}
             <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#1c1c1e] border border-[#28282b]">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-600 via-amber-600 to-indigo-600 p-0.5">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-600 via-amber-600 to-[#ff6b00] p-0.5">
                   <div className="w-full h-full rounded-full bg-[#1c1c1e] flex items-center justify-center font-bold text-white text-base">
                     🐸
                   </div>
@@ -87,7 +182,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-base font-bold text-white">Mathx</span>
-                    <span className="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-1.5 py-0.2 rounded border border-amber-500/30">
+                    <span className="text-[10px] bg-[#ff6b00]/20 text-[#ff6b00] font-bold px-1.5 py-0.2 rounded border border-[#ff6b00]/30">
                       👑 PRO
                     </span>
                   </div>
@@ -106,11 +201,11 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
             {/* Premium Status Banner */}
             <div className="p-4 rounded-2xl bg-[#1c1c1e] border border-[#28282b] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-full bg-[#ff6b00]/20 text-[#ff6b00] flex items-center justify-center font-bold">
                   <Crown className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">Conta Premium</h3>
+                  <h3 className="text-sm font-bold text-white">Conta Premium Completa</h3>
                   <p className="text-xs text-neutral-400">100% Gratuito e Ilimitado para Sempre</p>
                 </div>
               </div>
@@ -125,7 +220,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
               className="rounded-2xl bg-[#1c1c1e] border border-[#28282b] p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <Layers className="w-5 h-5 text-blue-400" />
+                <Layers className="w-5 h-5 text-[#ff6b00]" />
                 <span className="text-sm font-semibold text-white">Barra de Abas</span>
               </div>
               <ChevronRight className="w-5 h-5 text-neutral-500" />
@@ -138,10 +233,10 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Palette className="w-5 h-5 text-blue-400" />
+                  <Palette className="w-5 h-5 text-[#ff6b00]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Aparência</span>
-                    <p className="text-[11px] text-neutral-400">Tema AMOLED, Cores e Estilo</p>
+                    <p className="text-[11px] text-neutral-400">Tema AMOLED, Laranja TickTick e Estilo</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-neutral-500" />
@@ -152,7 +247,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-blue-400" />
+                  <Clock className="w-5 h-5 text-[#ff6b00]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Data hora</span>
                     <p className="text-[11px] text-neutral-400">Formato {settings.timeFormat || '24h'}, Início no {settings.startOfWeek || 'Domingo'}</p>
@@ -166,10 +261,12 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-blue-400" />
+                  <Bell className="w-5 h-5 text-[#ff6b00]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Sons e Notificações</span>
-                    <p className="text-[11px] text-neutral-400">Toque: {settings.sound || 'Chime'}</p>
+                    <p className="text-[11px] text-neutral-400">
+                      {settings.alarmMode === 'short' ? 'Notificação Curta' : 'Alarme Contínuo 5 Minutos'} • {settings.sound === 'custom' ? 'Áudio do Celular' : settings.sound || 'Radar'}
+                    </p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-neutral-500" />
@@ -180,7 +277,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Sparkles className="w-5 h-5 text-blue-400" />
+                  <Sparkles className="w-5 h-5 text-[#ff6b00]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Funções de IA</span>
                     <p className="text-[11px] text-neutral-400">Assistente Gemini & Time-blocking</p>
@@ -194,7 +291,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <SettingsIcon className="w-5 h-5 text-blue-400" />
+                  <SettingsIcon className="w-5 h-5 text-[#ff6b00]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Geral</span>
                     <p className="text-[11px] text-neutral-400">Avisar antes de sair, Padrões</p>
@@ -221,52 +318,226 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
           </>
         )}
 
-        {/* ================= SUB-SCREEN: SONS E NOTIFICAÇÕES ================= */}
+        {/* ================= SUB-SCREEN: SONS E NOTIFICAÇÕES (ALARMES LONGOS E ÁUDIO DO CELULAR) ================= */}
         {activeScreen === 'sound' && (
           <div className="space-y-4 animate-in fade-in">
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-4">
-              <h3 className="text-sm font-bold text-white">Toque de Notificação</h3>
+            {/* Mode: Contínuo vs Curto */}
+            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+              <span className="text-sm font-bold text-white block">Estilo do Toque</span>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => updateSettings({ alarmMode: 'continuous' })}
+                  className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                    (settings.alarmMode !== 'short')
+                      ? 'bg-[#28282e] border-[#ff6b00] text-white shadow-md'
+                      : 'bg-[#141416] border-[#262629] text-neutral-400'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="text-xs font-bold text-white">Alarme Contínuo</span>
+                    {settings.alarmMode !== 'short' && <Check className="w-4 h-4 text-[#ff6b00]" />}
+                  </div>
+                  <span className="text-[10px] text-neutral-400 leading-tight">
+                    Toca por até 5 minutos como despertador até você parar
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => updateSettings({ alarmMode: 'short' })}
+                  className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                    (settings.alarmMode === 'short')
+                      ? 'bg-[#28282e] border-[#ff6b00] text-white shadow-md'
+                      : 'bg-[#141416] border-[#262629] text-neutral-400'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="text-xs font-bold text-white">Notificação Curta</span>
+                    {settings.alarmMode === 'short' && <Check className="w-4 h-4 text-[#ff6b00]" />}
+                  </div>
+                  <span className="text-[10px] text-neutral-400 leading-tight">
+                    Apenas 1 toque rápido de alerta sonoro
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* CUSTOM PHONE AUDIO UPLOAD */}
+            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                    <Music className="w-4 h-4 text-[#ff6b00]" />
+                    Áudio Personalizado do Celular
+                  </h3>
+                  <p className="text-xs text-neutral-400">
+                    Use qualquer música ou som longo (ex: 5 min) do seu aparelho
+                  </p>
+                </div>
+              </div>
+
+              {/* Upload Input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="audio/*"
+                onChange={handleAudioFileUpload}
+                className="hidden"
+              />
+
+              {customAudio ? (
+                <div className={`p-3 rounded-xl border flex flex-col gap-2 transition-all ${
+                  settings.sound === 'custom' 
+                    ? 'bg-[#28282e] border-[#ff6b00]' 
+                    : 'bg-[#141416] border-[#262629]'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div 
+                      onClick={() => updateSettings({ sound: 'custom' })}
+                      className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-[#ff6b00]/20 text-[#ff6b00] flex items-center justify-center shrink-0">
+                        <Music className="w-4 h-4" />
+                      </div>
+                      <div className="truncate">
+                        <span className="text-xs font-bold text-white block truncate">
+                          {customAudio.name}
+                        </span>
+                        <span className="text-[10px] text-neutral-400">
+                          {formatFileSize(customAudio.size)} • Áudio Ativo
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (testPlaying && settings.sound === 'custom') {
+                            handleStopTest();
+                          } else {
+                            updateSettings({ sound: 'custom' });
+                            handleTestSound('custom');
+                          }
+                        }}
+                        className="px-2.5 py-1.5 bg-[#ff6b00] hover:bg-[#ea580c] text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-md"
+                      >
+                        {testPlaying && settings.sound === 'custom' ? (
+                          <>
+                            <Square className="w-3 h-3 fill-current" />
+                            <span>Parar</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3 h-3 fill-current" />
+                            <span>Ouvir</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleRemoveCustomAudio}
+                        className="p-1.5 text-neutral-400 hover:text-rose-400 rounded-lg"
+                        title="Remover"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#262629] flex items-center justify-between text-[11px]">
+                    <span className="text-neutral-400">Definido como som principal do alarme</span>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-[#ff6b00] font-semibold hover:underline"
+                    >
+                      Trocar Arquivo
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isUploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-3.5 px-4 bg-[#141416] hover:bg-[#202024] border border-dashed border-[#ff6b00]/60 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-[#ff6b00] transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>{isUploading ? 'Carregando áudio...' : 'Selecionar Áudio / MP3 do Celular'}</span>
+                </button>
+              )}
+            </div>
+
+            {/* PRE-INSTALLED CONTINUOUS ALARMS & RINGTONES */}
+            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+              <h3 className="text-sm font-bold text-white">Toques e Alarmes Pré-instalados</h3>
               <div className="space-y-2">
                 {[
-                  { id: 'chime', label: 'Chime Melódico Clássico' },
-                  { id: 'bell', label: 'Sino Suave (Tibetano)' },
-                  { id: 'marimba', label: 'Marimba Vibrante' },
-                  { id: 'digital', label: 'Digital Beep-Beep' },
-                  { id: 'none', label: 'Silencioso / Mudo' }
+                  { id: 'radar', label: 'Alarme Radar Contínuo', desc: 'Pulsos de alarme potentes e energéticos' },
+                  { id: 'digital', label: 'Despertador Digital Clássico', desc: 'Série de bips eletrônicos em loop' },
+                  { id: 'siren', label: 'Sirene de Emergência', desc: 'Alerta contínuo oscilante de alta atenção' },
+                  { id: 'bell', label: 'Sino Despertador', desc: 'Batidas rítmicas de sino' },
+                  { id: 'chime', label: 'Chime Melódico', desc: 'Melodia relaxante suave' },
+                  { id: 'none', label: 'Silencioso / Apenas Vibração', desc: 'Sem reprodução de áudio' }
                 ].map(item => {
-                  const isSelected = (settings.sound || 'chime') === item.id;
+                  const isSelected = (settings.sound || 'radar') === item.id;
+                  const isThisPlaying = testPlaying && (settings.sound || 'radar') === item.id;
+
                   return (
                     <div
                       key={item.id}
                       onClick={() => {
                         updateSettings({ sound: item.id });
-                        if (item.id !== 'none') handleTestSound(item.id);
+                        if (item.id !== 'none') {
+                          handleStopTest();
+                        }
                       }}
                       className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                         isSelected 
-                          ? 'bg-[#28282e] border-[#4c82f7] text-white' 
+                          ? 'bg-[#28282e] border-[#ff6b00] text-white shadow-md' 
                           : 'bg-[#141416] border-[#262629] text-neutral-300 hover:bg-[#1a1a1e]'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Volume2 className={`w-4 h-4 ${isSelected ? 'text-[#4c82f7]' : 'text-neutral-500'}`} />
-                        <span className="text-xs font-semibold">{item.label}</span>
+                        <Volume2 className={`w-4 h-4 ${isSelected ? 'text-[#ff6b00]' : 'text-neutral-500'}`} />
+                        <div>
+                          <span className="text-xs font-semibold block">{item.label}</span>
+                          <span className="text-[10px] text-neutral-400">{item.desc}</span>
+                        </div>
                       </div>
+
                       <div className="flex items-center gap-2">
                         {item.id !== 'none' && (
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
+                              updateSettings({ sound: item.id });
                               handleTestSound(item.id);
                             }}
-                            className="p-1 rounded-lg bg-[#1e1e22] text-xs text-neutral-300 hover:text-white flex items-center gap-1 px-2 border border-[#323236]"
+                            className={`p-1 rounded-lg text-xs flex items-center gap-1 px-2.5 py-1 border transition-colors ${
+                              isThisPlaying
+                                ? 'bg-[#ff6b00] text-white border-[#ff6b00]'
+                                : 'bg-[#1e1e22] text-neutral-300 hover:text-white border-[#323236]'
+                            }`}
                           >
-                            <Play className="w-3 h-3 fill-current" />
-                            <span>Testar</span>
+                            {isThisPlaying ? (
+                              <>
+                                <Square className="w-3 h-3 fill-current" />
+                                <span>Parar</span>
+                              </>
+                            ) : (
+                              <>
+                                <Play className="w-3 h-3 fill-current" />
+                                <span>Testar</span>
+                              </>
+                            )}
                           </button>
                         )}
-                        {isSelected && <Check className="w-4 h-4 text-[#4c82f7] stroke-[2.5]" />}
+                        {isSelected && <Check className="w-4 h-4 text-[#ff6b00] stroke-[2.5]" />}
                       </div>
                     </div>
                   );
@@ -274,11 +545,41 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
               </div>
             </div>
 
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-4">
+            {/* DURATION PRESET (5 MINUTES) */}
+            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-semibold text-white block">Volume dos Sons</span>
-                  <span className="text-xs text-neutral-400">Intensidade dos alertas e sons de foco</span>
+                  <span className="text-sm font-semibold text-white block">Duração Máxima do Alarme</span>
+                  <span className="text-xs text-neutral-400">Tempo que o som tocará até auto-desligar</span>
+                </div>
+                <span className="text-xs font-mono text-[#ff6b00] font-bold">
+                  {settings.alarmDuration || 5} Minutos
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[1, 3, 5, 10].map(mins => (
+                  <button
+                    key={mins}
+                    type="button"
+                    onClick={() => updateSettings({ alarmDuration: mins })}
+                    className={`py-2 text-xs font-bold rounded-xl border transition-colors ${
+                      (settings.alarmDuration || 5) === mins
+                        ? 'bg-[#ff6b00] text-white border-[#ff6b00]'
+                        : 'bg-[#141416] text-neutral-400 border-[#262629]'
+                    }`}
+                  >
+                    {mins} min
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* VOLUME SLIDER */}
+            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm font-semibold text-white block">Volume do Alarme</span>
+                  <span className="text-xs text-neutral-400">Intensidade sonora dos alertas</span>
                 </div>
                 <span className="text-xs font-mono text-neutral-300">
                   {Math.round((settings.volume ?? 0.8) * 100)}%
@@ -291,27 +592,43 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                 step="0.05"
                 value={settings.volume ?? 0.8}
                 onChange={e => updateSettings({ volume: parseFloat(e.target.value) })}
-                className="w-full accent-[#4c82f7]"
+                className="w-full accent-[#ff6b00]"
               />
             </div>
 
+            {/* VIBRATION TOGGLE */}
             <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 flex items-center justify-between">
               <div>
-                <span className="text-sm font-semibold text-white block">Vibração</span>
-                <span className="text-xs text-neutral-400">Vibrar ao completar tarefa ou pomodoro</span>
+                <span className="text-sm font-semibold text-white block">Vibração Contínua do Celular</span>
+                <span className="text-xs text-neutral-400">Vibrar vigorosamente junto com o som do alarme</span>
               </div>
               <button
                 type="button"
                 onClick={() => updateSettings({ vibration: !settings.vibration })}
                 className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                  settings.vibration ? 'bg-[#4c82f7]' : 'bg-neutral-700'
+                  settings.vibration !== false ? 'bg-[#ff6b00]' : 'bg-neutral-700'
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
-                  settings.vibration ? 'translate-x-6' : 'translate-x-0'
+                  settings.vibration !== false ? 'translate-x-6' : 'translate-x-0'
                 }`} />
               </button>
             </div>
+
+            {/* FULL SCREEN ALARM TEST BUTTON */}
+            <button
+              type="button"
+              onClick={() => {
+                handleStopTest();
+                if (onTriggerTestAlarm) {
+                  onTriggerTestAlarm(settings.sound || (customAudio ? 'custom' : 'radar'));
+                }
+              }}
+              className="w-full py-3.5 bg-gradient-to-r from-[#ff6b00] to-[#ea580c] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all"
+            >
+              <Bell className="w-4 h-4 animate-bounce" />
+              <span>Disparar Alarme de Teste em Tela Cheia</span>
+            </button>
           </div>
         )}
 
@@ -321,7 +638,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
             <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
               <h3 className="text-sm font-bold text-white">Tema de Fundo</h3>
               {[
-                { id: 'amoled', label: 'Preto AMOLED Puro (#000000)', desc: 'Recomendado para tela OLED / economia de bateria' },
+                { id: 'amoled', label: 'Preto AMOLED Puro (#000000)', desc: 'Recomendado para tela OLED / economia máxima de bateria' },
                 { id: 'charcoal', label: 'Cinza Carvão Escuro (#121215)', desc: 'Contraste suave' },
                 { id: 'graphite', label: 'Grafite Noturno (#1a1a1f)', desc: 'Tom moderno e elegante' }
               ].map(t => (
@@ -330,7 +647,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                   onClick={() => updateSettings({ theme: t.id })}
                   className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer ${
                     (settings.theme || 'amoled') === t.id 
-                      ? 'bg-[#28282e] border-[#4c82f7] text-white' 
+                      ? 'bg-[#28282e] border-[#ff6b00] text-white shadow-md' 
                       : 'bg-[#141416] border-[#262629] text-neutral-300'
                   }`}
                 >
@@ -338,7 +655,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                     <span className="text-xs font-bold block">{t.label}</span>
                     <span className="text-[11px] text-neutral-400">{t.desc}</span>
                   </div>
-                  {(settings.theme || 'amoled') === t.id && <Check className="w-4 h-4 text-[#4c82f7]" />}
+                  {(settings.theme || 'amoled') === t.id && <Check className="w-4 h-4 text-[#ff6b00]" />}
                 </div>
               ))}
             </div>
@@ -347,9 +664,9 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
               <h3 className="text-sm font-bold text-white">Cor de Destaque</h3>
               <div className="flex gap-3">
                 {[
-                  { color: '#4c82f7', label: 'Azul TickTick' },
+                  { color: '#ff6b00', label: 'Laranja TickTick Pop' },
+                  { color: '#4c82f7', label: 'Azul Clássico' },
                   { color: '#10b981', label: 'Esmeralda' },
-                  { color: '#f97316', label: 'Laranja' },
                   { color: '#8b5cf6', label: 'Roxo' },
                   { color: '#ec4899', label: 'Rosa' }
                 ].map(c => (
@@ -357,11 +674,11 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                     key={c.color}
                     onClick={() => updateSettings({ accentColor: c.color })}
                     className={`w-9 h-9 rounded-full flex items-center justify-center transition-transform ${
-                      (settings.accentColor || '#4c82f7') === c.color ? 'scale-115 ring-2 ring-white' : ''
+                      (settings.accentColor || '#ff6b00') === c.color ? 'scale-115 ring-2 ring-white' : ''
                     }`}
                     style={{ backgroundColor: c.color }}
                   >
-                    {(settings.accentColor || '#4c82f7') === c.color && <Check className="w-4 h-4 text-white stroke-[3]" />}
+                    {(settings.accentColor || '#ff6b00') === c.color && <Check className="w-4 h-4 text-white stroke-[3]" />}
                   </button>
                 ))}
               </div>
@@ -381,7 +698,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                     onClick={() => updateSettings({ timeFormat: fmt })}
                     className={`p-3 rounded-xl border text-xs font-bold transition-colors ${
                       (settings.timeFormat || '24h') === fmt
-                        ? 'bg-[#4c82f7] text-white border-[#4c82f7]'
+                        ? 'bg-[#ff6b00] text-white border-[#ff6b00]'
                         : 'bg-[#141416] text-neutral-300 border-[#262629]'
                     }`}
                   >
@@ -403,7 +720,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                     onClick={() => updateSettings({ startOfWeek: d.id })}
                     className={`p-3 rounded-xl border text-xs font-bold transition-colors ${
                       (settings.startOfWeek || 'domingo') === d.id
-                        ? 'bg-[#4c82f7] text-white border-[#4c82f7]'
+                        ? 'bg-[#ff6b00] text-white border-[#ff6b00]'
                         : 'bg-[#141416] text-neutral-300 border-[#262629]'
                     }`}
                   >
@@ -422,7 +739,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                 type="button"
                 onClick={() => updateSettings({ showWeekNumbers: !settings.showWeekNumbers })}
                 className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                  settings.showWeekNumbers ? 'bg-[#4c82f7]' : 'bg-neutral-700'
+                  settings.showWeekNumbers ? 'bg-[#ff6b00]' : 'bg-neutral-700'
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
@@ -436,7 +753,6 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
         {/* ================= SUB-SCREEN: GERAL ================= */}
         {activeScreen === 'general' && (
           <div className="space-y-4 animate-in fade-in">
-            {/* Matching screenshot photo_2026-10-28_00-42-39.jpg: Avisar antes de sair */}
             <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 flex items-center justify-between">
               <div>
                 <span className="text-sm font-semibold text-white block">Avisar antes de sair</span>
@@ -446,7 +762,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                 type="button"
                 onClick={() => updateSettings({ confirmExit: !settings.confirmExit })}
                 className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                  settings.confirmExit !== false ? 'bg-[#4c82f7]' : 'bg-neutral-700'
+                  settings.confirmExit !== false ? 'bg-[#ff6b00]' : 'bg-neutral-700'
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
@@ -467,7 +783,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                     onClick={() => updateSettings({ delayedSection: pos.id })}
                     className={`p-2.5 rounded-xl border text-xs font-semibold ${
                       (settings.delayedSection || 'top') === pos.id 
-                        ? 'bg-[#4c82f7] text-white border-[#4c82f7]' 
+                        ? 'bg-[#ff6b00] text-white border-[#ff6b00]' 
                         : 'bg-[#141416] text-neutral-400 border-[#262629]'
                     }`}
                   >
@@ -495,7 +811,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
                   onClose();
                   if (onOpenSyncModal) onOpenSyncModal();
                 }}
-                className="w-full py-2.5 bg-[#4c82f7] hover:bg-[#3b72e7] text-white text-xs font-bold rounded-xl shadow-md"
+                className="w-full py-2.5 bg-[#ff6b00] hover:bg-[#ea580c] text-white text-xs font-bold rounded-xl shadow-md"
               >
                 Abrir Assistente de Sincronização API
               </button>
@@ -503,7 +819,7 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
 
             <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Download className="w-4 h-4 text-blue-400" />
+                <Download className="w-4 h-4 text-[#ff6b00]" />
                 Backup Completo (Exportar / Importar)
               </h3>
               <p className="text-xs text-neutral-400">
@@ -556,12 +872,12 @@ export default function SettingsModal({ isOpen, onClose, store, onOpenSyncModal 
         {activeScreen === 'ai' && (
           <div className="space-y-4 animate-in fade-in">
             <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
-              <div className="flex items-center gap-2 text-blue-400">
+              <div className="flex items-center gap-2 text-[#ff6b00]">
                 <Sparkles className="w-5 h-5" />
                 <h3 className="text-sm font-bold text-white">Assistente de Produtividade Gemini</h3>
               </div>
               <p className="text-xs text-neutral-400">
-                O OpenTick integra modelos de IA para decomposição automática de tarefas e sugestão de blocos de tempo livres.
+                O OpenTick integra inteligência local-first para decomposição automática de tarefas e sugestão de blocos de tempo livres.
               </p>
               <div className="p-3 bg-[#141416] rounded-xl border border-[#262629] text-xs text-neutral-300">
                 Status: <span className="text-emerald-400 font-bold">Pronto e Ativo (Local First)</span>

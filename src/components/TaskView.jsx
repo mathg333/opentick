@@ -16,10 +16,12 @@ import {
   Kanban,
   List as ListIcon,
   Edit2,
-  Tag as TagIcon
+  Tag as TagIcon,
+  Repeat
 } from 'lucide-react';
 import CustomDatePickerModal from './CustomDatePickerModal';
 import EditListModal from './EditListModal';
+import TimePickerModal from './TimePickerModal';
 
 export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMenu }) {
   const { 
@@ -41,6 +43,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
   const [viewLayout, setViewLayout] = useState('list'); // 'list' or 'kanban'
   const [isCustomDateModalOpen, setIsCustomDateModalOpen] = useState(false);
   const [isEditListModalOpen, setIsEditListModalOpen] = useState(false);
+  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   const [newTagInput, setNewTagInput] = useState('');
   const [quickTitle, setQuickTitle] = useState('');
   const [quickDueDate, setQuickDueDate] = useState('');
@@ -55,7 +58,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // Determine current view title and active project
+  // Current view title and active project
   let viewTitle = 'Caixa de Entrada';
   let currentProject = null;
   let filteredTasks = state.tasks;
@@ -65,7 +68,12 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     filteredTasks = state.tasks.filter(t => t.projectId === 'inbox');
   } else if (activeView === 'tasks-today') {
     viewTitle = 'Hoje';
-    filteredTasks = state.tasks.filter(t => t.dueDate === todayStr || (!t.completed && t.dueDate && t.dueDate < todayStr));
+    filteredTasks = state.tasks.filter(t => {
+      const matchDue = t.dueDate === todayStr;
+      const matchRecur = t.recurringDates && t.recurringDates.includes(todayStr);
+      const overdue = !t.completed && t.dueDate && t.dueDate < todayStr;
+      return matchDue || matchRecur || overdue;
+    });
   } else if (activeView === 'tasks-completed') {
     viewTitle = 'Concluído';
     filteredTasks = state.tasks.filter(t => t.completed);
@@ -79,9 +87,16 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
   const pendingTasks = filteredTasks.filter(t => !t.completed);
   const completedTasks = filteredTasks.filter(t => t.completed);
 
-  const noDateTasks = pendingTasks.filter(t => !t.dueDate);
-  const todayTasks = pendingTasks.filter(t => t.dueDate === todayStr || (t.dueDate && t.dueDate < todayStr));
-  const upcomingTasks = pendingTasks.filter(t => t.dueDate && t.dueDate > todayStr);
+  const noDateTasks = pendingTasks.filter(t => !t.dueDate && (!t.recurringDates || t.recurringDates.length === 0));
+  const todayTasks = pendingTasks.filter(t => {
+    const isToday = t.dueDate === todayStr || (t.recurringDates && t.recurringDates.includes(todayStr));
+    const isOverdue = t.dueDate && t.dueDate < todayStr;
+    return isToday || isOverdue;
+  });
+  const upcomingTasks = pendingTasks.filter(t => {
+    if (noDateTasks.includes(t) || todayTasks.includes(t)) return false;
+    return true;
+  });
 
   const toggleSection = (key) => {
     setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
@@ -118,6 +133,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     setQuickPriority(0);
   };
 
+  // Multiple Dates Confirmation Handler
   const handleMultipleDatesSelected = ({ dates, time }) => {
     if (!dates || dates.length === 0) return;
     let targetProj = 'inbox';
@@ -126,19 +142,16 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     }
 
     if (selectedTask) {
-      // Apply to currently open task
+      // Set recurring dates on the single task (No duplicates!)
       updateTask(selectedTask.id, {
         dueDate: dates[0],
+        recurringDates: dates,
         startTime: time || selectedTask.startTime
       });
-      // If user selected multiple dates, clone to the other dates as requested!
-      if (dates.length > 1) {
-        addTasksForMultipleDates(selectedTask, dates.slice(1));
-      }
     } else {
-      // Pre-fill quick add or create tasks
+      // Create single task with recurring dates
       addTasksForMultipleDates({
-        title: quickTitle.trim() || 'Nova Tarefa Recorrente',
+        title: quickTitle.trim() || 'Nova Tarefa Programada',
         projectId: targetProj,
         startTime: time,
         priority: 1
@@ -147,19 +160,42 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     }
   };
 
+  // Toggle single date inside task detail calendar
+  const handleToggleDateInTask = (dStr) => {
+    if (!selectedTask) return;
+    const current = selectedTask.recurringDates ? [...selectedTask.recurringDates] : (selectedTask.dueDate ? [selectedTask.dueDate] : []);
+    let updated;
+    if (current.includes(dStr)) {
+      updated = current.filter(d => d !== dStr);
+    } else {
+      updated = [...current, dStr].sort();
+    }
+    updateTask(selectedTask.id, {
+      recurringDates: updated,
+      dueDate: updated[0] || ''
+    });
+  };
+
   // Kanban Columns Data
   const kanbanTodo = filteredTasks.filter(t => !t.completed && (t.kanbanStatus === 'todo' || !t.kanbanStatus));
   const kanbanInProgress = filteredTasks.filter(t => !t.completed && t.kanbanStatus === 'in_progress');
   const kanbanDone = filteredTasks.filter(t => t.completed || t.kanbanStatus === 'done');
 
+  // Month days for detail sheet interactive calendar
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfWeek = new Date(year, month, 1).getDay();
+
   return (
     <div className="flex-1 flex h-full overflow-hidden bg-[#000000]">
       {/* Main Task List Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Top Bar with Layout Switcher (Lista / Kanban) and Edit List */}
+        {/* Top Bar with Layout Switcher (Lista / Trello) and Edit List */}
         <div className="px-4 py-3 flex items-center justify-between bg-[#000000] shrink-0 border-b border-[#1c1c1e]">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-white tracking-tight truncate max-w-[180px] sm:max-w-[260px]">
+            <h1 className="hidden md:block text-lg font-bold text-white tracking-tight truncate max-w-[180px] sm:max-w-[260px]">
               {viewTitle}
             </h1>
             {currentProject && (
@@ -173,42 +209,42 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* View Layout Switcher (Lista vs Kanban) */}
+          <div className="flex items-center gap-2 ml-auto">
+            {/* View Layout Switcher (Lista vs Trello) */}
             <div className="flex items-center bg-[#1c1c1e] p-0.5 rounded-xl border border-[#2c2c2e]">
               <button
                 onClick={() => setViewLayout('list')}
-                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
-                  viewLayout === 'list' ? 'bg-[#2c2c2e] text-white shadow-xs' : 'text-neutral-400 hover:text-white'
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                  viewLayout === 'list' ? 'bg-[#ff6b00] text-white shadow-xs' : 'text-neutral-400 hover:text-white'
                 }`}
                 title="Visualização em Lista"
               >
                 <ListIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Lista</span>
+                <span>Lista</span>
               </button>
               <button
                 onClick={() => setViewLayout('kanban')}
-                className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors ${
-                  viewLayout === 'kanban' ? 'bg-[#2c2c2e] text-white shadow-xs' : 'text-neutral-400 hover:text-white'
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                  viewLayout === 'kanban' ? 'bg-[#ff6b00] text-white shadow-xs' : 'text-neutral-400 hover:text-white'
                 }`}
-                title="Visualização em Quadro Kanban"
+                title="Visualização em Quadro Trello"
               >
                 <Kanban className="w-4 h-4" />
-                <span className="hidden sm:inline">Kanban</span>
+                <span>Trello</span>
               </button>
             </div>
 
             <button 
               onClick={() => setIsCustomDateModalOpen(true)}
-              className="p-1.5 text-neutral-400 hover:text-white rounded-lg"
-              title="Agendamento Múltiplo"
+              className="p-2 text-neutral-300 hover:text-[#ff6b00] bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl transition-colors flex items-center justify-center"
+              title="Agendamento Múltiplo / Calendário"
             >
-              <CalendarIcon className="w-5 h-5" />
+              <CalendarIcon className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* LAYOUT 1: LIST VIEW (Exact TickTick Floating Cards) */}
+        {/* LAYOUT 1: LIST VIEW (Floating Cards) */}
         {viewLayout === 'list' && (
           <div className="flex-1 overflow-y-auto px-3.5 md:px-8 py-3 space-y-3 pb-32">
             {/* Quick Add Bar */}
@@ -227,7 +263,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               <button
                 type="button"
                 onClick={() => setIsCustomDateModalOpen(true)}
-                className="p-1 text-neutral-400 hover:text-white"
+                className="p-1 text-neutral-400 hover:text-[#ff6b00]"
                 title="Escolher datas múltiplas / horário"
               >
                 <CalendarIcon className="w-4 h-4" />
@@ -235,237 +271,328 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               <button
                 type="submit"
                 disabled={!quickTitle.trim()}
-                className="px-3 py-1 bg-[#4c82f7] hover:bg-[#3b72e7] disabled:opacity-30 text-white text-xs font-bold rounded-xl shrink-0"
+                className="px-3 py-1 bg-[#ff6b00] hover:bg-[#ea580c] disabled:opacity-30 text-white text-xs font-bold rounded-xl shrink-0 transition-colors shadow-md"
               >
                 Salvar
               </button>
             </form>
 
-            {/* Section: Sem Data */}
-            {noDateTasks.length > 0 && (
-              <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
-                <div 
-                  onClick={() => toggleSection('noDate')}
-                  className="flex items-center justify-between cursor-pointer select-none pb-2"
-                >
-                  <span className="text-sm font-bold text-white">Sem Data</span>
-                  <div className="flex items-center gap-1 text-xs text-neutral-400">
-                    <span className="font-mono">{noDateTasks.length}</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.noDate ? '-rotate-90' : ''}`} />
+            {/* In "Hoje" View: Show tasks of today directly filling the full screen without nested accordion or extra 'Hoje' titles! */}
+            {activeView === 'tasks-today' ? (
+              <div className="space-y-3">
+                {todayTasks.length === 0 ? (
+                  <div className="py-20 flex flex-col items-center justify-center text-center px-4">
+                    <div className="w-16 h-16 rounded-full bg-[#1c1c1e] border border-[#2c2c2e] flex items-center justify-center mb-3 text-2xl shadow-xl">
+                      ☀️
+                    </div>
+                    <h3 className="text-base font-bold text-white mb-1">Nenhuma tarefa pendente para hoje!</h3>
+                    <p className="text-xs text-neutral-400 max-w-xs mb-5">
+                      Adicione uma nova tarefa acima ou selecione datas específicas no calendário.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomDateModalOpen(true)}
+                      className="px-4 py-2 bg-[#ff6b00] hover:bg-[#ea580c] text-white text-xs font-bold rounded-xl shadow-lg flex items-center gap-2"
+                    >
+                      <CalendarIcon className="w-4 h-4" />
+                      <span>Agendar Tarefas no Calendário</span>
+                    </button>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {todayTasks.map(task => {
+                      const recurCount = task.recurringDates ? task.recurringDates.length : 0;
+                      return (
+                        <div
+                          key={task.id}
+                          onClick={() => setSelectedTaskId(task.id)}
+                          className="bg-[#1c1c1e] hover:bg-[#222226] border border-[#262629] rounded-2xl p-4 flex items-center justify-between gap-3 cursor-pointer shadow-lg active:scale-99 transition-all"
+                        >
+                          <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleTaskCompleted(task.id);
+                              }}
+                              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
+                                task.completed ? 'bg-[#ff6b00] border-[#ff6b00]' : 'border-neutral-500 hover:border-neutral-300'
+                              }`}
+                            >
+                              {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                            </button>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-sm font-semibold text-neutral-100 truncate block">
+                                {task.title}
+                              </span>
+                              <div className="flex items-center gap-2 mt-1">
+                                {task.startTime && (
+                                  <span className="text-xs text-[#ff6b00] flex items-center gap-1 font-bold">
+                                    <Clock className="w-3.5 h-3.5" />
+                                    {task.startTime}
+                                  </span>
+                                )}
+                                {recurCount > 1 && (
+                                  <span className="text-[10px] bg-[#ff6b00]/20 text-[#ff6b00] font-bold px-2 py-0.5 rounded-full border border-[#ff6b00]/30 flex items-center gap-1">
+                                    <Repeat className="w-3 h-3" />
+                                    {recurCount} datas agendadas
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
 
-                {!collapsedSections.noDate && (
-                  <div className="space-y-3 pt-2">
-                    {noDateTasks.map(task => (
-                      <div
-                        key={task.id}
-                        onClick={() => setSelectedTaskId(task.id)}
-                        className="flex items-center justify-between gap-3 cursor-pointer group"
-                      >
-                        <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleTaskCompleted(task.id);
-                            }}
-                            className="w-5 h-5 rounded-md border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
-                          >
-                            {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
-                          </button>
-                          <span className="text-sm font-medium text-neutral-100 truncate block">
-                            {task.title}
-                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {task.priority > 0 && (
+                              <Flag className={`w-4 h-4 ${priorityColors[task.priority]} shrink-0`} />
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onStartPomodoroForTask(task);
+                              }}
+                              className="p-1.5 text-neutral-400 hover:text-[#ff6b00] rounded-lg transition-colors"
+                              title="Iniciar Foco"
+                            >
+                              <Play className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                        {task.priority > 0 && (
-                          <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
-                        )}
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Collapsed completed tasks for today */}
+                {completedTasks.length > 0 && (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection('completed')}
+                      className="w-full flex items-center justify-between text-xs text-neutral-400 py-2 px-1 hover:text-neutral-300"
+                    >
+                      <span>Concluídas Hoje ({completedTasks.length})</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${collapsedSections.completed ? '-rotate-90' : ''}`} />
+                    </button>
+
+                    {!collapsedSections.completed && (
+                      <div className="space-y-2 pt-1 opacity-70">
+                        {completedTasks.map(task => (
+                          <div
+                            key={task.id}
+                            onClick={() => setSelectedTaskId(task.id)}
+                            className="bg-[#141416] border border-[#222226] rounded-xl p-3 flex items-center justify-between gap-3 cursor-pointer"
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleTaskCompleted(task.id);
+                                }}
+                                className="w-5 h-5 rounded-md bg-[#ff6b00] border border-[#ff6b00] flex items-center justify-center shrink-0"
+                              >
+                                <Check className="w-3 h-3 text-white stroke-[3]" />
+                              </button>
+                              <span className="text-xs text-neutral-400 line-through truncate">
+                                {task.title}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteTask(task.id);
+                              }}
+                              className="text-neutral-500 hover:text-rose-400 p-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>
-            )}
+            ) : (
+              /* In other views: render sections as usual */
+              <>
+                {/* Section: Sem Data */}
+                {noDateTasks.length > 0 && (
+                  <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
+                    <div 
+                      onClick={() => toggleSection('noDate')}
+                      className="flex items-center justify-between cursor-pointer select-none pb-2"
+                    >
+                      <span className="text-sm font-bold text-white">Sem Data</span>
+                      <div className="flex items-center gap-1 text-xs text-neutral-400">
+                        <span className="font-mono">{noDateTasks.length}</span>
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.noDate ? '-rotate-90' : ''}`} />
+                      </div>
+                    </div>
 
-            {/* Section: Hoje */}
-            {todayTasks.length > 0 && (
-              <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
-                <div 
-                  onClick={() => toggleSection('today')}
-                  className="flex items-center justify-between cursor-pointer select-none pb-2"
-                >
-                  <span className="text-sm font-bold text-white">Hoje</span>
-                  <div className="flex items-center gap-1 text-xs text-neutral-400">
-                    <span className="font-mono">{todayTasks.length}</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.today ? '-rotate-90' : ''}`} />
-                  </div>
-                </div>
-
-                {!collapsedSections.today && (
-                  <div className="space-y-3 pt-2">
-                    {todayTasks.map(task => (
-                      <div
-                        key={task.id}
-                        onClick={() => setSelectedTaskId(task.id)}
-                        className="flex items-center justify-between gap-3 cursor-pointer group"
-                      >
-                        <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleTaskCompleted(task.id);
-                            }}
-                            className="w-5 h-5 rounded-md border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                    {!collapsedSections.noDate && (
+                      <div className="space-y-3 pt-2">
+                        {noDateTasks.map(task => (
+                          <div
+                            key={task.id}
+                            onClick={() => setSelectedTaskId(task.id)}
+                            className="flex items-center justify-between gap-3 cursor-pointer group"
                           >
-                            {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
-                          </button>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-neutral-100 truncate block">
-                              {task.title}
-                            </span>
-                            {task.startTime && (
-                              <span className="text-xs text-[#4c82f7] flex items-center gap-1 mt-0.5 font-medium">
-                                <Clock className="w-3 h-3" />
-                                {task.startTime}
+                            <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleTaskCompleted(task.id);
+                                }}
+                                className="w-5 h-5 rounded-md border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                              >
+                                {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                              </button>
+                              <span className="text-sm font-medium text-neutral-100 truncate block">
+                                {task.title}
                               </span>
+                            </div>
+                            {task.priority > 0 && (
+                              <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
                             )}
                           </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {task.priority > 0 && (
-                            <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
-                          )}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onStartPomodoroForTask(task);
-                            }}
-                            className="p-1 text-neutral-400 hover:text-amber-400 rounded transition-colors"
-                            title="Foco"
-                          >
-                            <Play className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* Section: Próximas */}
-            {upcomingTasks.length > 0 && (
-              <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
-                <div 
-                  onClick={() => toggleSection('upcoming')}
-                  className="flex items-center justify-between cursor-pointer select-none pb-2"
-                >
-                  <span className="text-sm font-bold text-white">Próximos Dias</span>
-                  <div className="flex items-center gap-1 text-xs text-neutral-400">
-                    <span className="font-mono">{upcomingTasks.length}</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.upcoming ? '-rotate-90' : ''}`} />
+                {/* Section: Próximas */}
+                {upcomingTasks.length > 0 && (
+                  <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
+                    <div 
+                      onClick={() => toggleSection('upcoming')}
+                      className="flex items-center justify-between cursor-pointer select-none pb-2"
+                    >
+                      <span className="text-sm font-bold text-white">Próximos Dias</span>
+                      <div className="flex items-center gap-1 text-xs text-neutral-400">
+                        <span className="font-mono">{upcomingTasks.length}</span>
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.upcoming ? '-rotate-90' : ''}`} />
+                      </div>
+                    </div>
+
+                    {!collapsedSections.upcoming && (
+                      <div className="space-y-3 pt-2">
+                        {upcomingTasks.map(task => {
+                          const recurCount = task.recurringDates ? task.recurringDates.length : 0;
+                          return (
+                            <div
+                              key={task.id}
+                              onClick={() => setSelectedTaskId(task.id)}
+                              className="flex items-center justify-between gap-3 cursor-pointer group"
+                            >
+                              <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleTaskCompleted(task.id);
+                                  }}
+                                  className="w-5 h-5 rounded-md border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                                >
+                                  {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-sm font-medium text-neutral-100 truncate block">
+                                    {task.title}
+                                  </span>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-xs text-neutral-400">
+                                      {task.dueDate} {task.startTime ? ` às ${task.startTime}` : ''}
+                                    </span>
+                                    {recurCount > 1 && (
+                                      <span className="text-[10px] bg-[#ff6b00]/20 text-[#ff6b00] font-bold px-1.5 py-0.2 rounded border border-[#ff6b00]/30 flex items-center gap-1">
+                                        <Repeat className="w-2.5 h-2.5" />
+                                        {recurCount} datas
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {task.priority > 0 && (
+                                <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
-                {!collapsedSections.upcoming && (
-                  <div className="space-y-3 pt-2">
-                    {upcomingTasks.map(task => (
-                      <div
-                        key={task.id}
-                        onClick={() => setSelectedTaskId(task.id)}
-                        className="flex items-center justify-between gap-3 cursor-pointer group"
-                      >
-                        <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleTaskCompleted(task.id);
-                            }}
-                            className="w-5 h-5 rounded-md border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                {/* Section: Concluído */}
+                {completedTasks.length > 0 && (
+                  <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
+                    <div 
+                      onClick={() => toggleSection('completed')}
+                      className="flex items-center justify-between cursor-pointer select-none pb-2"
+                    >
+                      <span className="text-sm font-bold text-neutral-300">Concluído e Não Farei.</span>
+                      <div className="flex items-center gap-1 text-xs text-neutral-400">
+                        <span className="font-mono">{completedTasks.length}</span>
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.completed ? '-rotate-90' : ''}`} />
+                      </div>
+                    </div>
+
+                    {!collapsedSections.completed && (
+                      <div className="space-y-3 pt-2">
+                        {completedTasks.map(task => (
+                          <div
+                            key={task.id}
+                            onClick={() => setSelectedTaskId(task.id)}
+                            className="flex items-start justify-between gap-3 cursor-pointer opacity-75 hover:opacity-100"
                           >
-                            {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
-                          </button>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-neutral-100 truncate block">
-                              {task.title}
-                            </span>
-                            <span className="text-xs text-neutral-400 mt-0.5 block">
-                              {task.dueDate} {task.startTime ? ` às ${task.startTime}` : ''}
-                            </span>
+                            <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleTaskCompleted(task.id);
+                                }}
+                                className="mt-0.5 w-5 h-5 rounded-md bg-[#ff6b00] border border-[#ff6b00] flex items-center justify-center transition-colors shrink-0"
+                              >
+                                <Check className="w-3 h-3 text-white stroke-[3]" />
+                              </button>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs font-medium text-neutral-300 uppercase tracking-wide block truncate line-through">
+                                  {task.title}
+                                </span>
+                                <span className="text-[11px] text-neutral-500 mt-1 block">
+                                  {task.dueDate ? `Concluído: ${task.dueDate}` : 'Concluído'}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteTask(task.id);
+                              }}
+                              className="text-neutral-500 hover:text-rose-400 p-1"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Section: Concluído */}
-            {completedTasks.length > 0 && (
-              <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
-                <div 
-                  onClick={() => toggleSection('completed')}
-                  className="flex items-center justify-between cursor-pointer select-none pb-2"
-                >
-                  <span className="text-sm font-bold text-neutral-300">Concluído e Não Farei.</span>
-                  <div className="flex items-center gap-1 text-xs text-neutral-400">
-                    <span className="font-mono">{completedTasks.length}</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.completed ? '-rotate-90' : ''}`} />
-                  </div>
-                </div>
-
-                {!collapsedSections.completed && (
-                  <div className="space-y-3 pt-2">
-                    {completedTasks.map(task => (
-                      <div
-                        key={task.id}
-                        onClick={() => setSelectedTaskId(task.id)}
-                        className="flex items-start justify-between gap-3 cursor-pointer opacity-75 hover:opacity-100"
-                      >
-                        <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleTaskCompleted(task.id);
-                            }}
-                            className="mt-0.5 w-5 h-5 rounded-md bg-neutral-700/60 border border-neutral-600 flex items-center justify-center transition-colors shrink-0"
-                          >
-                            <Check className="w-3 h-3 text-neutral-300 stroke-[3]" />
-                          </button>
-                          <div className="flex-1 min-w-0">
-                            <span className="text-xs font-medium text-neutral-300 uppercase tracking-wide block truncate line-through">
-                              {task.title}
-                            </span>
-                            <span className="text-[11px] text-neutral-500 mt-1 block">
-                              {task.dueDate ? `Concluído: ${task.dueDate}` : 'Concluído'}
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteTask(task.id);
-                          }}
-                          className="text-neutral-500 hover:text-rose-400 p-1"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              </>
             )}
           </div>
         )}
 
-        {/* LAYOUT 2: KANBAN / TRELLO VIEW (Requested by User) */}
+        {/* LAYOUT 2: KANBAN / TRELLO VIEW */}
         {viewLayout === 'kanban' && (
           <div className="flex-1 overflow-x-auto p-4 flex gap-4 pb-32">
             {[
@@ -477,7 +604,6 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 key={col.id} 
                 className="w-72 shrink-0 bg-[#1c1c1e] rounded-2xl border border-[#2c2c2e] flex flex-col overflow-hidden shadow-xl"
               >
-                {/* Column Header */}
                 <div className="p-3 border-b border-[#28282b] flex items-center justify-between bg-[#141416]">
                   <h3 className="text-xs font-bold text-white">{col.label}</h3>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${col.badge}`}>
@@ -485,7 +611,6 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                   </span>
                 </div>
 
-                {/* Task Cards in Column */}
                 <div className="flex-1 p-3 overflow-y-auto space-y-2">
                   {col.tasks.map(task => (
                     <div
@@ -505,11 +630,10 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       {task.dueDate && (
                         <div className="flex items-center gap-1 text-[10px] text-neutral-400">
                           <CalendarIcon className="w-3 h-3" />
-                          <span>{task.dueDate}</span>
+                          <span>{task.dueDate} {task.startTime ? ` às ${task.startTime}` : ''}</span>
                         </div>
                       )}
 
-                      {/* Move to next column quick button */}
                       <div className="pt-2 border-t border-[#222226] flex items-center justify-between text-[10px]">
                         <button
                           onClick={(e) => {
@@ -579,7 +703,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 type="button"
                 onClick={() => toggleTaskCompleted(selectedTask.id)}
                 className={`mt-1 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                  selectedTask.completed ? 'bg-[#4c82f7] border-[#4c82f7] text-white' : 'border-neutral-500'
+                  selectedTask.completed ? 'bg-[#ff6b00] border-[#ff6b00] text-white' : 'border-neutral-500'
                 }`}
               >
                 {selectedTask.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -592,7 +716,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               />
             </div>
 
-            {/* List / Category Selector (Allows picking ANY list or creating a new one) */}
+            {/* List / Category Selector */}
             <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
               <label className="text-xs text-neutral-400 font-medium">Lista / Categoria</label>
               <div className="flex gap-2">
@@ -610,12 +734,11 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                   onClick={() => {
                     const customCategory = prompt('Nome da nova categoria / lista:');
                     if (customCategory && customCategory.trim()) {
-                      const newProj = addProject({ name: customCategory.trim(), color: '#4c82f7' });
+                      const newProj = addProject({ name: customCategory.trim(), color: '#ff6b00' });
                       updateTask(selectedTask.id, { projectId: newProj.id });
                     }
                   }}
                   className="px-3 py-2 bg-[#141416] hover:bg-[#28282e] border border-[#2c2c2e] rounded-xl text-xs text-neutral-300 font-bold shrink-0"
-                  title="Criar nova categoria livre"
                 >
                   + Nova Lista
                 </button>
@@ -634,37 +757,89 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               />
             </div>
 
-            {/* Date & Time with Custom Multi-Date Picker */}
+            {/* Date & Time Picker */}
             <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
-                  <CalendarIcon className="w-4 h-4 text-blue-400" />
+                  <CalendarIcon className="w-4 h-4 text-[#ff6b00]" />
                   Data de Vencimento
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsCustomDateModalOpen(true)}
-                  className="text-xs text-[#4c82f7] hover:underline font-medium"
+                  className="text-xs text-[#ff6b00] hover:underline font-bold"
                 >
                   {selectedTask.dueDate || 'Escolher data'}
                 </button>
               </div>
 
+              {/* Touch-Friendly Time Button */}
               <div className="flex items-center justify-between pt-2 border-t border-[#262629]">
                 <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-yellow-400" />
+                  <Clock className="w-4 h-4 text-amber-400" />
                   Horário
                 </span>
-                <input
-                  type="time"
-                  value={selectedTask.startTime || ''}
-                  onChange={(e) => updateTask(selectedTask.id, { startTime: e.target.value })}
-                  className="bg-[#141416] border border-[#2c2c2e] rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none"
-                />
+                <button
+                  type="button"
+                  onClick={() => setIsTimePickerOpen(true)}
+                  className="bg-[#141416] hover:bg-[#28282e] border border-[#2c2c2e] rounded-xl px-3 py-1.5 text-xs text-white font-mono font-bold flex items-center gap-1.5"
+                >
+                  <span>{selectedTask.startTime || 'Definir Horário'}</span>
+                </button>
               </div>
             </div>
 
-            {/* Custom Tags / Etiquetas */}
+            {/* FULL MONTH CALENDAR VIEW OF RECURRING DATES (User request!) */}
+            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-white font-bold flex items-center gap-1.5">
+                  <CalendarIcon className="w-4 h-4 text-[#ff6b00]" />
+                  Calendário de Repetições
+                </span>
+                <span className="text-[10px] text-[#ff6b00] font-mono font-bold">
+                  {(selectedTask.recurringDates || []).length} datas marcadas
+                </span>
+              </div>
+              <p className="text-[11px] text-neutral-400">
+                Toque nos dias para adicionar ou remover da repetição:
+              </p>
+
+              {/* Mini Month Grid */}
+              <div className="pt-2">
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-neutral-500 font-bold uppercase mb-1">
+                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <span key={i}>{d}</span>)}
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-center">
+                  {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                    <div key={`empty-${i}`} className="h-7" />
+                  ))}
+                  {Array.from({ length: daysInMonth }).map((_, i) => {
+                    const dayNum = i + 1;
+                    const mo = String(month + 1).padStart(2, '0');
+                    const dy = String(dayNum).padStart(2, '0');
+                    const dStr = `${year}-${mo}-${dy}`;
+                    const isMarked = selectedTask.recurringDates && selectedTask.recurringDates.includes(dStr);
+
+                    return (
+                      <button
+                        key={dStr}
+                        type="button"
+                        onClick={() => handleToggleDateInTask(dStr)}
+                        className={`h-7 w-7 mx-auto rounded-full text-[11px] font-bold flex items-center justify-center transition-all ${
+                          isMarked
+                            ? 'bg-[#ff6b00] text-white shadow-md scale-105'
+                            : 'text-neutral-300 hover:bg-[#28282e]'
+                        }`}
+                      >
+                        {dayNum}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Custom Tags */}
             <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
               <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
                 <TagIcon className="w-4 h-4 text-neutral-400" />
@@ -672,7 +847,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {(selectedTask.tags || []).map(tg => (
-                  <span key={tg} className="text-xs bg-[#141416] text-[#4c82f7] px-2.5 py-1 rounded-lg border border-[#2c2c2e] flex items-center gap-1">
+                  <span key={tg} className="text-xs bg-[#141416] text-[#ff6b00] px-2.5 py-1 rounded-lg border border-[#2c2c2e] flex items-center gap-1 font-semibold">
                     #{tg}
                     <button
                       type="button"
@@ -709,7 +884,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       setNewTagInput('');
                     }
                   }}
-                  className="px-3 py-1.5 bg-[#2c2c2e] hover:bg-[#38383c] text-white rounded-xl text-xs font-bold"
+                  className="px-3 py-1.5 bg-[#ff6b00] hover:bg-[#ea580c] text-white rounded-xl text-xs font-bold"
                 >
                   +
                 </button>
@@ -752,7 +927,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       <button
                         onClick={() => toggleSubtask(selectedTask.id, sub.id)}
                         className={`w-4 h-4 rounded border flex items-center justify-center ${
-                          sub.completed ? 'bg-[#4c82f7] border-[#4c82f7] text-white' : 'border-neutral-500'
+                          sub.completed ? 'bg-[#ff6b00] border-[#ff6b00] text-white' : 'border-neutral-500'
                         }`}
                       >
                         {sub.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -790,7 +965,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 setSelectedTaskId(null);
                 onStartPomodoroForTask(selectedTask);
               }}
-              className="w-full py-3 bg-[#4c82f7] text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-xl active:scale-98"
+              className="w-full py-3 bg-[#ff6b00] hover:bg-[#ea580c] text-white rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-xl active:scale-98 transition-colors"
             >
               <Play className="w-4 h-4 fill-current" />
               Iniciar Pomodoro Nesta Tarefa
@@ -799,12 +974,23 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
         </div>
       )}
 
-      {/* Custom Multi-Date & Recurring Picker Modal */}
+      {/* Custom Multi-Date Picker Modal */}
       <CustomDatePickerModal
         isOpen={isCustomDateModalOpen}
         onClose={() => setIsCustomDateModalOpen(false)}
         initialDate={selectedTask?.dueDate || quickDueDate}
+        initialTime={selectedTask?.startTime || ''}
         onSelectDates={handleMultipleDatesSelected}
+      />
+
+      {/* Touch-Friendly Time Picker Modal */}
+      <TimePickerModal
+        isOpen={isTimePickerOpen}
+        onClose={() => setIsTimePickerOpen(false)}
+        initialTime={selectedTask?.startTime || ''}
+        onSelectTime={(t) => {
+          if (selectedTask) updateTask(selectedTask.id, { startTime: t });
+        }}
       />
 
       {/* Edit List Modal */}
