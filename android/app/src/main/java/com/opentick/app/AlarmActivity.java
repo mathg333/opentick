@@ -6,13 +6,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.TextView;
@@ -31,6 +34,8 @@ public class AlarmActivity extends Activity {
     private TextView mClockTimeView;
     private TextView mClockDateView;
     private View mBellContainer;
+    private View mOuterRipple;
+    private View mMidRipple;
 
     private String mTaskId = "";
     private String mTaskTitle = "Lembrete OpenTick";
@@ -46,8 +51,8 @@ public class AlarmActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Configure activity to wake up screen and show directly over lockscreen
-        configureLockScreen();
+        // Configure edge-to-edge translucent frosted glass & lockscreen flags
+        configureWindowAndLockScreen();
 
         setContentView(R.layout.activity_alarm);
 
@@ -67,10 +72,12 @@ public class AlarmActivity extends Activity {
         mClockTimeView = findViewById(R.id.alarm_clock_time);
         mClockDateView = findViewById(R.id.alarm_clock_date);
         mBellContainer = findViewById(R.id.alarm_bell_container);
+        mOuterRipple = findViewById(R.id.alarm_outer_ripple);
+        mMidRipple = findViewById(R.id.alarm_mid_ripple);
 
-        // Start Clock & Pulse Animation
+        // Start Clock & Multi-stage Soundwave Pulse Animation
         setupLiveClock();
-        setupPulseAnimation();
+        setupGlassRipplesAnimation();
 
         // Button: Stop Alarm
         Button btnStop = findViewById(R.id.btn_stop_alarm);
@@ -119,7 +126,8 @@ public class AlarmActivity extends Activity {
         }
     }
 
-    private void configureLockScreen() {
+    private void configureWindowAndLockScreen() {
+        // Lock screen display & wakeup
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true);
             setTurnScreenOn(true);
@@ -138,6 +146,23 @@ public class AlarmActivity extends Activity {
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         );
+
+        // Android 12+ (API 31+) Native Frosted Glass Window Blur
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
+            getWindow().getAttributes().setBlurBehindRadius(75);
+        }
+
+        // Edge-to-edge transparent system bars
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(Color.TRANSPARENT);
+            getWindow().setNavigationBarColor(Color.TRANSPARENT);
+            getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            );
+        }
     }
 
     private void setupLiveClock() {
@@ -161,18 +186,66 @@ public class AlarmActivity extends Activity {
         mTimeHandler.post(mTimeRunnable);
     }
 
-    private void setupPulseAnimation() {
-        if (mBellContainer == null) return;
-        ScaleAnimation pulse = new ScaleAnimation(
-            0.95f, 1.10f,
-            0.95f, 1.10f,
-            Animation.RELATIVE_TO_SELF, 0.5f,
-            Animation.RELATIVE_TO_SELF, 0.5f
-        );
-        pulse.setDuration(700);
-        pulse.setRepeatMode(Animation.REVERSE);
-        pulse.setRepeatCount(Animation.INFINITE);
-        mBellContainer.startAnimation(pulse);
+    private void setupGlassRipplesAnimation() {
+        // 1. Center Bell Pulse
+        if (mBellContainer != null) {
+            ScaleAnimation bellPulse = new ScaleAnimation(
+                0.95f, 1.08f,
+                0.95f, 1.08f,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF, 0.5f
+            );
+            bellPulse.setDuration(750);
+            bellPulse.setRepeatMode(Animation.REVERSE);
+            bellPulse.setRepeatCount(Animation.INFINITE);
+            mBellContainer.startAnimation(bellPulse);
+        }
+
+        // 2. Mid Soundwave Ripple (scale + alpha)
+        if (mMidRipple != null) {
+            AnimationSet midSet = new AnimationSet(true);
+            ScaleAnimation midScale = new ScaleAnimation(
+                0.90f, 1.25f,
+                0.90f, 1.25f,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF, 0.5f
+            );
+            midScale.setDuration(1200);
+            midScale.setRepeatMode(Animation.RESTART);
+            midScale.setRepeatCount(Animation.INFINITE);
+
+            AlphaAnimation midAlpha = new AlphaAnimation(0.7f, 0.05f);
+            midAlpha.setDuration(1200);
+            midAlpha.setRepeatMode(Animation.RESTART);
+            midAlpha.setRepeatCount(Animation.INFINITE);
+
+            midSet.addAnimation(midScale);
+            midSet.addAnimation(midAlpha);
+            mMidRipple.startAnimation(midSet);
+        }
+
+        // 3. Outer Soundwave Ripple
+        if (mOuterRipple != null) {
+            AnimationSet outerSet = new AnimationSet(true);
+            ScaleAnimation outerScale = new ScaleAnimation(
+                0.85f, 1.35f,
+                0.85f, 1.35f,
+                Animation.RELATIVE_TO_SELF, 0.5f,
+                Animation.RELATIVE_TO_SELF, 0.5f
+            );
+            outerScale.setDuration(1600);
+            outerScale.setRepeatMode(Animation.RESTART);
+            outerScale.setRepeatCount(Animation.INFINITE);
+
+            AlphaAnimation outerAlpha = new AlphaAnimation(0.6f, 0.0f);
+            outerAlpha.setDuration(1600);
+            outerAlpha.setRepeatMode(Animation.RESTART);
+            outerAlpha.setRepeatCount(Animation.INFINITE);
+
+            outerSet.addAnimation(outerScale);
+            outerSet.addAnimation(outerAlpha);
+            mOuterRipple.startAnimation(outerSet);
+        }
     }
 
     @Override

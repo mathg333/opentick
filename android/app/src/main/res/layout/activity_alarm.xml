@@ -1,172 +1,255 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#000000"
-    android:gravity="center_horizontal"
-    android:paddingStart="24dp"
-    android:paddingEnd="24dp"
-    android:paddingTop="36dp"
-    android:paddingBottom="28dp">
+    android:background="#D0050508">
 
-    <!-- Top Status Indicator -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <View
-            android:id="@+id/alarm_pulsing_dot"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/bg_alarm_bell_circle" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ALARME EM EXECUÇÃO • OPENTICK"
-            android:textColor="#ff6b00"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.08" />
-    </LinearLayout>
-
-    <!-- Center Content Spacer -->
+    <!-- Ambient Neon Orange Radial Glow (Refracted through translucent frosted glass) -->
     <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.8" />
-
-    <!-- Pulsing Bell Icon -->
-    <RelativeLayout
-        android:id="@+id/alarm_bell_container"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:gravity="center"
-        android:background="@drawable/bg_alarm_bell_circle">
-
-        <ImageView
-            android:id="@+id/alarm_bell_icon"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:src="@android:drawable/ic_lock_idle_alarm"
-            android:tint="#ffffff" />
-    </RelativeLayout>
-
-    <!-- Real-time Digital Clock -->
-    <TextView
-        android:id="@+id/alarm_clock_time"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:text="00:00"
-        android:textColor="#ffffff"
-        android:textSize="54sp"
-        android:textStyle="bold"
-        android:fontFamily="monospace" />
-
-    <!-- Date Text -->
-    <TextView
-        android:id="@+id/alarm_clock_date"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="quarta-feira, 28 de outubro"
-        android:textColor="#a1a1aa"
-        android:textSize="14sp" />
+        android:layout_width="320dp"
+        android:layout_height="320dp"
+        android:layout_gravity="center_horizontal|top"
+        android:layout_marginTop="80dp"
+        android:background="@drawable/bg_ambient_glow" />
 
     <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.6" />
+        android:layout_width="260dp"
+        android:layout_height="260dp"
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="100dp"
+        android:background="@drawable/bg_ambient_glow" />
 
-    <!-- Task Information Card -->
+    <!-- Main Foreground Content Layout -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="@drawable/bg_alarm_card"
-        android:padding="20dp">
+        android:gravity="center_horizontal"
+        android:paddingStart="22dp"
+        android:paddingEnd="22dp"
+        android:paddingTop="42dp"
+        android:paddingBottom="42dp">
 
-        <TextView
+        <!-- Top Frosted Status Pill -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="LEMBRETE DA TAREFA"
-            android:textColor="#ff6b00"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.08" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_glass_pill"
+            android:paddingStart="14dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
 
-        <TextView
-            android:id="@+id/alarm_task_title"
+            <View
+                android:id="@+id/alarm_pulsing_dot"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_alarm_bell_circle" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ALARME ATIVO • OPENTICK"
+                android:textColor="#FF7A00"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1" />
+        </LinearLayout>
+
+        <!-- Flexible Spacer -->
+        <View
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Minha Tarefa Importante"
-            android:textColor="#ffffff"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:maxLines="3"
-            android:ellipsize="end" />
+            android:layout_height="0dp"
+            android:layout_weight="0.8" />
 
+        <!-- Concentric Glass Soundwave Rings + Pulsing Bell -->
+        <RelativeLayout
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:gravity="center">
+
+            <!-- Outer Glass Ring Ripple -->
+            <View
+                android:id="@+id/alarm_outer_ripple"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/bg_bell_ripple" />
+
+            <!-- Mid Glass Ring Ripple -->
+            <View
+                android:id="@+id/alarm_mid_ripple"
+                android:layout_width="128dp"
+                android:layout_height="128dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/bg_bell_ripple" />
+
+            <!-- Center Radiant Glowing Sphere -->
+            <RelativeLayout
+                android:id="@+id/alarm_bell_container"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                android:layout_centerInParent="true"
+                android:gravity="center"
+                android:background="@drawable/bg_alarm_bell_circle">
+
+                <ImageView
+                    android:id="@+id/alarm_bell_icon"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:src="@android:drawable/ic_lock_idle_alarm"
+                    android:tint="#ffffff" />
+            </RelativeLayout>
+        </RelativeLayout>
+
+        <!-- Giant Minimalist Digital Clock -->
         <TextView
-            android:id="@+id/alarm_task_time_badge"
+            android:id="@+id/alarm_clock_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="⏰ Programado no OpenTick"
-            android:textColor="#d4d4d8"
+            android:layout_marginTop="16dp"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="58sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:shadowColor="#80FF6B00"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="12" />
+
+        <!-- Date Pill -->
+        <TextView
+            android:id="@+id/alarm_clock_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_glass_pill"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:text="quarta-feira, 28 de outubro"
+            android:textColor="#C4C4CC"
             android:textSize="13sp" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Flexible Spacer -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.6" />
+
+        <!-- Ultra-luxurious Frosted Glass Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Toque nos botões abaixo para desligar ou adiar"
-            android:textColor="#71717a"
-            android:textSize="11sp" />
+            android:orientation="vertical"
+            android:background="@drawable/bg_glass_card"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LEMBRETE DA TAREFA"
+                android:textColor="#FF7A00"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.1" />
+
+            <TextView
+                android:id="@+id/alarm_task_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Minha Tarefa Importante"
+                android:textColor="#FFFFFF"
+                android:textSize="21sp"
+                android:textStyle="bold"
+                android:maxLines="3"
+                android:ellipsize="end" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_glass_pill"
+                android:paddingStart="10dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp">
+
+                <TextView
+                    android:id="@+id/alarm_task_time_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⏰ Programado no OpenTick"
+                    android:textColor="#E4E4E7"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Tocando continuamente • Toque abaixo para desligar"
+                android:textColor="#A1A1AA"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Flexible Spacer -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1.0" />
+
+        <!-- Action Controls -->
+        <!-- Big Liquid Neon Orange Stop Button -->
+        <Button
+            android:id="@+id/btn_stop_alarm"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:background="@drawable/bg_glass_stop_btn"
+            android:text="⏹️  PARAR ALARME"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04"
+            android:stateListAnimator="@null" />
+
+        <!-- Frosted Glass Snooze Button -->
+        <Button
+            android:id="@+id/btn_snooze_alarm"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_glass_snooze_btn"
+            android:text="💤  Adiar por 5 minutos (Snooze)"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:stateListAnimator="@null" />
+
+        <!-- Subtle Translucent Pill Button -->
+        <Button
+            android:id="@+id/btn_open_app"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_glass_pill"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:text="Abrir tarefa no aplicativo ↗"
+            android:textColor="#D4D4D8"
+            android:textSize="12sp"
+            android:stateListAnimator="@null" />
+
     </LinearLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1.0" />
-
-    <!-- Action Buttons -->
-    <Button
-        android:id="@+id/btn_stop_alarm"
-        android:layout_width="match_parent"
-        android:layout_height="58dp"
-        android:background="@drawable/bg_alarm_stop_btn"
-        android:text="⏹️  PARAR ALARME"
-        android:textColor="#ffffff"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:stateListAnimator="@null" />
-
-    <Button
-        android:id="@+id/btn_snooze_alarm"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_alarm_snooze_btn"
-        android:text="💤  Adiar por 5 minutos (Snooze)"
-        android:textColor="#e4e4e7"
-        android:textSize="14sp"
-        android:stateListAnimator="@null" />
-
-    <Button
-        android:id="@+id/btn_open_app"
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="8dp"
-        android:background="@android:color/transparent"
-        android:text="Abrir tarefa no aplicativo ↗"
-        android:textColor="#a1a1aa"
-        android:textSize="13sp"
-        android:stateListAnimator="@null" />
-
-</LinearLayout>
+</FrameLayout>
