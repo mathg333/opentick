@@ -194,9 +194,6 @@ export default function Sidebar({
               <span className="font-extrabold text-base text-white tracking-tight truncate">
                 {profile.name || 'Mathx'}
               </span>
-              <span className="text-[9px] bg-[#ff6b00]/20 text-[#ff6b00] font-black px-1.5 py-0.5 rounded border border-[#ff6b00]/30 shrink-0">
-                PRO
-              </span>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-neutral-400 mt-0.5">
               <div className="flex items-center gap-1">
@@ -421,13 +418,10 @@ export default function Sidebar({
 
         <div className="border-t border-[#242428] my-2" />
 
-        {/* PRO Premium Unlocked Section with Rich Glowing Badges */}
+        {/* Ferramentas e Recursos */}
         <div className="space-y-1">
           <div className="px-2 pb-1.5 text-[10px] font-black text-neutral-400 uppercase tracking-widest flex items-center justify-between">
-            <span>Ferramentas PRO</span>
-            <span className="text-[9px] bg-emerald-500/20 text-emerald-400 font-black px-1.5 py-0.5 rounded border border-emerald-500/30">
-              100% GRÁTIS
-            </span>
+            <span>Recursos & Ferramentas</span>
           </div>
 
           {[
@@ -435,7 +429,7 @@ export default function Sidebar({
             { id: 'eisenhower', label: 'Matriz de Eisenhower', icon: Grid, gradient: 'from-emerald-500 to-teal-600' },
             { id: 'habits', label: 'Rastreador de Hábitos', icon: Flame, gradient: 'from-amber-500 to-orange-600' },
             { id: 'pomodoro', label: 'Pomodoro & Ruídos', icon: Clock, gradient: 'from-rose-500 to-red-600' },
-            { id: 'stats', label: 'Estatísticas & Insights', icon: BarChart3, gradient: 'from-indigo-500 to-purple-600' }
+            { id: 'stats', label: 'Progresso Nível XP', icon: BarChart3, gradient: 'from-indigo-500 to-purple-600' }
           ].map(tool => {
             const Icon = tool.icon;
             const isActive = activeView === tool.id;

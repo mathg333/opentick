@@ -117,9 +117,6 @@ export default function PomodoroTimer({ store, activeTask }) {
               <h1 className="text-base md:text-xl font-bold text-neutral-100">
                 Pomodoro & Modo Foco
               </h1>
-              <span className="text-[9px] md:text-[10px] bg-neutral-800 text-neutral-300 font-bold px-2 py-0.5 rounded border border-neutral-700">
-                PRO GRATUITO
-              </span>
             </div>
             <p className="text-xs text-neutral-500 hidden sm:block">
               Timer de alta precisão com sons ambientes sintetizados

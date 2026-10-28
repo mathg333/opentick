@@ -109,9 +109,6 @@ export default function EisenhowerMatrix({ store }) {
                 <h1 className="text-base md:text-xl font-bold text-neutral-100">
                   Matriz de Eisenhower
                 </h1>
-                <span className="text-[9px] md:text-[10px] bg-neutral-800 text-neutral-300 font-bold px-2 py-0.5 rounded border border-neutral-700">
-                  PRO GRATUITO
-                </span>
               </div>
               <p className="text-xs text-neutral-500 hidden sm:block">
                 Priorização estratégica dos 4 quadrantes

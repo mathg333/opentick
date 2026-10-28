@@ -14,7 +14,8 @@ import {
   Check, 
   ChevronRight,
   Camera,
-  Award
+  Award,
+  Crown
 } from 'lucide-react';
 import RankShield2D from './RankShield2D';
 import { calculateGamification, RANKS_CONFIG } from '../utils/gamification';
@@ -23,6 +24,7 @@ import ProfileCustomizeModal from './ProfileCustomizeModal';
 export default function ProductivityStats({ store }) {
   const { state } = store;
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [previewRank, setPreviewRank] = useState(null);
 
   const profile = state.userProfile || {
     name: 'Mathx',
@@ -34,6 +36,8 @@ export default function ProductivityStats({ store }) {
   };
 
   const stats = calculateGamification(state);
+  const displayedRank = previewRank || stats.currentRank;
+  const isPreviewing = previewRank && previewRank.tier !== stats.currentRank.tier;
 
   const totalTasks = state.tasks.length;
   const completedTasks = state.tasks.filter(t => t.completed).length;
@@ -66,8 +70,8 @@ export default function ProductivityStats({ store }) {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#0c0c0e]">
-      {/* Header */}
-      <div className="px-4 py-3 md:px-8 md:pt-6 md:pb-4 border-b border-[#222226] bg-[#0c0c0e] flex items-center justify-between shrink-0">
+      {/* Desktop Header - Limpo e Minimalista */}
+      <div className="hidden md:flex px-8 pt-5 pb-4 border-b border-[#1c1c22] bg-[#0c0c0e] items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-[#ff6b00] p-0.5 shadow-md shadow-[#ff6b00]/20 flex items-center justify-center shrink-0">
             <div className="w-full h-full rounded-[10px] bg-[#121215] flex items-center justify-center">
@@ -75,23 +79,15 @@ export default function ProductivityStats({ store }) {
             </div>
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base md:text-xl font-black text-white tracking-tight">
-                Estatísticas & Gamificação RPG
-              </h1>
-              <span className="text-[9px] md:text-[10px] bg-[#ff6b00]/20 text-[#ff6b00] font-black px-2 py-0.5 rounded border border-[#ff6b00]/30">
-                PRO GRATUITO
-              </span>
-            </div>
-            <p className="text-xs text-neutral-400 hidden sm:block">
-              Evolua de ranking, conquiste escudos 2D e suba de nível com suas tarefas
-            </p>
+            <h1 className="text-xl font-black text-white tracking-tight">
+              Progresso Nível XP
+            </h1>
           </div>
         </div>
 
         <button
           onClick={() => setIsProfileModalOpen(true)}
-          className="text-xs font-bold text-white bg-[#1c1c22] hover:bg-[#25252d] border border-[#2c2c34] px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all shadow"
+          className="text-xs font-bold text-white bg-[#1c1c22] hover:bg-[#25252d] border border-[#2c2c34] px-3.5 py-1.5 rounded-xl flex items-center gap-2 transition-all shadow"
         >
           <Camera className="w-3.5 h-3.5 text-[#ff6b00]" />
           <span>Editar Perfil & Capa</span>
@@ -99,33 +95,37 @@ export default function ProductivityStats({ store }) {
       </div>
 
       {/* Main Scrollable Body */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-8 space-y-6 max-w-5xl pb-28 md:pb-12">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6 md:p-8 space-y-6 max-w-5xl pb-28 md:pb-12 pt-3 sm:pt-6">
         
-        {/* 1. HERO PLAYER RPG CARD */}
+        {/* 1. HERO PLAYER CARD - Posicionado no topo */}
         <div className="rounded-3xl border border-[#27272a] overflow-hidden bg-[#121215] shadow-2xl relative">
           {/* Banner Capa */}
           <div 
-            className="h-32 sm:h-40 w-full relative bg-cover bg-center flex items-end p-4"
+            className="h-32 sm:h-44 w-full relative bg-cover bg-center flex items-start justify-end p-3 sm:p-4"
             style={getCoverBg()}
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/45 to-[#121215]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-[#121215]" />
             
             <button
               onClick={() => setIsProfileModalOpen(true)}
-              className="relative z-10 text-xs font-bold text-white bg-black/60 hover:bg-black/80 px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md flex items-center gap-1.5 shadow transition-all ml-auto"
+              className="relative z-10 text-[11px] sm:text-xs font-bold text-white bg-black/65 hover:bg-black/85 px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md flex items-center gap-1.5 shadow transition-all active:scale-95"
+              title="Trocar Foto de Perfil ou Imagem de Capa"
             >
               <Camera className="w-3.5 h-3.5 text-[#ff6b00]" />
-              Trocar Foto / Capa
+              <span>Trocar Foto / Capa</span>
             </button>
           </div>
 
-          {/* Profile Details & Big Shield Row */}
-          <div className="px-4 sm:px-6 pb-6 relative -mt-12 sm:-mt-16 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-            
-            <div className="flex items-end gap-4">
-              {/* Avatar with Ring */}
-              <div className="relative group shrink-0">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-emerald-500 via-amber-500 to-[#ff6b00] p-1.5 shadow-2xl ring-4 ring-[#121215]">
+          {/* Profile Details (Avatar, Nome, Título) */}
+          <div className="px-4 sm:px-6 pb-2 relative -mt-12 sm:-mt-16 flex items-end justify-between gap-4">
+            <div className="flex items-end gap-3.5 sm:gap-4">
+              {/* Avatar com ação de clique direto para editar */}
+              <div 
+                onClick={() => setIsProfileModalOpen(true)}
+                className="relative group shrink-0 cursor-pointer" 
+                title="Toque para alterar avatar e perfil"
+              >
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-amber-500 via-[#ff6b00] to-orange-400 p-1 shadow-2xl ring-4 ring-[#121215] group-hover:scale-105 transition-transform">
                   <div className="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center font-black text-white text-3xl sm:text-4xl select-none">
                     {profile.avatarType === 'image' && profile.avatar ? (
                       <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -134,19 +134,20 @@ export default function ProductivityStats({ store }) {
                     )}
                   </div>
                 </div>
-                <span className="absolute -top-1 -right-1 bg-amber-400 text-black text-xs font-black rounded-full p-0.5 shadow-md flex items-center justify-center w-6 h-6">
-                  👑
-                </span>
+                <div className="absolute bottom-0 right-0 bg-[#ff6b00] text-white rounded-full p-1.5 shadow-md border-2 border-[#121215] flex items-center justify-center">
+                  <Camera className="w-3.5 h-3.5" />
+                </div>
               </div>
 
-              {/* Name & Title */}
+              {/* Nome, Nível e Título */}
               <div className="space-y-1 mb-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                     {profile.name || 'Mathx'}
                   </h2>
-                  <span className="bg-amber-400/20 text-amber-300 font-extrabold text-[10px] px-2 py-0.5 rounded-full border border-amber-400/40 font-mono">
-                    Nv. {stats.level}
+                  <span className="bg-amber-400/15 text-amber-300 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full border border-amber-400/30 font-mono flex items-center gap-1">
+                    <Zap className="w-3 h-3 fill-amber-300 text-amber-300" />
+                    Nível {stats.level}
                   </span>
                 </div>
                 <p className="text-xs text-neutral-400 font-medium">
@@ -154,32 +155,56 @@ export default function ProductivityStats({ store }) {
                 </p>
               </div>
             </div>
-
-            {/* Current Active Shield & Elo Badge */}
-            <div className="flex items-center gap-3 bg-[#18181c] border border-[#2a2a32] rounded-2xl p-3 shadow-xl w-full sm:w-auto">
-              <div className="shrink-0 relative">
-                <div className="absolute inset-0 rounded-full bg-[#ff6b00]/20 blur-md" />
-                <RankShield2D tier={stats.currentRank.tier} size={48} />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block">
-                  Ranking Atual
-                </span>
-                <span className="text-base font-black text-white tracking-tight block" style={{ color: stats.currentRank.color }}>
-                  {stats.currentRank.name}
-                </span>
-                <span className="text-[11px] text-neutral-400 font-mono">
-                  {stats.totalXp} XP acumulados
-                </span>
-              </div>
-            </div>
-
           </div>
 
-          {/* XP Progress Bar to Next Tier */}
-          <div className="px-4 sm:px-6 pb-6 pt-2 border-t border-[#1c1c20]">
+          {/* 🌟 HERO CENTERPIECE: ESCUDO DO RANKING DINÂMICO BEM GRANDE, CENTRALIZADO NO MEIO, COM EFEITO BLUR, SEM CAIXA */}
+          <div className="py-6 px-4 flex flex-col items-center justify-center text-center relative overflow-hidden">
+            {/* Luminous Ambient Glow (Blur Effect) matching the displayed tier color */}
+            <div 
+              className="absolute w-56 h-56 rounded-full blur-3xl opacity-40 pointer-events-none transition-all duration-700"
+              style={{ backgroundColor: displayedRank.color }}
+            />
+
+            {/* Escudo 3D PNG BEM GRANDE (150px) em destaque absoluto */}
+            <div className="relative z-10 flex items-center justify-center my-1 hover:scale-105 active:scale-95 transition-transform duration-300">
+              <RankShield2D tier={displayedRank.tier} size={150} showGlow={true} />
+            </div>
+
+            {/* Informações centralizadas logo abaixo do escudo */}
+            <div className="relative z-10 mt-3 space-y-1">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-[11px] font-extrabold text-neutral-400 uppercase tracking-widest block">
+                  {isPreviewing ? 'Visualizando Escudo' : 'Ranking Atual'}
+                </span>
+                {isPreviewing && (
+                  <button
+                    onClick={() => setPreviewRank(null)}
+                    className="text-[10px] text-amber-400 font-bold underline hover:text-amber-300"
+                  >
+                    Voltar ao Meu Elo
+                  </button>
+                )}
+              </div>
+              <h3 
+                className="text-2xl sm:text-3xl font-black tracking-tight transition-colors duration-500"
+                style={{ color: displayedRank.color }}
+              >
+                {displayedRank.name}
+              </h3>
+              <p className="text-xs sm:text-sm text-neutral-300 font-mono font-medium">
+                {isPreviewing ? (
+                  <span>Requer {displayedRank.minXp} XP para desbloquear</span>
+                ) : (
+                  <span>{stats.totalXp} XP acumulados</span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Barra de Progresso de XP */}
+          <div className="px-4 sm:px-6 pb-5 pt-3 border-t border-[#1c1c22]">
             <div className="flex items-center justify-between text-xs font-bold mb-2">
-              <span className="text-neutral-300 flex items-center gap-1.5">
+              <span className="text-neutral-200 flex items-center gap-1.5">
                 <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                 Progresso para o próximo Ranking
               </span>
@@ -190,84 +215,94 @@ export default function ProductivityStats({ store }) {
               </span>
             </div>
 
-            {/* Visual Progress Bar */}
-            <div className="w-full h-3.5 rounded-full bg-[#1c1c22] border border-[#27272a] overflow-hidden p-0.5">
+            {/* Barra Visual */}
+            <div className="w-full h-3 rounded-full bg-[#1c1c24] border border-[#272730] overflow-hidden p-0.5">
               <div 
                 className="h-full rounded-full bg-gradient-to-r from-amber-500 via-[#ff6b00] to-[#ff3d00] transition-all duration-500 shadow-[0_0_12px_rgba(255,107,0,0.5)]"
                 style={{ width: `${stats.tierProgressPct}%` }}
               />
             </div>
 
-            <div className="flex items-center justify-between mt-2 text-[11px] text-neutral-400">
-              <span>{stats.currentRank.name}</span>
+            <div className="flex items-center justify-between mt-2 text-[11px]">
+              <span className="text-neutral-400 font-medium">
+                Elo atual: <strong className="text-white">{stats.currentRank.name}</strong>
+              </span>
               {stats.nextRank ? (
                 <span className="text-amber-400 font-bold">
-                  Faltam apenas {stats.xpToNextTier} XP para {stats.nextRank.shortName}!
+                  Faltam apenas {stats.xpToNextTier} XP para {stats.nextRank.shortName}
                 </span>
               ) : (
-                <span className="text-emerald-400 font-bold">Lenda Suprema Imortal 👑</span>
+                <span className="text-emerald-400 font-bold">Soberano de Rubi Supremo 💎</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* 2. TRILHA DE ESCUDOS 2D DOS RANKINGS (ROADMAP) */}
-        <div className="space-y-3">
+        {/* 2. SEUS RANKINGS - Escudos 3D Grandes e Destacados */}
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-neutral-200 uppercase tracking-wider flex items-center gap-2">
-              <Shield className="w-4 h-4 text-[#ff6b00]" />
-              Trilha de Escudos dos Rankings
-            </h3>
-            <span className="text-xs text-neutral-400">
-              {stats.currentRank.name}
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-xl bg-[#ff6b00]/15 border border-[#ff6b00]/30 text-[#ff6b00]">
+                <Shield className="w-5 h-5" />
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white tracking-tight">
+                Seus Rankings
+              </h3>
+            </div>
+            <span className="text-xs font-bold text-[#ff6b00] bg-[#ff6b00]/10 px-3 py-1 rounded-full border border-[#ff6b00]/25">
+              Elo: {stats.currentRank.name}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3.5">
             {RANKS_CONFIG.map((rank) => {
               const isUnlocked = stats.totalXp >= rank.minXp;
               const isCurrent = stats.currentRank.tier === rank.tier;
+              const isSelected = displayedRank.tier === rank.tier;
 
               return (
                 <div
                   key={rank.tier}
-                  className={`rounded-2xl border p-3 flex flex-col items-center text-center relative transition-all ${
-                    isCurrent
-                      ? 'bg-gradient-to-b from-[#1c1c24] to-[#121216] border-[#ff6b00] ring-2 ring-[#ff6b00]/30 shadow-xl shadow-[#ff6b00]/15 scale-102'
+                  onClick={() => setPreviewRank(rank)}
+                  className={`rounded-2xl border p-3 flex flex-col items-center text-center relative transition-all cursor-pointer active:scale-95 ${
+                    isSelected
+                      ? 'bg-gradient-to-b from-[#1e1e28] to-[#121218] border-[#ff6b00] ring-2 ring-[#ff6b00]/40 shadow-xl shadow-[#ff6b00]/20 scale-102'
                       : isUnlocked
-                      ? 'bg-[#121215] border-[#2c2c34] hover:border-neutral-500'
-                      : 'bg-[#0a0a0c] border-[#1c1c20] opacity-50'
+                      ? 'bg-[#121216] border-[#2c2c36] hover:border-neutral-500'
+                      : 'bg-[#0a0a0c] border-[#1c1c20] opacity-45 hover:opacity-75'
                   }`}
+                  title={`Toque para visualizar o escudo de ${rank.shortName}`}
                 >
                   {isCurrent && (
-                    <span className="absolute -top-2.5 bg-[#ff6b00] text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow tracking-wider uppercase">
+                    <span className="absolute -top-2.5 bg-[#ff6b00] text-white text-[9px] font-black px-2.5 py-0.5 rounded-full shadow tracking-wider uppercase">
                       Seu Elo
                     </span>
                   )}
 
-                  {/* 2D Vector Shield */}
-                  <div className="my-2 relative flex items-center justify-center">
-                    <RankShield2D tier={rank.tier} size={54} />
+                  {/* Escudo 3D PNG Grande em Destaque Absoluto */}
+                  <div className="my-2.5 relative flex items-center justify-center">
+                    <RankShield2D tier={rank.tier} size={84} />
                     {!isUnlocked && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full">
-                        <Lock className="w-4 h-4 text-neutral-400" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl backdrop-blur-[1px]">
+                        <Lock className="w-5 h-5 text-neutral-300" />
                       </div>
                     )}
                   </div>
 
-                  <span className="text-xs font-black text-white mt-1" style={{ color: rank.color }}>
+                  {/* Nome do Escudo: Porte Médio, Elegante e Nítido */}
+                  <span className="text-sm font-black text-white mt-1" style={{ color: rank.color }}>
                     {rank.shortName}
                   </span>
 
-                  <span className="text-[10px] text-neutral-400 font-mono mt-0.5">
+                  <span className="text-[11px] text-neutral-400 font-mono mt-0.5">
                     {rank.minXp} XP
                   </span>
 
-                  <div className="mt-2 w-full pt-2 border-t border-white/5 flex items-center justify-center">
+                  <div className="mt-2.5 w-full pt-2 border-t border-white/5 flex items-center justify-center">
                     {isUnlocked ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                        Liberado
+                      <span className="inline-flex items-center gap-1.5 text-[10px] text-amber-300 font-extrabold">
+                        <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                        Conquistado
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-[10px] text-neutral-400 font-medium">
@@ -282,11 +317,11 @@ export default function ProductivityStats({ store }) {
           </div>
         </div>
 
-        {/* 3. PAINEL DE BATALHA & ESTATÍSTICAS (KPIS) */}
+        {/* 3. PAINEL DE ESTATÍSTICAS E RENDIMENTO */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <div className="bg-[#121215] border border-[#27272a] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
-              <span className="font-bold">Tarefas Entregues</span>
+              <span className="font-bold">Tarefas Concluídas</span>
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{completedTasks}</div>
@@ -313,13 +348,13 @@ export default function ProductivityStats({ store }) {
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{bestHabitStreak} dias</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
-              {activeHabitsCount} hábitos diários
+              {activeHabitsCount} hábitos ativos
             </span>
           </div>
 
           <div className="bg-[#121215] border border-[#27272a] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
-              <span className="font-bold">Taxa de Vitória</span>
+              <span className="font-bold">Taxa de Conclusão</span>
               <TrendingUp className="w-4 h-4 text-indigo-400" />
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{completionRate}%</div>
@@ -329,7 +364,7 @@ export default function ProductivityStats({ store }) {
           </div>
         </div>
 
-        {/* 4. SALA DE CONQUISTAS & BADGES */}
+        {/* 4. SALA DE CONQUISTAS */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-neutral-200 uppercase tracking-wider flex items-center gap-2">

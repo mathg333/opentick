@@ -349,7 +349,7 @@ export default function App() {
     if (activeView === 'eisenhower') return 'Matriz';
     if (activeView === 'habits') return 'Hábitos';
     if (activeView === 'pomodoro') return 'Foco';
-    if (activeView === 'stats') return 'Estatísticas';
+    if (activeView === 'stats') return 'Progresso Nível XP';
     if (activeView.startsWith('project-')) {
       const projId = activeView.replace('project-', '');
       const proj = state.projects.find(p => p.id === projId);
@@ -370,7 +370,7 @@ export default function App() {
           >
             <Menu className="w-6 h-6 stroke-[2]" />
           </button>
-          <h1 className="text-lg font-bold text-white tracking-tight truncate max-w-[210px]">
+          <h1 className="text-lg font-bold text-white tracking-tight truncate max-w-[270px]">
             {getHeaderTitle()}
           </h1>
         </div>

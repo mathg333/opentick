@@ -1,5 +1,6 @@
 /**
  * Gamification & RPG Ranking Engine for OpenTick
+ * 3D Shields: Ferro, Bronze, Prata, Ouro, Safira, Diamante, Rubi
  */
 
 export const RANKS_CONFIG = [
@@ -19,7 +20,7 @@ export const RANKS_CONFIG = [
     tier: 'bronze',
     name: 'Guerreiro de Bronze',
     shortName: 'Bronze',
-    color: '#cd7f32',
+    color: '#d97706',
     bgBadge: 'bg-amber-950 text-amber-400 border-amber-800',
     minXp: 300,
     maxXp: 899,
@@ -76,16 +77,16 @@ export const RANKS_CONFIG = [
     description: 'Produtividade inquebrável, foco supremo e maestria.'
   },
   {
-    tier: 'lenda',
-    name: 'Lenda Imortal',
-    shortName: 'Mestre Lenda',
-    color: '#ff6b00',
-    bgBadge: 'bg-orange-950 text-orange-400 border-orange-500',
+    tier: 'rubi',
+    name: 'Soberano de Rubi',
+    shortName: 'Rubi',
+    color: '#ef4444',
+    bgBadge: 'bg-red-950 text-red-400 border-red-600',
     minXp: 10000,
     maxXp: 99999,
     minLevel: 22,
     maxLevel: 99,
-    description: 'O ápice da produtividade humana. Zero procrastinação.'
+    description: 'O nível supremo. Mestre absoluto forjado no cristal místico de rubi.'
   }
 ];
 
@@ -111,89 +112,84 @@ export function calculateGamification(state) {
   let nextRank = RANKS_CONFIG[1];
 
   for (let i = 0; i < RANKS_CONFIG.length; i++) {
-    const r = RANKS_CONFIG[i];
-    if (totalXp >= r.minXp) {
-      currentRank = r;
+    if (totalXp >= RANKS_CONFIG[i].minXp) {
+      currentRank = RANKS_CONFIG[i];
       nextRank = RANKS_CONFIG[i + 1] || null;
     }
   }
 
   // Calculate Level and Progress
-  const xpIntoCurrentTier = totalXp - currentRank.minXp;
-  const tierXpRange = nextRank ? (nextRank.minXp - currentRank.minXp) : 5000;
-  const tierProgressPct = nextRank 
-    ? Math.min(100, Math.max(0, Math.round((xpIntoCurrentTier / tierXpRange) * 100)))
-    : 100;
+  let tierProgressPct = 100;
+  let xpToNextTier = 0;
+  if (nextRank) {
+    const range = nextRank.minXp - currentRank.minXp;
+    const currentWithinRange = totalXp - currentRank.minXp;
+    tierProgressPct = Math.min(100, Math.max(0, Math.round((currentWithinRange / range) * 100)));
+    xpToNextTier = nextRank.minXp - totalXp;
+  }
 
-  const level = Math.min(
-    currentRank.maxLevel,
-    currentRank.minLevel + Math.floor((tierProgressPct / 100) * (currentRank.maxLevel - currentRank.minLevel))
-  );
+  const level = currentRank.minLevel + Math.floor((tierProgressPct / 100) * (currentRank.maxLevel - currentRank.minLevel));
 
   // Achievements
   const achievements = [
     {
-      id: 'first_blood',
+      id: 'first_task',
       title: 'Primeira Vitória',
-      desc: 'Conclua sua primeira tarefa no OpenTick',
-      icon: '⚔️',
+      desc: 'Completou a primeira tarefa no OpenTick',
+      icon: '🎯',
       unlocked: completedTasks.length >= 1
     },
     {
-      id: 'focus_spark',
-      title: 'Chama do Foco',
-      desc: 'Complete uma sessão Pomodoro de 25 minutos',
+      id: 'task_spree',
+      title: 'Produtividade em Série',
+      desc: 'Completou 5 ou mais tarefas',
+      icon: '⚡',
+      unlocked: completedTasks.length >= 5
+    },
+    {
+      id: 'pomodoro_starter',
+      title: 'Foco Profundo',
+      desc: 'Realizou ao menos 1 sessão de Pomodoro',
       icon: '🍅',
       unlocked: pomodoroSessions.length >= 1
     },
     {
-      id: 'task_slayer',
-      title: 'Matador de Tarefas',
-      desc: 'Conclua pelo menos 5 tarefas',
-      icon: '🎯',
-      unlocked: completedTasks.length >= 5
-    },
-    {
-      id: 'habit_builder',
-      title: 'Forjador de Hábitos',
-      desc: 'Mantenha um hábito ativo por 3 dias seguidos',
+      id: 'habit_master',
+      title: 'Hábito Inquebrável',
+      desc: 'Manteve uma sequência de hábitos de 3+ dias',
       icon: '🔥',
-      unlocked: habitStreakDays >= 3
+      unlocked: habits.some(h => (h.streak || 0) >= 3 || (h.bestStreak || 0) >= 3)
     },
     {
-      id: 'silver_knight',
-      title: 'Cavaleiro de Prata',
-      desc: 'Atinja 900 XP no ranking geral',
-      icon: '🥈',
+      id: 'silver_rank',
+      title: 'Cavaleiro Forjado',
+      desc: 'Alcançou o ranking Cavaleiro de Prata (900+ XP)',
+      icon: '🛡️',
       unlocked: totalXp >= 900
     },
     {
-      id: 'sapphire_mind',
-      title: 'Mente de Safira',
-      desc: 'Atinja 3.500 XP e desbloqueie o Escudo de Safira',
-      icon: '🔷',
-      unlocked: totalXp >= 3500
+      id: 'gold_master',
+      title: 'Comandante Supremo',
+      desc: 'Alcançou o ranking Comandante de Ouro (1800+ XP)',
+      icon: '👑',
+      unlocked: totalXp >= 1800
     },
     {
-      id: 'legendary_focus',
-      title: 'Lenda Suprema',
-      desc: 'Atinja o ranking Lenda Imortal (+10.000 XP)',
-      icon: '👑',
+      id: 'ruby_sovereign',
+      title: 'Soberano de Rubi',
+      desc: 'Alcançou o ranking lendário de Rubi (10000+ XP)',
+      icon: '💎',
       unlocked: totalXp >= 10000
     }
   ];
 
   return {
     totalXp,
-    taskXp,
-    pomodoroXp,
-    habitXp,
-    bonusXp,
+    level,
     currentRank,
     nextRank,
-    level,
     tierProgressPct,
-    xpToNextTier: nextRank ? Math.max(0, nextRank.minXp - totalXp) : 0,
+    xpToNextTier,
     achievements,
     unlockedAchievementsCount: achievements.filter(a => a.unlocked).length
   };
