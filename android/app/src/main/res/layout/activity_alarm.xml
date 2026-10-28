@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    android:gravity="center_horizontal"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="36dp"
+    android:paddingBottom="28dp">
+
+    <!-- Top Status Indicator -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <View
+            android:id="@+id/alarm_pulsing_dot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_alarm_bell_circle" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ALARME EM EXECUÇÃO • OPENTICK"
+            android:textColor="#ff6b00"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
+    </LinearLayout>
+
+    <!-- Center Content Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.8" />
+
+    <!-- Pulsing Bell Icon -->
+    <RelativeLayout
+        android:id="@+id/alarm_bell_container"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:gravity="center"
+        android:background="@drawable/bg_alarm_bell_circle">
+
+        <ImageView
+            android:id="@+id/alarm_bell_icon"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@android:drawable/ic_lock_idle_alarm"
+            android:tint="#ffffff" />
+    </RelativeLayout>
+
+    <!-- Real-time Digital Clock -->
+    <TextView
+        android:id="@+id/alarm_clock_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="00:00"
+        android:textColor="#ffffff"
+        android:textSize="54sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace" />
+
+    <!-- Date Text -->
+    <TextView
+        android:id="@+id/alarm_clock_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="quarta-feira, 28 de outubro"
+        android:textColor="#a1a1aa"
+        android:textSize="14sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.6" />
+
+    <!-- Task Information Card -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_alarm_card"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="LEMBRETE DA TAREFA"
+            android:textColor="#ff6b00"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
+
+        <TextView
+            android:id="@+id/alarm_task_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Minha Tarefa Importante"
+            android:textColor="#ffffff"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:maxLines="3"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/alarm_task_time_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="⏰ Programado no OpenTick"
+            android:textColor="#d4d4d8"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Toque nos botões abaixo para desligar ou adiar"
+            android:textColor="#71717a"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.0" />
+
+    <!-- Action Buttons -->
+    <Button
+        android:id="@+id/btn_stop_alarm"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:background="@drawable/bg_alarm_stop_btn"
+        android:text="⏹️  PARAR ALARME"
+        android:textColor="#ffffff"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:stateListAnimator="@null" />
+
+    <Button
+        android:id="@+id/btn_snooze_alarm"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_alarm_snooze_btn"
+        android:text="💤  Adiar por 5 minutos (Snooze)"
+        android:textColor="#e4e4e7"
+        android:textSize="14sp"
+        android:stateListAnimator="@null" />
+
+    <Button
+        android:id="@+id/btn_open_app"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/transparent"
+        android:text="Abrir tarefa no aplicativo ↗"
+        android:textColor="#a1a1aa"
+        android:textSize="13sp"
+        android:stateListAnimator="@null" />
+
+</LinearLayout>

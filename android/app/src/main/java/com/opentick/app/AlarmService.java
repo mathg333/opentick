@@ -1,5 +1,6 @@
 package com.opentick.app;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -7,8 +8,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.AudioAttributes;
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -21,7 +22,7 @@ import android.os.Vibrator;
 import androidx.core.app.NotificationCompat;
 
 public class AlarmService extends Service {
-    public static final String CHANNEL_ID = "opentick_alarm_channel";
+    public static final String CHANNEL_ID = "opentick_alarm_channel_v4";
     public static final int NOTIFICATION_ID = 9001;
 
     private static MediaPlayer sMediaPlayer;
@@ -31,8 +32,11 @@ public class AlarmService extends Service {
 
     public static final String ACTION_START_ALARM = "com.opentick.app.ACTION_START_ALARM";
     public static final String ACTION_STOP_ALARM = "com.opentick.app.ACTION_STOP_ALARM";
+    public static final String ACTION_SNOOZE_ALARM = "com.opentick.app.ACTION_SNOOZE_ALARM";
+
     public static final String EXTRA_TASK_ID = "EXTRA_TASK_ID";
     public static final String EXTRA_TASK_TITLE = "EXTRA_TASK_TITLE";
+    public static final String EXTRA_SNOOZE_MINUTES = "EXTRA_SNOOZE_MINUTES";
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -56,13 +60,22 @@ public class AlarmService extends Service {
             return START_NOT_STICKY;
         }
 
+        if (ACTION_SNOOZE_ALARM.equals(action)) {
+            String taskId = intent.getStringExtra(EXTRA_TASK_ID);
+            String taskTitle = intent.getStringExtra(EXTRA_TASK_TITLE);
+            int minutes = intent.getIntExtra(EXTRA_SNOOZE_MINUTES, 5);
+            snoozeInternal(taskId, taskTitle, minutes);
+            stopAlarmInternal();
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+
         if (ACTION_START_ALARM.equals(action)) {
             String taskId = intent.getStringExtra(EXTRA_TASK_ID);
             String taskTitle = intent.getStringExtra(EXTRA_TASK_TITLE);
             if (taskTitle == null || taskTitle.trim().isEmpty()) {
                 taskTitle = "Lembrete OpenTick";
             }
-
             startAlarmInternal(taskId, taskTitle);
         }
 
@@ -76,8 +89,9 @@ public class AlarmService extends Service {
                 "Alarmes e Despertadores OpenTick",
                 NotificationManager.IMPORTANCE_HIGH
             );
-            channel.setDescription("Alarmes contínuos em tela cheia e tela de bloqueio");
+            channel.setDescription("Alarmes contínuos em tela cheia e tela de bloqueio com aviso na barra");
             channel.enableLights(true);
+            channel.setLightColor(Color.parseColor("#ff6b00"));
             channel.enableVibration(true);
             channel.setBypassDnd(true);
             channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
@@ -98,38 +112,67 @@ public class AlarmService extends Service {
     }
 
     private void startAlarmInternal(String taskId, String taskTitle) {
-        // Stop any previous instance
+        // Stop any running sound/notification
         stopAlarmInternal();
-
-        // 1. PendingIntent to open MainActivity
-        Intent openIntent = new Intent(this, MainActivity.class);
-        openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        openIntent.putExtra("TRIGGERED_BY_ALARM", true);
-        openIntent.putExtra("ALARM_TASK_ID", taskId);
-        openIntent.putExtra("ALARM_TASK_TITLE", taskTitle);
 
         int flag = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             flag |= PendingIntent.FLAG_IMMUTABLE;
         }
-        PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(this, 100, openIntent, flag);
+
+        // 1. PendingIntent to open the dedicated full-screen AlarmActivity
+        Intent alarmActivityIntent = new Intent(this, AlarmActivity.class);
+        alarmActivityIntent.addFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK |
+            Intent.FLAG_ACTIVITY_CLEAR_TOP |
+            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        );
+        alarmActivityIntent.putExtra(EXTRA_TASK_ID, taskId);
+        alarmActivityIntent.putExtra(EXTRA_TASK_TITLE, taskTitle);
+        PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(this, 100, alarmActivityIntent, flag);
 
         // 2. PendingIntent for Dismiss/Stop Action Button directly on Notification
         Intent stopIntent = new Intent(this, AlarmService.class);
         stopIntent.setAction(ACTION_STOP_ALARM);
         PendingIntent stopPendingIntent = PendingIntent.getService(this, 101, stopIntent, flag);
 
-        // 3. Build High Priority Notification with FullScreenIntent
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher)
+        // 3. PendingIntent for Snooze (+5 min) Action Button on Notification
+        Intent snoozeIntent = new Intent(this, AlarmService.class);
+        snoozeIntent.setAction(ACTION_SNOOZE_ALARM);
+        snoozeIntent.putExtra(EXTRA_TASK_ID, taskId);
+        snoozeIntent.putExtra(EXTRA_TASK_TITLE, taskTitle);
+        snoozeIntent.putExtra(EXTRA_SNOOZE_MINUTES, 5);
+        PendingIntent snoozePendingIntent = PendingIntent.getService(this, 102, snoozeIntent, flag);
+
+        // 4. Build Public Version for Lockscreen
+        NotificationCompat.Builder publicBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("⏰ " + taskTitle)
-            .setContentText("Alarme disparando! Toque para desligar.")
+            .setContentText("Disparando agora! Toque para abrir.")
+            .setColor(Color.parseColor("#ff6b00"))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "PARAR ALARME", stopPendingIntent)
+            .addAction(android.R.drawable.ic_menu_recent_history, "ADIAR (+5m)", snoozePendingIntent)
+            .setContentIntent(fullScreenPendingIntent);
+
+        // 5. Build High Priority Notification with FullScreenIntent
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentTitle("⏰ " + taskTitle)
+            .setContentText("Alarme disparando! Toque para ver ou desligue abaixo.")
+            .setStyle(new NotificationCompat.BigTextStyle()
+                .bigText("O alarme da tarefa está tocando continuamente.\nToque para abrir a tela cheia ou use os botões abaixo:"))
+            .setColor(Color.parseColor("#ff6b00"))
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setPublicVersion(publicBuilder.build())
             .setFullScreenIntent(fullScreenPendingIntent, true)
             .setContentIntent(fullScreenPendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "PARAR ALARME", stopPendingIntent)
+            .addAction(android.R.drawable.ic_menu_recent_history, "ADIAR (+5m)", snoozePendingIntent)
             .setOngoing(true)
             .setAutoCancel(false);
 
@@ -141,7 +184,7 @@ public class AlarmService extends Service {
             e.printStackTrace();
         }
 
-        // 4. Play Continuous Alarm Sound
+        // 6. Play Continuous Alarm Sound
         try {
             Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
             if (alarmUri == null) alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
@@ -161,7 +204,7 @@ public class AlarmService extends Service {
             e.printStackTrace();
         }
 
-        // 5. Continuous Vibration
+        // 7. Continuous Vibration Pattern
         try {
             sVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
             if (sVibrator != null && sVibrator.hasVibrator()) {
@@ -176,13 +219,41 @@ public class AlarmService extends Service {
             e.printStackTrace();
         }
 
-        // 6. 5-Minute Auto-Stop Safety Timeout
+        // 8. 5-Minute Auto-Stop Safety Timeout
         sHandler = new Handler(Looper.getMainLooper());
         sAutoStopRunnable = () -> {
             stopAlarmInternal();
             stopSelf();
         };
         sHandler.postDelayed(sAutoStopRunnable, 5 * 60 * 1000);
+    }
+
+    private void snoozeInternal(String taskId, String taskTitle, int minutes) {
+        try {
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (am != null) {
+                long triggerAtMillis = System.currentTimeMillis() + (minutes * 60 * 1000);
+
+                Intent intent = new Intent(this, AlarmReceiver.class);
+                intent.putExtra(AlarmReceiver.EXTRA_TASK_ID, taskId);
+                intent.putExtra(AlarmReceiver.EXTRA_TASK_TITLE, taskTitle != null ? taskTitle : "Lembrete OpenTick");
+
+                int flag = PendingIntent.FLAG_UPDATE_CURRENT;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    flag |= PendingIntent.FLAG_IMMUTABLE;
+                }
+                int requestCode = (taskId != null ? taskId.hashCode() : 1) + 999;
+                PendingIntent pi = PendingIntent.getBroadcast(this, requestCode, intent, flag);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi);
+                } else {
+                    am.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void stopAlarmInternal() {
@@ -215,6 +286,13 @@ public class AlarmService extends Service {
                 nm.cancel(NOTIFICATION_ID);
             }
         } catch (Exception e) {}
+
+        // Broadcast to close AlarmActivity if it's open
+        try {
+            Intent closeIntent = new Intent(AlarmActivity.ACTION_CLOSE_ALARM_ACTIVITY);
+            closeIntent.setPackage(getPackageName());
+            sendBroadcast(closeIntent);
+        } catch (Exception e) {}
     }
 
     public static void start(Context context, String taskId, String taskTitle) {
@@ -232,6 +310,15 @@ public class AlarmService extends Service {
     public static void stop(Context context) {
         Intent intent = new Intent(context, AlarmService.class);
         intent.setAction(ACTION_STOP_ALARM);
+        context.startService(intent);
+    }
+
+    public static void snooze(Context context, String taskId, String taskTitle, int minutes) {
+        Intent intent = new Intent(context, AlarmService.class);
+        intent.setAction(ACTION_SNOOZE_ALARM);
+        intent.putExtra(EXTRA_TASK_ID, taskId);
+        intent.putExtra(EXTRA_TASK_TITLE, taskTitle);
+        intent.putExtra(EXTRA_SNOOZE_MINUTES, minutes);
         context.startService(intent);
     }
 

@@ -69,6 +69,26 @@ export async function stopNativeAlarm() {
 }
 
 /**
+ * Snooze currently ringing native alarm for a given number of minutes
+ * @param {string} id - Task ID
+ * @param {string} title - Task Title
+ * @param {number} minutes - Minutes to snooze (default 5)
+ */
+export async function snoozeNativeAlarm(id, title, minutes = 5) {
+  if (!isNativeAndroid()) return false;
+  try {
+    const plugin = getAlarmPlugin();
+    if (plugin?.snoozeActiveAlarm) {
+      await plugin.snoozeActiveAlarm({ id, title, minutes });
+      return true;
+    }
+  } catch (e) {
+    console.warn('Error snoozing native alarm:', e);
+  }
+  return false;
+}
+
+/**
  * Check overlay, notification and exact alarm permissions
  */
 export async function checkAlarmPermissions() {

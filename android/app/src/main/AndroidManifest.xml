@@ -40,6 +40,17 @@
 
         </activity>
 
+        <!-- Dedicated Full Screen AMOLED Lockscreen Alarm Activity -->
+        <activity
+            android:name=".AlarmActivity"
+            android:theme="@style/AppTheme.AlarmTheme"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:showForAllUsers="true"
+            android:exported="false" />
+
         <!-- Broadcast Receiver for Android AlarmManager -->
         <receiver
             android:name=".AlarmReceiver"

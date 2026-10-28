@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#121214</color>
+    <color name="colorPrimaryDark">#000000</color>
+    <color name="colorAccent">#ff6b00</color>
+    <color name="alarmOrange">#ff6b00</color>
+    <color name="alarmOrangeDark">#e05d00</color>
+    <color name="alarmDarkCard">#1c1c1e</color>
+    <color name="alarmBackground">#000000</color>
+    <color name="alarmTextWhite">#ffffff</color>
+    <color name="alarmTextSecondary">#a1a1aa</color>
+    <color name="alarmBorder">#2c2c2e</color>
+</resources>

@@ -107,6 +107,21 @@ public class OpenTickAlarmPlugin extends Plugin {
     }
 
     @PluginMethod
+    public void snoozeActiveAlarm(PluginCall call) {
+        String id = call.getString("id", "");
+        String title = call.getString("title", "Lembrete OpenTick");
+        int minutes = call.getInt("minutes", 5);
+        try {
+            AlarmService.snooze(getContext(), id, title, minutes);
+            JSObject ret = new JSObject();
+            ret.put("success", true);
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject("Error snoozing alarm: " + e.getMessage(), e);
+        }
+    }
+
+    @PluginMethod
     public void checkPermissions(PluginCall call) {
         Context context = getContext();
         boolean overlayGranted = true;

@@ -27,30 +27,29 @@ public class AlarmReceiver extends BroadcastReceiver {
                     PowerManager.ON_AFTER_RELEASE,
                     "OpenTick:AlarmWakeLock"
                 );
-                wakeLock.acquire(15000); // Hold wake lock for 15 seconds to display UI
+                wakeLock.acquire(15000); // Hold wake lock to light up screen and display UI
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // 2. Start continuous audio and vibration via AlarmService
+        // 2. Start continuous audio, vibration and notification via AlarmService
         try {
             AlarmService.start(context, taskId, taskTitle);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // 3. Immediately launch MainActivity on top of the lock screen and over other apps
+        // 3. Immediately launch dedicated AlarmActivity on top of lock screen and other apps
         try {
-            Intent launchIntent = new Intent(context, MainActivity.class);
+            Intent launchIntent = new Intent(context, AlarmActivity.class);
             launchIntent.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
                 Intent.FLAG_ACTIVITY_CLEAR_TOP |
                 Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
             );
-            launchIntent.putExtra("TRIGGERED_BY_ALARM", true);
-            launchIntent.putExtra("ALARM_TASK_ID", taskId);
-            launchIntent.putExtra("ALARM_TASK_TITLE", taskTitle);
+            launchIntent.putExtra(AlarmService.EXTRA_TASK_ID, taskId);
+            launchIntent.putExtra(AlarmService.EXTRA_TASK_TITLE, taskTitle);
             context.startActivity(launchIntent);
         } catch (Exception e) {
             e.printStackTrace();
