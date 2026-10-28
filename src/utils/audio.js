@@ -1,4 +1,4 @@
-// Ambient Noise & Chime Generator using pure Web Audio API (Zero external MP3 dependencies)
+// Ambient Noise & Notification Ringtones using pure Web Audio API (Zero external MP3 dependencies)
 class SoundManager {
   constructor() {
     this.ctx = null;
@@ -17,28 +17,79 @@ class SoundManager {
     }
   }
 
-  // Bell chime when Pomodoro completes
-  playChime() {
+  // Play notification tone by name
+  playSound(name = 'chime', vol = 0.5) {
     try {
       this.init();
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
+      const now = this.ctx.currentTime;
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, this.ctx.currentTime); // A5
-      osc.frequency.exponentialRampToValueAtTime(1760, this.ctx.currentTime + 0.1);
-
-      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 1.8);
-
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-
-      osc.start();
-      osc.stop(this.ctx.currentTime + 1.8);
+      if (name === 'chime') {
+        // Melodic Chime
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now); // A5
+        osc.frequency.exponentialRampToValueAtTime(1760, now + 0.1);
+        gain.gain.setValueAtTime(vol * 0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(now + 1.2);
+      } else if (name === 'bell') {
+        // Resonant Bell
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        osc1.frequency.setValueAtTime(523.25, now); // C5
+        osc2.frequency.setValueAtTime(659.25, now); // E5
+        gain.gain.setValueAtTime(vol * 0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 2.0);
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc1.start();
+        osc2.start();
+        osc1.stop(now + 2.0);
+        osc2.stop(now + 2.0);
+      } else if (name === 'marimba') {
+        // Warm Marimba chords
+        [440, 554.37, 659.25, 880].forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.08);
+          gain.gain.setValueAtTime(vol * 0.3, now + i * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.4);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.4);
+        });
+      } else if (name === 'digital') {
+        // Dual beep
+        [1000, 1500].forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq, now + i * 0.1);
+          gain.gain.setValueAtTime(vol * 0.15, now + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.1 + 0.08);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.1);
+          osc.stop(now + i * 0.1 + 0.08);
+        });
+      }
     } catch (e) {
       console.warn('Audio play error', e);
     }
+  }
+
+  playChime() {
+    this.playSound('chime', 0.6);
   }
 
   // Generate Pink / Brown Noise for Focus / White Noise
@@ -74,7 +125,7 @@ class SoundManager {
           const white = Math.random() * 2 - 1;
           data[i] = (lastOut + 0.02 * white) / 1.02;
           lastOut = data[i];
-          data[i] *= 3.5; // Gain compensation
+          data[i] *= 3.5;
         }
       }
 
@@ -102,14 +153,16 @@ class SoundManager {
   }
 
   stopNoise() {
-    if (this.noiseNode) {
-      try {
+    try {
+      if (this.noiseNode) {
         this.noiseNode.stop();
         this.noiseNode.disconnect();
-      } catch (e) {}
-      this.noiseNode = null;
+        this.noiseNode = null;
+      }
+      this.isPlaying = false;
+    } catch (e) {
+      console.warn('Error stopping noise', e);
     }
-    this.isPlaying = false;
   }
 }
 

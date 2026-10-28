@@ -1,14 +1,33 @@
 import { useState, useEffect } from 'react';
 import { INITIAL_PROJECTS, INITIAL_TASKS, INITIAL_HABITS, INITIAL_POMODORO_SESSIONS } from './initialData';
 
-const STORAGE_KEY = 'opentick_app_state_v1';
+const STORAGE_KEY = 'opentick_app_state_v2';
 
 export function useAppStore() {
   const [state, setState] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.projects && parsed.tasks) {
+          return {
+            ...parsed,
+            settings: {
+              theme: 'amoled',
+              accentColor: '#4c82f7',
+              sound: 'chime',
+              volume: 0.8,
+              vibration: true,
+              timeFormat: '24h',
+              startOfWeek: 'domingo',
+              showWeekNumbers: false,
+              confirmExit: true,
+              defaultDueDate: 'today',
+              delayedSection: 'top',
+              ...parsed.settings
+            }
+          };
+        }
       }
     } catch (e) {
       console.warn('Failed to load local storage', e);
@@ -18,6 +37,19 @@ export function useAppStore() {
       tasks: INITIAL_TASKS,
       habits: INITIAL_HABITS,
       pomodoroSessions: INITIAL_POMODORO_SESSIONS,
+      settings: {
+        theme: 'amoled',
+        accentColor: '#4c82f7',
+        sound: 'chime',
+        volume: 0.8,
+        vibration: true,
+        timeFormat: '24h',
+        startOfWeek: 'domingo',
+        showWeekNumbers: false,
+        confirmExit: true,
+        defaultDueDate: 'today',
+        delayedSection: 'top'
+      },
       ticktickConfig: {
         clientId: '1VnPwbqL2WaCGV713q',
         accessToken: ''
@@ -25,7 +57,7 @@ export function useAppStore() {
     };
   });
 
-  const [activeView, setActiveView] = useState('tasks-today'); // 'tasks-inbox', 'tasks-today', 'tasks-next7', 'calendar', 'eisenhower', 'habits', 'pomodoro', 'stats', 'project-[id]'
+  const [activeView, setActiveView] = useState('tasks-today'); // 'tasks-inbox', 'tasks-today', 'tasks-completed', 'calendar', 'eisenhower', 'habits', 'pomodoro', 'stats', 'project-[id]'
   const [selectedTaskId, setSelectedTaskId] = useState(null);
 
   useEffect(() => {
@@ -46,10 +78,11 @@ export function useAppStore() {
       priority: taskData.priority !== undefined ? taskData.priority : 0,
       urgent: taskData.urgent ?? false,
       important: taskData.important ?? false,
-      dueDate: taskData.dueDate || new Date().toISOString().split('T')[0],
+      dueDate: taskData.dueDate || '',
       startTime: taskData.startTime || '',
       endTime: taskData.endTime || '',
       completed: false,
+      kanbanStatus: taskData.kanbanStatus || 'todo', // 'todo', 'in_progress', 'done'
       tags: taskData.tags || [],
       subtasks: taskData.subtasks || [],
       createdAt: new Date().toISOString()
@@ -62,17 +95,69 @@ export function useAppStore() {
     return newTask;
   };
 
+  // Add identical task across multiple specific dates (User request: e.g. days 21, 23, 27, 28, 29)
+  const addTasksForMultipleDates = (taskData, datesList) => {
+    if (!datesList || datesList.length === 0) {
+      return [addTask(taskData)];
+    }
+    const newTasks = datesList.map((dStr, idx) => ({
+      id: 'task-' + Date.now() + '-' + idx,
+      title: taskData.title,
+      description: taskData.description || '',
+      projectId: taskData.projectId || 'inbox',
+      priority: taskData.priority !== undefined ? taskData.priority : 0,
+      urgent: taskData.urgent ?? false,
+      important: taskData.important ?? false,
+      dueDate: dStr,
+      startTime: taskData.startTime || '',
+      endTime: taskData.endTime || '',
+      completed: false,
+      kanbanStatus: 'todo',
+      tags: taskData.tags || [],
+      subtasks: taskData.subtasks ? JSON.parse(JSON.stringify(taskData.subtasks)) : [],
+      createdAt: new Date().toISOString()
+    }));
+
+    setState(prev => ({
+      ...prev,
+      tasks: [...newTasks, ...prev.tasks]
+    }));
+    return newTasks;
+  };
+
   const updateTask = (id, updates) => {
     setState(prev => ({
       ...prev,
-      tasks: prev.tasks.map(t => t.id === id ? { ...t, ...updates } : t)
+      tasks: prev.tasks.map(t => {
+        if (t.id === id) {
+          const updated = { ...t, ...updates };
+          // Keep kanbanStatus and completed in sync
+          if (updates.completed !== undefined) {
+            updated.kanbanStatus = updates.completed ? 'done' : 'todo';
+          } else if (updates.kanbanStatus !== undefined) {
+            updated.completed = updates.kanbanStatus === 'done';
+          }
+          return updated;
+        }
+        return t;
+      })
     }));
   };
 
   const toggleTaskCompleted = (id) => {
     setState(prev => ({
       ...prev,
-      tasks: prev.tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
+      tasks: prev.tasks.map(t => {
+        if (t.id === id) {
+          const nextCompleted = !t.completed;
+          return {
+            ...t,
+            completed: nextCompleted,
+            kanbanStatus: nextCompleted ? 'done' : 'todo'
+          };
+        }
+        return t;
+      })
     }));
   };
 
@@ -127,11 +212,6 @@ export function useAppStore() {
     }));
   };
 
-  // Eisenhower Quadrant Setter
-  const setTaskQuadrant = (taskId, urgent, important) => {
-    updateTask(taskId, { urgent, important });
-  };
-
   // Habit Actions
   const addHabit = (habitData) => {
     const newHabit = {
@@ -156,24 +236,14 @@ export function useAppStore() {
           const current = !!h.checkIns[dateStr];
           const updatedCheckIns = { ...h.checkIns, [dateStr]: !current };
           
-          // Recompute current streak
           let streak = 0;
-          let d = new Date();
-          while (true) {
-            const ds = d.toISOString().split('T')[0];
-            if (updatedCheckIns[ds]) {
+          const today = new Date();
+          for (let i = 0; i < 365; i++) {
+            const d = new Date(today.getTime() - i * 86400000);
+            const str = d.toISOString().split('T')[0];
+            if (updatedCheckIns[str]) {
               streak++;
-              d.setDate(d.getDate() - 1);
-            } else if (ds === new Date().toISOString().split('T')[0]) {
-              // check if yesterday was done
-              d.setDate(d.getDate() - 1);
-              const yesterdayStr = d.toISOString().split('T')[0];
-              if (updatedCheckIns[yesterdayStr]) {
-                continue;
-              } else {
-                break;
-              }
-            } else {
+            } else if (i > 0) {
               break;
             }
           }
@@ -219,6 +289,14 @@ export function useAppStore() {
       icon: projectData.icon || 'Folder'
     };
     setState(prev => ({ ...prev, projects: [...prev.projects, newProj] }));
+    return newProj;
+  };
+
+  const updateProject = (id, updates) => {
+    setState(prev => ({
+      ...prev,
+      projects: prev.projects.map(p => p.id === id ? { ...p, ...updates } : p)
+    }));
   };
 
   const deleteProject = (id) => {
@@ -227,6 +305,14 @@ export function useAppStore() {
       ...prev,
       projects: prev.projects.filter(p => p.id !== id),
       tasks: prev.tasks.map(t => t.projectId === id ? { ...t, projectId: 'inbox' } : t)
+    }));
+  };
+
+  // Settings Updater
+  const updateSettings = (updates) => {
+    setState(prev => ({
+      ...prev,
+      settings: { ...prev.settings, ...updates }
     }));
   };
 
@@ -250,7 +336,6 @@ export function useAppStore() {
         icon: 'Folder'
       }));
 
-      // Fetch tasks for each project
       let allTasks = [];
       for (const p of projects) {
         try {
@@ -270,6 +355,7 @@ export function useAppStore() {
                 important: t.priority >= 2,
                 dueDate: t.dueDate ? t.dueDate.split('T')[0] : '',
                 completed: t.status === 2,
+                kanbanStatus: t.status === 2 ? 'done' : 'todo',
                 tags: t.tags || [],
                 subtasks: (t.items || []).map(i => ({ id: 'tt-sub-' + i.id, title: i.title, completed: i.status === 1 })),
                 createdAt: t.createdTime || new Date().toISOString()
@@ -294,10 +380,7 @@ export function useAppStore() {
     }
   };
 
-  // Export / Import JSON
-  const exportData = () => {
-    return JSON.stringify(state, null, 2);
-  };
+  const exportData = () => JSON.stringify(state, null, 2);
 
   const importData = (jsonString) => {
     try {
@@ -316,19 +399,21 @@ export function useAppStore() {
     selectedTaskId,
     setSelectedTaskId,
     addTask,
+    addTasksForMultipleDates,
     updateTask,
     toggleTaskCompleted,
     deleteTask,
     addSubtask,
     toggleSubtask,
     deleteSubtask,
-    setTaskQuadrant,
     addHabit,
     toggleHabitCheckIn,
     deleteHabit,
     addPomodoroSession,
     addProject,
+    updateProject,
     deleteProject,
+    updateSettings,
     setTickTickConfig,
     importFromTickTick,
     exportData,

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { App as CapApp } from '@capacitor/app';
 import { useAppStore } from './store/useStore';
 import Sidebar from './components/Sidebar';
 import TaskView from './components/TaskView';
@@ -28,7 +29,7 @@ import {
 
 export default function App() {
   const store = useAppStore();
-  const { activeView, setActiveView, setSelectedTaskId, state } = store;
+  const { activeView, setActiveView, selectedTaskId, setSelectedTaskId, state } = store;
 
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -46,6 +47,87 @@ export default function App() {
       Notification.requestPermission();
     }
   }, []);
+
+  // Native Android Hardware / Virtual Back Button Handler (Fixes app closing instead of navigating back)
+  useEffect(() => {
+    let lastBackPress = 0;
+
+    const handleBackButton = async () => {
+      // 1. Close Search Modal
+      if (isSearchOpen) {
+        setIsSearchOpen(false);
+        return;
+      }
+      // 2. Close Settings Modal
+      if (isSettingsOpen) {
+        setIsSettingsOpen(false);
+        return;
+      }
+      // 3. Close Sync Modal
+      if (isSyncModalOpen) {
+        setIsSyncModalOpen(false);
+        return;
+      }
+      // 4. Close Quick Add Modal
+      if (isQuickAddOpen) {
+        setIsQuickAddOpen(false);
+        return;
+      }
+      // 5. Close Mobile Drawer
+      if (isMobileDrawerOpen) {
+        setIsMobileDrawerOpen(false);
+        return;
+      }
+      // 6. Close Task Details Sheet
+      if (selectedTaskId) {
+        setSelectedTaskId(null);
+        return;
+      }
+      // 7. If on another screen, navigate back to 'tasks-today'
+      if (activeView !== 'tasks-today') {
+        setActiveView('tasks-today');
+        return;
+      }
+
+      // 8. If on 'tasks-today' and nothing is open, confirm exit with double tap
+      const now = Date.now();
+      if (now - lastBackPress < 2000) {
+        CapApp.exitApp();
+      } else {
+        lastBackPress = now;
+        const toast = document.createElement('div');
+        toast.innerText = 'Pressione voltar novamente para sair';
+        toast.className = 'fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#1c1c1e] text-white px-4 py-2 rounded-full text-xs font-semibold shadow-2xl border border-[#2c2c2e] z-50 animate-in fade-in select-none pointer-events-none';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+      }
+    };
+
+    let backListenerHandle = null;
+    try {
+      CapApp.addListener('backButton', handleBackButton).then(handle => {
+        backListenerHandle = handle;
+      });
+    } catch (e) {
+      console.warn('Capacitor App backButton listener not available on web', e);
+    }
+
+    return () => {
+      if (backListenerHandle) {
+        backListenerHandle.remove();
+      }
+    };
+  }, [
+    isSearchOpen, 
+    isSettingsOpen, 
+    isSyncModalOpen, 
+    isQuickAddOpen, 
+    isMobileDrawerOpen, 
+    selectedTaskId, 
+    activeView, 
+    setActiveView, 
+    setSelectedTaskId
+  ]);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -327,7 +409,7 @@ export default function App() {
         onClose={() => setIsSyncModalOpen(false)}
       />
 
-      {/* Settings Modal (Matching TickTick Android settings screens) */}
+      {/* Settings Modal with real interactive sub-screens */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
