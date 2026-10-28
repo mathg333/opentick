@@ -244,18 +244,18 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
           </div>
         </div>
 
-        {/* LAYOUT 1: LIST VIEW (Floating Cards) */}
+        {/* LAYOUT 1: LIST VIEW (Clean Mobile First Layout) */}
         {viewLayout === 'list' && (
-          <div className="flex-1 overflow-y-auto px-3.5 md:px-8 py-3 space-y-3 pb-32">
-            {/* Quick Add Bar */}
+          <div className="flex-1 overflow-y-auto px-3.5 md:px-6 pt-1.5 pb-32 space-y-2.5">
+            {/* Quick Add Bar - Compact & High-Positioned */}
             <form 
               onSubmit={handleQuickAdd}
-              className="bg-[#1c1c1e] border border-[#2c2c2e] rounded-2xl p-2.5 flex items-center gap-2 shadow-md"
+              className="bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl px-3 py-2 flex items-center gap-2 shadow-md"
             >
-              <Plus className="w-4 h-4 text-neutral-400 shrink-0 ml-1" />
+              <Plus className="w-4 h-4 text-neutral-400 shrink-0 ml-0.5" />
               <input
                 type="text"
-                placeholder={`Adicionar em "${viewTitle}"... (Enter para salvar)`}
+                placeholder={`Adicionar em "${viewTitle}"...`}
                 value={quickTitle}
                 onChange={e => setQuickTitle(e.target.value)}
                 className="flex-1 bg-transparent text-xs text-white placeholder-neutral-500 focus:outline-none"
@@ -271,7 +271,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               <button
                 type="submit"
                 disabled={!quickTitle.trim()}
-                className="px-3 py-1 bg-[#ff6b00] hover:bg-[#ea580c] disabled:opacity-30 text-white text-xs font-bold rounded-xl shrink-0 transition-colors shadow-md"
+                className="px-3 py-1 bg-[#ff6b00] hover:bg-[#ea580c] disabled:opacity-30 text-white text-xs font-bold rounded-lg shrink-0 transition-colors shadow-sm"
               >
                 Salvar
               </button>
@@ -415,6 +415,59 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                     )}
                   </div>
                 )}
+
+                {/* Rich Bottom Daily Productivity Card */}
+                <div className="mt-3 p-4 rounded-2xl bg-[#141416] border border-[#242428] space-y-3 shadow-xl">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-white uppercase tracking-wider">
+                        Resumo do Dia
+                      </span>
+                      <span className="text-[10px] bg-[#ff6b00]/20 text-[#ff6b00] font-black px-1.5 py-0.2 rounded border border-[#ff6b00]/30">
+                        HOJE
+                      </span>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-[#ff6b00]">
+                      {completedTasks.length} de {todayTasks.length + completedTasks.length} concluídas ({todayTasks.length + completedTasks.length > 0 ? Math.round((completedTasks.length / (todayTasks.length + completedTasks.length)) * 100) : 100}%)
+                    </span>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-full h-2 rounded-full bg-[#202024] overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-[#ff6b00] to-[#ea580c] transition-all duration-500 rounded-full"
+                      style={{
+                        width: `${todayTasks.length + completedTasks.length > 0 ? (completedTasks.length / (todayTasks.length + completedTasks.length)) * 100 : 100}%`
+                      }}
+                    />
+                  </div>
+
+                  {/* Mini Stats Grid */}
+                  <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                    <div className="p-2 rounded-xl bg-[#1c1c1e] border border-[#262629]">
+                      <span className="text-[10px] text-neutral-400 block font-medium">Sequência</span>
+                      <span className="text-xs font-black text-amber-400 flex items-center justify-center gap-1 mt-0.5">
+                        🔥 12 dias
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#1c1c1e] border border-[#262629]">
+                      <span className="text-[10px] text-neutral-400 block font-medium">Foco Pomodoro</span>
+                      <span className="text-xs font-black text-rose-400 flex items-center justify-center gap-1 mt-0.5">
+                        🍅 45 min
+                      </span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-[#1c1c1e] border border-[#262629]">
+                      <span className="text-[10px] text-neutral-400 block font-medium">Pendentes</span>
+                      <span className="text-xs font-black text-white flex items-center justify-center gap-1 mt-0.5">
+                        📋 {todayTasks.length} tarefas
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-neutral-500 text-center italic pt-0.5">
+                    "Pequenos passos diários constroem grandes conquistas."
+                  </p>
+                </div>
               </div>
             ) : (
               /* In other views: render sections as usual */
@@ -716,19 +769,10 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               />
             </div>
 
-            {/* List / Category Selector */}
-            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
-              <label className="text-xs text-neutral-400 font-medium">Lista / Categoria</label>
-              <div className="flex gap-2">
-                <select
-                  value={selectedTask.projectId || 'inbox'}
-                  onChange={e => updateTask(selectedTask.id, { projectId: e.target.value })}
-                  className="flex-1 bg-[#141416] border border-[#2c2c2e] text-xs text-white rounded-xl px-3 py-2 focus:outline-none"
-                >
-                  {state.projects.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+            {/* List / Category Selector - 100% Contained in Card */}
+            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-neutral-400 font-medium">Lista / Categoria</label>
                 <button
                   type="button"
                   onClick={() => {
@@ -738,11 +782,20 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       updateTask(selectedTask.id, { projectId: newProj.id });
                     }
                   }}
-                  className="px-3 py-2 bg-[#141416] hover:bg-[#28282e] border border-[#2c2c2e] rounded-xl text-xs text-neutral-300 font-bold shrink-0"
+                  className="text-xs text-[#ff6b00] hover:text-[#ea580c] font-bold flex items-center gap-1 active:scale-95 transition-transform"
                 >
                   + Nova Lista
                 </button>
               </div>
+              <select
+                value={selectedTask.projectId || 'inbox'}
+                onChange={e => updateTask(selectedTask.id, { projectId: e.target.value })}
+                className="w-full bg-[#141416] border border-[#2c2c2e] text-xs text-white rounded-xl px-3 py-2.5 focus:outline-none truncate"
+              >
+                {state.projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.icon || '📁'} {p.name}</option>
+                ))}
+              </select>
             </div>
 
             {/* Description Notes */}
@@ -900,14 +953,14 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                     key={p}
                     type="button"
                     onClick={() => updateTask(selectedTask.id, { priority: p })}
-                    className={`py-2 text-xs rounded-xl border flex items-center justify-center gap-1.5 transition-colors ${
+                    className={`py-2 text-xs rounded-xl border flex items-center justify-center gap-1 transition-colors min-w-0 ${
                       selectedTask.priority === p
-                        ? 'bg-[#28282e] border-neutral-400 text-white font-bold'
+                        ? 'bg-[#28282e] border-[#ff6b00] text-white font-bold shadow-sm'
                         : 'border-[#262629] bg-[#141416] text-neutral-400'
                     }`}
                   >
-                    <Flag className={`w-3.5 h-3.5 ${priorityColors[p]}`} />
-                    <span>{p === 0 ? 'Sem' : p === 1 ? 'Baixa' : p === 2 ? 'Média' : 'Alta'}</span>
+                    <Flag className={`w-3.5 h-3.5 ${priorityColors[p]} shrink-0`} />
+                    <span className="truncate text-[11px]">{p === 0 ? 'Sem' : p === 1 ? 'Baixa' : p === 2 ? 'Média' : 'Alta'}</span>
                   </button>
                 ))}
               </div>

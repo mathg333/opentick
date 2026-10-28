@@ -23,7 +23,11 @@ import {
   Zap,
   Slash,
   SlidersHorizontal,
-  FolderPlus
+  FolderPlus,
+  Crown,
+  Sparkles,
+  CheckCircle2,
+  Folder
 } from 'lucide-react';
 
 export default function Sidebar({ 
@@ -36,13 +40,14 @@ export default function Sidebar({
   const { state, activeView, setActiveView, addProject, deleteProject } = store;
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectColor, setNewProjectColor] = useState('#3b82f6');
+  const [newProjectColor, setNewProjectColor] = useState('#ff6b00');
 
   const today = new Date();
   const dayOfMonth = today.getDate();
   const todayStr = today.toISOString().split('T')[0];
 
-  const todayTasksCount = state.tasks.filter(t => !t.completed && t.dueDate === todayStr).length;
+  const todayTasksCount = state.tasks.filter(t => !t.completed && (t.dueDate === todayStr || (t.recurringDates && t.recurringDates.includes(todayStr)))).length;
+  const inboxTasksCount = state.tasks.filter(t => !t.completed && (t.projectId === 'inbox' || !t.projectId)).length;
   const completedTasksCount = state.tasks.filter(t => t.completed).length;
 
   const handleSelectView = (viewId) => {
@@ -56,58 +61,60 @@ export default function Sidebar({
     addProject({
       name: newProjectName.trim(),
       color: newProjectColor,
-      icon: 'Folder'
+      icon: '📁'
     });
     setNewProjectName('');
     setIsAddingProject(false);
   };
 
   return (
-    <aside className="w-[300px] max-w-[85vw] md:w-64 bg-[#18181b] border-r border-[#262629] flex flex-col h-full select-none shadow-2xl md:shadow-none text-neutral-100">
-      {/* Profile Header (Exact TickTick layout: Avatar, Name "Mathx", Search, Bell, Settings) */}
-      <div className="p-4 pt-5 border-b border-[#262629] flex items-center justify-between shrink-0 bg-[#141416]">
+    <aside className="w-[310px] max-w-[85vw] md:w-68 bg-[#121214] border-r border-[#242428] flex flex-col h-full select-none shadow-2xl md:shadow-none text-neutral-100">
+      {/* Profile Header (Larger, prominent avatar requested by user, with PRO status) */}
+      <div className="p-4 pt-5 pb-4 border-b border-[#242428] flex items-center justify-between shrink-0 bg-[#0e0e10]">
         <div 
           onClick={() => {
             if (onOpenSettingsModal) onOpenSettingsModal();
             if (onCloseMobileDrawer) onCloseMobileDrawer();
           }}
-          className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity"
+          className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity"
         >
-          {/* Avatar with Frog/Knight aesthetic from screenshot */}
-          <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-600 via-amber-600 to-indigo-600 p-0.5 shadow-md">
-              <div className="w-full h-full rounded-full bg-[#1c1c1e] flex items-center justify-center font-bold text-white text-xs">
+          {/* Much Larger Avatar with Iridescent Glowing Gradient Ring */}
+          <div className="relative shrink-0">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 via-amber-500 to-[#ff6b00] p-1 shadow-lg shadow-[#ff6b00]/25">
+              <div className="w-full h-full rounded-full bg-[#1c1c1e] flex items-center justify-center font-black text-white text-2xl select-none">
                 🐸
               </div>
             </div>
-            {/* Level/Crown Badge */}
-            <span className="absolute -top-1 -right-1 bg-neutral-200 text-black text-[9px] font-black rounded-full px-1 shadow">
+            {/* Gold Crown Badge */}
+            <span className="absolute -top-1 -right-1 bg-amber-400 text-black text-[10px] font-black rounded-full p-0.5 shadow-md flex items-center justify-center w-5 h-5">
               👑
             </span>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-sm text-white tracking-tight">Mathx</span>
-              <span className="text-[9px] bg-emerald-500/20 text-emerald-400 font-bold px-1.5 py-0.2 rounded border border-emerald-500/30">
+              <span className="font-extrabold text-base text-white tracking-tight truncate">Mathx</span>
+              <span className="text-[9px] bg-[#ff6b00]/20 text-[#ff6b00] font-black px-1.5 py-0.5 rounded border border-[#ff6b00]/30 shrink-0">
                 PRO FREE
               </span>
             </div>
-            <div className="flex items-center gap-1 text-[10px] text-neutral-400 mt-0.5">
-              <span className="bg-[#242428] px-1 rounded text-emerald-300 font-mono">Lv.5</span>
-              <span>• 12 crachás</span>
+            <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 mt-1">
+              <span className="bg-emerald-950 text-emerald-300 font-bold px-1.5 py-0.2 rounded font-mono text-[10px]">
+                Lv.5
+              </span>
+              <span className="truncate">⭐ 12 crachás</span>
             </div>
           </div>
         </div>
 
-        {/* Top Action Icons: Search, Bell, Settings / Close on Mobile */}
+        {/* Top Header Actions: Search, Settings, Close */}
         <div className="flex items-center gap-1">
           <button
             onClick={() => {
               if (onOpenSearchModal) onOpenSearchModal();
               if (onCloseMobileDrawer) onCloseMobileDrawer();
             }}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800 transition-colors"
+            className="p-2 text-neutral-400 hover:text-white rounded-xl active:bg-neutral-800 transition-colors"
             title="Pesquisar"
           >
             <Search className="w-4 h-4" />
@@ -117,14 +124,14 @@ export default function Sidebar({
               if (onOpenSettingsModal) onOpenSettingsModal();
               if (onCloseMobileDrawer) onCloseMobileDrawer();
             }}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800 transition-colors"
+            className="p-2 text-neutral-400 hover:text-white rounded-xl active:bg-neutral-800 transition-colors"
             title="Configurações"
           >
             <Settings className="w-4 h-4" />
           </button>
           <button
             onClick={onCloseMobileDrawer}
-            className="md:hidden p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800 ml-1"
+            className="md:hidden p-2 text-neutral-400 hover:text-white rounded-xl active:bg-neutral-800"
             title="Fechar menu"
           >
             <X className="w-5 h-5" />
@@ -134,65 +141,73 @@ export default function Sidebar({
 
       {/* Scrollable Navigation Area */}
       <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
-        {/* Smart Views: Hoje (blue box icon with date) & Etiquetas */}
+        {/* Core Views with Rich Colored Icon Badges */}
         <div className="space-y-1">
+          {/* Hoje */}
           <button
             onClick={() => handleSelectView('tasks-today')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
               activeView === 'tasks-today'
-                ? 'bg-[#28282e] text-white font-semibold'
-                : 'text-neutral-300 hover:bg-[#222226]'
+                ? 'bg-[#222226] text-white shadow-sm border border-[#303036]'
+                : 'text-neutral-300 hover:bg-[#1a1a1e]'
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-md bg-[#4c82f7] flex items-center justify-center text-white font-black text-[11px] shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#ff6b00] to-[#ea580c] flex items-center justify-center text-white font-black text-xs shadow-md shadow-[#ff6b00]/30 shrink-0">
                 {dayOfMonth}
               </div>
-              <span className="font-semibold">Hoje</span>
+              <span className="text-sm font-bold">Hoje</span>
             </div>
             {todayTasksCount > 0 && (
-              <span className="text-xs text-neutral-400 font-mono font-medium">
+              <span className="text-xs bg-[#ff6b00]/20 text-[#ff6b00] font-mono font-bold px-2 py-0.5 rounded-full border border-[#ff6b00]/30">
                 {todayTasksCount}
               </span>
             )}
           </button>
 
+          {/* Caixa de Entrada */}
           <button
             onClick={() => handleSelectView('tasks-inbox')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
               activeView === 'tasks-inbox'
-                ? 'bg-[#28282e] text-white font-semibold'
-                : 'text-neutral-300 hover:bg-[#222226]'
+                ? 'bg-[#222226] text-white shadow-sm border border-[#303036]'
+                : 'text-neutral-300 hover:bg-[#1a1a1e]'
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-md bg-[#3b82f6]/20 flex items-center justify-center text-[#4c82f7]">
-                <Inbox className="w-3.5 h-3.5" />
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                <Inbox className="w-4 h-4 stroke-[2.5]" />
               </div>
-              <span>Caixa de Entrada</span>
+              <span className="text-sm">Caixa de Entrada</span>
             </div>
+            {inboxTasksCount > 0 && (
+              <span className="text-xs text-neutral-400 font-mono font-bold px-1.5 py-0.5">
+                {inboxTasksCount}
+              </span>
+            )}
           </button>
 
-          <div className="flex items-center justify-between px-3 py-2 text-xs text-neutral-400 hover:text-neutral-200 cursor-pointer">
+          {/* Etiquetas */}
+          <div className="flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-semibold text-neutral-300 hover:bg-[#1a1a1e] cursor-pointer transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-md bg-[#2563eb]/20 flex items-center justify-center text-blue-400">
-                <Tag className="w-3.5 h-3.5" />
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center text-white shadow-md shadow-amber-500/20 shrink-0">
+                <Tag className="w-4 h-4" />
               </div>
-              <span>Etiquetas</span>
+              <span className="text-sm">Etiquetas</span>
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-neutral-600" />
+            <ChevronRight className="w-4 h-4 text-neutral-500" />
           </div>
         </div>
 
-        <div className="border-t border-[#262629] my-2" />
+        <div className="border-t border-[#242428] my-2" />
 
-        {/* User Lists (Populated with user's real categories from screenshot) */}
+        {/* User Custom Lists with Rich Styled Badges */}
         <div className="space-y-1">
-          <div className="px-2 pb-1 text-[10px] font-bold text-neutral-500 uppercase tracking-wider flex items-center justify-between">
-            <span>Listas</span>
+          <div className="px-2 pb-1.5 text-[10px] font-black text-neutral-400 uppercase tracking-widest flex items-center justify-between">
+            <span>Listas & Projetos</span>
             <button
               onClick={() => setIsAddingProject(!isAddingProject)}
-              className="text-neutral-400 hover:text-white transition-colors p-0.5"
+              className="p-1 rounded-lg bg-[#1c1c1e] text-neutral-300 hover:text-white border border-[#2c2c2e] transition-colors"
               title="Nova Lista"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -200,38 +215,38 @@ export default function Sidebar({
           </div>
 
           {isAddingProject && (
-            <form onSubmit={handleCreateProject} className="p-2.5 bg-[#141417] rounded-xl border border-[#27272a] space-y-2 mb-2">
+            <form onSubmit={handleCreateProject} className="p-3 bg-[#18181c] rounded-2xl border border-[#2e2e34] space-y-2.5 mb-2 shadow-xl animate-in fade-in">
               <input
                 type="text"
                 placeholder="Nome da lista..."
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
                 autoFocus
-                className="w-full bg-[#09090b] border border-[#27272a] rounded px-2.5 py-1 text-xs text-white placeholder-neutral-600 focus:outline-none"
+                className="w-full bg-[#0d0d0f] border border-[#2e2e34] rounded-xl px-3 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none"
               />
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
-                  {['#ef4444', '#f59e0b', '#10b981', '#06b6d4', '#8b5cf6', '#ec4899'].map((c) => (
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center gap-1.5">
+                  {['#ff6b00', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b'].map((c) => (
                     <button
                       key={c}
                       type="button"
                       onClick={() => setNewProjectColor(c)}
-                      className={`w-3.5 h-3.5 rounded-full ${newProjectColor === c ? 'scale-125 ring-2 ring-white' : 'opacity-70'}`}
+                      className={`w-4 h-4 rounded-full transition-transform ${newProjectColor === c ? 'scale-125 ring-2 ring-white shadow-sm' : 'opacity-70'}`}
                       style={{ backgroundColor: c }}
                     />
                   ))}
                 </div>
-                <div className="flex gap-1">
+                <div className="flex gap-1.5">
                   <button
                     type="button"
                     onClick={() => setIsAddingProject(false)}
-                    className="text-[10px] px-2 py-0.5 text-neutral-400"
+                    className="text-xs px-2.5 py-1 text-neutral-400 hover:text-white"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="text-[10px] px-2.5 py-0.5 bg-white text-black font-bold rounded"
+                    className="text-xs px-3 py-1 bg-[#ff6b00] hover:bg-[#ea580c] text-white font-bold rounded-xl shadow-md"
                   >
                     Salvar
                   </button>
@@ -246,40 +261,62 @@ export default function Sidebar({
 
             // Map custom emoji per list
             let listEmoji = '📁';
-            if (proj.name.toLowerCase().includes('tecnologia')) listEmoji = '📚';
-            else if (proj.name.toLowerCase().includes('sprint')) listEmoji = '🚀';
-            else if (proj.name.toLowerCase().includes('alta')) listEmoji = '🔥';
-            else if (proj.name.toLowerCase().includes('média') || proj.name.toLowerCase().includes('media')) listEmoji = '⚡';
-            else if (proj.name.toLowerCase().includes('leitura')) listEmoji = '📚';
-            else if (proj.name.toLowerCase().includes('fazer')) listEmoji = '☰';
+            let bgGradient = 'from-blue-500 to-indigo-600';
+            const nameLower = proj.name.toLowerCase();
+
+            if (nameLower.includes('tecnologia')) {
+              listEmoji = '💻';
+              bgGradient = 'from-cyan-500 to-blue-600';
+            } else if (nameLower.includes('sprint')) {
+              listEmoji = '🚀';
+              bgGradient = 'from-violet-500 to-purple-600';
+            } else if (nameLower.includes('alta') || nameLower.includes('urgente')) {
+              listEmoji = '🔥';
+              bgGradient = 'from-rose-500 to-red-600';
+            } else if (nameLower.includes('média') || nameLower.includes('media')) {
+              listEmoji = '⚡';
+              bgGradient = 'from-amber-500 to-orange-600';
+            } else if (nameLower.includes('leitura') || nameLower.includes('livro')) {
+              listEmoji = '📚';
+              bgGradient = 'from-emerald-500 to-teal-600';
+            } else if (nameLower.includes('fazer')) {
+              listEmoji = '📝';
+              bgGradient = 'from-blue-500 to-indigo-600';
+            }
 
             return (
               <div
                 key={proj.id}
                 onClick={() => handleSelectView(`project-${proj.id}`)}
-                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer ${
+                className={`group flex items-center justify-between px-3 py-2 rounded-2xl text-xs transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-[#28282e] text-white font-medium'
-                    : 'text-neutral-300 hover:bg-[#222226]'
+                    ? 'bg-[#222226] text-white font-bold border border-[#303036] shadow-sm'
+                    : 'text-neutral-300 hover:bg-[#1a1a1e]'
                 }`}
               >
                 <div className="flex items-center gap-3 truncate">
-                  <span className="text-sm shrink-0">{listEmoji}</span>
-                  <span className="truncate">{proj.name}</span>
+                  <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${bgGradient} flex items-center justify-center text-sm shadow-sm shrink-0`}>
+                    {listEmoji}
+                  </div>
+                  <span className="truncate text-sm font-medium">{proj.name}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   {count > 0 && (
-                    <span className="text-xs text-neutral-400 font-mono">{count}</span>
+                    <span className="text-xs text-neutral-400 font-mono font-bold bg-[#18181c] px-2 py-0.5 rounded-full border border-[#28282c]">
+                      {count}
+                    </span>
                   )}
                   {proj.id !== 'inbox' && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteProject(proj.id);
+                        if (confirm(`Excluir a lista "${proj.name}"?`)) {
+                          deleteProject(proj.id);
+                        }
                       }}
-                      className="opacity-0 group-hover:opacity-100 text-neutral-500 hover:text-rose-400 p-1"
+                      className="opacity-0 group-hover:opacity-100 text-neutral-500 hover:text-rose-400 p-1 transition-opacity"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -288,69 +325,23 @@ export default function Sidebar({
           })}
         </div>
 
-        <div className="border-t border-[#262629] my-2" />
+        <div className="border-t border-[#242428] my-2" />
 
-        {/* System Completed & Trash Views */}
+        {/* PRO Premium Unlocked Section with Rich Glowing Badges */}
         <div className="space-y-1">
-          <button
-            onClick={() => handleSelectView('tasks-completed')}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all ${
-              activeView === 'tasks-completed' ? 'bg-[#28282e] text-white' : 'text-neutral-300 hover:bg-[#222226]'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-md bg-[#2563eb]/20 flex items-center justify-center text-blue-400">
-                <CheckSquare className="w-3.5 h-3.5" />
-              </div>
-              <span>Concluído</span>
-            </div>
-            {completedTasksCount > 0 && (
-              <span className="text-xs text-neutral-400 font-mono">{completedTasksCount}</span>
-            )}
-          </button>
-
-          <button
-            onClick={() => handleSelectView('tasks-wontdo')}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-neutral-300 hover:bg-[#222226]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-md bg-rose-500/20 flex items-center justify-center text-rose-400">
-                <X className="w-3.5 h-3.5" />
-              </div>
-              <span>Não será feito</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => handleSelectView('tasks-trash')}
-            className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs text-neutral-400 hover:bg-[#222226]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-md bg-neutral-800 flex items-center justify-center text-neutral-500">
-                <Trash2 className="w-3.5 h-3.5" />
-              </div>
-              <span>Lixeira</span>
-            </div>
-          </button>
-        </div>
-
-        <div className="border-t border-[#262629] my-2" />
-
-        {/* PRO Premium Unlocked Section */}
-        <div className="space-y-1">
-          <div className="px-2 pb-1 text-[10px] font-bold text-neutral-500 uppercase tracking-wider flex items-center justify-between">
-            <span>Recursos PRO Grátis</span>
-            <span className="text-[9px] bg-emerald-500/20 text-emerald-400 font-bold px-1 rounded">
-              DESBLOQUEADO
+          <div className="px-2 pb-1.5 text-[10px] font-black text-neutral-400 uppercase tracking-widest flex items-center justify-between">
+            <span>Ferramentas PRO</span>
+            <span className="text-[9px] bg-emerald-500/20 text-emerald-400 font-black px-1.5 py-0.5 rounded border border-emerald-500/30">
+              100% GRÁTIS
             </span>
           </div>
 
           {[
-            { id: 'calendar', label: 'Calendário & Time-Blocking', icon: CalendarIcon, color: 'text-blue-400' },
-            { id: 'eisenhower', label: 'Matriz de Eisenhower', icon: Grid, color: 'text-rose-400' },
-            { id: 'habits', label: 'Rastreador de Hábitos', icon: Flame, color: 'text-orange-400' },
-            { id: 'pomodoro', label: 'Pomodoro & Ruído Branco', icon: Clock, color: 'text-yellow-400' },
-            { id: 'stats', label: 'Estatísticas & Produtividade', icon: BarChart3, color: 'text-indigo-400' }
+            { id: 'calendar', label: 'Calendário & Horários', icon: CalendarIcon, gradient: 'from-blue-500 to-cyan-500' },
+            { id: 'eisenhower', label: 'Matriz de Eisenhower', icon: Grid, gradient: 'from-emerald-500 to-teal-600' },
+            { id: 'habits', label: 'Rastreador de Hábitos', icon: Flame, gradient: 'from-amber-500 to-orange-600' },
+            { id: 'pomodoro', label: 'Pomodoro & Ruídos', icon: Clock, gradient: 'from-rose-500 to-red-600' },
+            { id: 'stats', label: 'Estatísticas & Insights', icon: BarChart3, gradient: 'from-indigo-500 to-purple-600' }
           ].map(tool => {
             const Icon = tool.icon;
             const isActive = activeView === tool.id;
@@ -358,28 +349,68 @@ export default function Sidebar({
               <button
                 key={tool.id}
                 onClick={() => handleSelectView(tool.id)}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all ${
-                  isActive ? 'bg-[#28282e] text-white font-bold' : 'text-neutral-300 hover:bg-[#222226]'
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs transition-all ${
+                  isActive 
+                    ? 'bg-[#222226] text-white font-bold border border-[#303036] shadow-sm' 
+                    : 'text-neutral-300 hover:bg-[#1a1a1e]'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${tool.color}`} />
-                  <span className="truncate">{tool.label}</span>
+                  <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center text-white shadow-sm shrink-0`}>
+                    <Icon className="w-4 h-4 stroke-[2.2]" />
+                  </div>
+                  <span className="truncate text-sm font-medium">{tool.label}</span>
                 </div>
               </button>
             );
           })}
         </div>
+
+        <div className="border-t border-[#242428] my-2" />
+
+        {/* System Completed & Trash Views */}
+        <div className="space-y-1">
+          <button
+            onClick={() => handleSelectView('tasks-completed')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs transition-all ${
+              activeView === 'tasks-completed' ? 'bg-[#222226] text-white font-bold' : 'text-neutral-300 hover:bg-[#1a1a1e]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-sm shrink-0">
+                <CheckSquare className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <span className="text-sm font-medium">Concluído</span>
+            </div>
+            {completedTasksCount > 0 && (
+              <span className="text-xs text-neutral-400 font-mono font-bold">{completedTasksCount}</span>
+            )}
+          </button>
+
+          <button
+            onClick={() => handleSelectView('tasks-trash')}
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-2xl text-xs transition-all ${
+              activeView === 'tasks-trash' ? 'bg-[#222226] text-white font-bold' : 'text-neutral-400 hover:bg-[#1a1a1e]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-neutral-700 to-neutral-800 flex items-center justify-center text-neutral-400 shadow-sm shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </div>
+              <span className="text-sm font-medium">Lixeira</span>
+            </div>
+          </button>
+        </div>
       </div>
 
-      {/* Drawer Footer (Matching screenshot bottom: + Adicionar, and reorder icon) */}
-      <div className="p-3 border-t border-[#262629] bg-[#141416] flex items-center justify-between shrink-0">
+      {/* Drawer Footer: + Adicionar Lista e Configurações */}
+      <div className="p-3 border-t border-[#242428] bg-[#0e0e10] flex items-center justify-between shrink-0">
         <button
           onClick={() => setIsAddingProject(true)}
-          className="flex items-center gap-2 text-xs font-semibold text-neutral-300 hover:text-white px-2 py-1 rounded-lg"
+          className="flex items-center gap-2 text-xs font-bold text-neutral-200 hover:text-white px-3 py-2 rounded-xl bg-[#1c1c1e] border border-[#2a2a2e] shadow-sm active:scale-95 transition-transform"
         >
-          <Plus className="w-4 h-4" />
-          <span>Adicionar</span>
+          <Plus className="w-4 h-4 text-[#ff6b00]" />
+          <span>Criar Lista</span>
         </button>
 
         <button
@@ -387,8 +418,8 @@ export default function Sidebar({
             if (onOpenSettingsModal) onOpenSettingsModal();
             if (onCloseMobileDrawer) onCloseMobileDrawer();
           }}
-          className="p-1.5 text-neutral-400 hover:text-white rounded-lg"
-          title="Gerenciar e Configurar"
+          className="p-2 text-neutral-400 hover:text-white rounded-xl bg-[#1c1c1e] border border-[#2a2a2e] active:scale-95 transition-transform"
+          title="Configurações Gerais"
         >
           <SlidersHorizontal className="w-4 h-4" />
         </button>
