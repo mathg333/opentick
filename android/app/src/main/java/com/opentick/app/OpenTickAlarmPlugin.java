@@ -96,13 +96,34 @@ public class OpenTickAlarmPlugin extends Plugin {
 
     @PluginMethod
     public void stopActiveAlarm(PluginCall call) {
+        String id = call.getString("id");
         try {
-            AlarmService.stop(getContext());
+            if (id != null && !id.isEmpty()) {
+                AlarmStateManager.markDismissed(getContext(), id);
+                AlarmService.stop(getContext(), id);
+            } else {
+                AlarmService.stop(getContext());
+            }
             JSObject ret = new JSObject();
             ret.put("success", true);
             call.resolve(ret);
         } catch (Exception e) {
             call.reject("Error stopping alarm: " + e.getMessage(), e);
+        }
+    }
+
+    @PluginMethod
+    public void markAlarmDismissed(PluginCall call) {
+        String id = call.getString("id");
+        try {
+            if (id != null && !id.isEmpty()) {
+                AlarmStateManager.markDismissed(getContext(), id);
+            }
+            JSObject ret = new JSObject();
+            ret.put("success", true);
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject("Error marking alarm dismissed: " + e.getMessage(), e);
         }
     }
 

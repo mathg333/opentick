@@ -83,7 +83,8 @@ public class AlarmActivity extends Activity {
         Button btnStop = findViewById(R.id.btn_stop_alarm);
         if (btnStop != null) {
             btnStop.setOnClickListener(v -> {
-                AlarmService.stop(this);
+                AlarmStateManager.markDismissed(this, mTaskId);
+                AlarmService.stop(this, mTaskId);
                 finish();
             });
         }
@@ -102,7 +103,8 @@ public class AlarmActivity extends Activity {
         Button btnOpenApp = findViewById(R.id.btn_open_app);
         if (btnOpenApp != null) {
             btnOpenApp.setOnClickListener(v -> {
-                AlarmService.stop(this);
+                AlarmStateManager.markDismissed(this, mTaskId);
+                AlarmService.stop(this, mTaskId);
 
                 Intent launchIntent = new Intent(this, MainActivity.class);
                 launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);

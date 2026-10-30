@@ -10,6 +10,60 @@ const getAlarmPlugin = () => {
 };
 
 /**
+ * Mark an alarm as dismissed / stopped by user (persisted in localStorage)
+ */
+export function markAlarmDismissed(taskId, dateStr, timeStr) {
+  if (!taskId) return;
+  try {
+    const now = new Date();
+    const dStr = dateStr || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const tStr = timeStr || `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    
+    // Key for this specific date and time
+    const key = `opentick_dismissed_${taskId}_${dStr}_${tStr}`;
+    localStorage.setItem(key, String(Date.now()));
+
+    // Key for today's dismissed tasks
+    const dailyKey = `opentick_dismissed_today_${dStr}`;
+    const existing = JSON.parse(localStorage.getItem(dailyKey) || '[]');
+    if (!existing.includes(taskId)) {
+      existing.push(taskId);
+      localStorage.setItem(dailyKey, JSON.stringify(existing));
+    }
+
+    // Inform native plugin
+    if (isNativeAndroid()) {
+      const plugin = getAlarmPlugin();
+      plugin?.markAlarmDismissed?.({ id: taskId }).catch(() => {});
+    }
+  } catch (e) {
+    console.warn('Error marking alarm dismissed:', e);
+  }
+}
+
+/**
+ * Check if an alarm has already been stopped/dismissed by user today
+ */
+export function isAlarmDismissed(taskId, dateStr, timeStr) {
+  if (!taskId) return false;
+  try {
+    const now = new Date();
+    const dStr = dateStr || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    
+    if (timeStr) {
+      const specificKey = `opentick_dismissed_${taskId}_${dStr}_${timeStr}`;
+      if (localStorage.getItem(specificKey)) return true;
+    }
+
+    const dailyKey = `opentick_dismissed_today_${dStr}`;
+    const existing = JSON.parse(localStorage.getItem(dailyKey) || '[]');
+    return existing.includes(taskId);
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
  * Schedule a native exact alarm in Android's AlarmManager
  * @param {string} id - Task ID
  * @param {string} title - Task Title
@@ -54,12 +108,12 @@ export async function cancelNativeAlarm(id) {
 /**
  * Stop any currently ringing native alarm and dismiss notification
  */
-export async function stopNativeAlarm() {
+export async function stopNativeAlarm(taskId) {
   if (!isNativeAndroid()) return false;
   try {
     const plugin = getAlarmPlugin();
     if (plugin?.stopActiveAlarm) {
-      await plugin.stopActiveAlarm();
+      await plugin.stopActiveAlarm(taskId ? { id: taskId } : {});
       return true;
     }
   } catch (e) {
@@ -143,6 +197,8 @@ export async function requestExactAlarmPermission() {
 export async function syncTasksToNativeAlarmManager(tasks) {
   if (!isNativeAndroid()) return;
   const now = Date.now();
+  const nowDate = new Date();
+  const todayStr = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}-${String(nowDate.getDate()).padStart(2, '0')}`;
 
   for (const task of tasks) {
     if (task.completed || !task.startTime) {
@@ -168,6 +224,11 @@ export async function syncTasksToNativeAlarmManager(tasks) {
     const [hours, minutes] = task.startTime.split(':').map(Number);
 
     for (const dStr of targetDates) {
+      // If this task was already dismissed for this date and time, skip it
+      if (isAlarmDismissed(task.id, dStr, task.startTime)) {
+        continue;
+      }
+
       const [y, m, d] = dStr.split('-').map(Number);
       const targetDate = new Date(y, m - 1, d, hours, minutes, 0, 0);
       const millis = targetDate.getTime();

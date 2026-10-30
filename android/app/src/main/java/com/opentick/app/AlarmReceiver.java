@@ -11,10 +11,16 @@ public class AlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (intent == null) return;
         String taskId = intent.getStringExtra(EXTRA_TASK_ID);
         String taskTitle = intent.getStringExtra(EXTRA_TASK_TITLE);
         if (taskTitle == null || taskTitle.trim().isEmpty()) {
             taskTitle = "Lembrete OpenTick";
+        }
+
+        // Check if user already dismissed/stopped this alarm
+        if (AlarmStateManager.isDismissed(context, taskId)) {
+            return;
         }
 
         // 1. Wake up device screen from sleep / lock state

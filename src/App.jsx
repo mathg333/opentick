@@ -16,7 +16,14 @@ import SearchModal from './components/SearchModal';
 import AlarmOverlayModal from './components/AlarmOverlayModal';
 import { soundManager } from './utils/audio';
 import { getCustomAudioFile } from './utils/audioStorage';
-import { syncTasksToNativeAlarmManager, stopNativeAlarm } from './utils/nativeAlarm';
+import { 
+  syncTasksToNativeAlarmManager, 
+  stopNativeAlarm, 
+  cancelNativeAlarm, 
+  markAlarmDismissed, 
+  isAlarmDismissed, 
+  isNativeAndroid 
+} from './utils/nativeAlarm';
 import { 
   Menu, 
   CheckSquare, 
@@ -81,8 +88,35 @@ export default function App() {
       setIsAlarmModalOpen(true);
     };
 
+    // Listen for alarm stop event broadcasted from native AlarmActivity or notification
+    const handleNativeAlarmStopped = (e) => {
+      const stoppedId = e?.detail?.taskId;
+      if (stoppedId) {
+        const now = new Date();
+        const yr = now.getFullYear();
+        const mo = String(now.getMonth() + 1).padStart(2, '0');
+        const dy = String(now.getDate()).padStart(2, '0');
+        const todayStr = `${yr}-${mo}-${dy}`;
+        markAlarmDismissed(stoppedId, todayStr);
+      }
+      soundManager.stopContinuousAlarm();
+      stopNativeAlarm(stoppedId);
+      setIsAlarmModalOpen(false);
+      setAlarmActiveTask(null);
+    };
+
+    window.__openTickStopAlarm = (taskId) => {
+      handleNativeAlarmStopped({ detail: { taskId } });
+    };
+
     window.addEventListener('nativeAlarmTriggered', handleNativeAlarm);
-    return () => window.removeEventListener('nativeAlarmTriggered', handleNativeAlarm);
+    window.addEventListener('nativeAlarmStopped', handleNativeAlarmStopped);
+
+    return () => {
+      delete window.__openTickStopAlarm;
+      window.removeEventListener('nativeAlarmTriggered', handleNativeAlarm);
+      window.removeEventListener('nativeAlarmStopped', handleNativeAlarmStopped);
+    };
   }, [state.tasks]);
 
   // Alarm Ticker: Checks every 5 seconds if a scheduled task has reached its time
@@ -104,6 +138,11 @@ export default function App() {
         if (t.completed) continue;
         if (!t.startTime) continue;
 
+        // Verify if this alarm was already stopped/dismissed today
+        if (isAlarmDismissed(t.id, todayStr, currentHHMM)) {
+          continue;
+        }
+
         const isToday = t.dueDate === todayStr || (t.recurringDates && t.recurringDates.includes(todayStr));
         const isTimeMatch = t.startTime === currentHHMM;
 
@@ -112,32 +151,35 @@ export default function App() {
           if (!triggeredAlarmsRef.current.has(alarmKey)) {
             triggeredAlarmsRef.current.add(alarmKey);
 
-            // Fetch custom audio if configured
-            let customAudioUrl = null;
-            if (settings.sound === 'custom') {
-              const record = await getCustomAudioFile();
-              customAudioUrl = record?.dataUrl || null;
-              if (record) setCustomAudioInfo(record);
-            }
-
-            // Start continuous long alarm (up to 5 min by default)
-            soundManager.startContinuousAlarm({
-              sound: settings.sound || 'radar',
-              customAudioUrl,
-              volume: settings.volume ?? 0.8,
-              durationMinutes: settings.alarmDuration || 5,
-              vibration: settings.vibration !== false,
-              onStop: () => {
-                setIsAlarmModalOpen(false);
-                setAlarmActiveTask(null);
+            // On Native Android, native AlarmService handles ringtone and AlarmActivity handles the UI.
+            // Do NOT start web soundManager audio on Native Android to prevent audio duplicate looping!
+            if (!isNativeAndroid()) {
+              let customAudioUrl = null;
+              if (settings.sound === 'custom') {
+                const record = await getCustomAudioFile();
+                customAudioUrl = record?.dataUrl || null;
+                if (record) setCustomAudioInfo(record);
               }
-            });
+
+              // Start continuous long alarm (up to 5 min by default)
+              soundManager.startContinuousAlarm({
+                sound: settings.sound || 'radar',
+                customAudioUrl,
+                volume: settings.volume ?? 0.8,
+                durationMinutes: settings.alarmDuration || 5,
+                vibration: settings.vibration !== false,
+                onStop: () => {
+                  setIsAlarmModalOpen(false);
+                  setAlarmActiveTask(null);
+                }
+              });
+            }
 
             setAlarmActiveTask(t);
             setIsAlarmModalOpen(true);
 
-            // Native / Browser notification
-            if ('Notification' in window && Notification.permission === 'granted') {
+            // Web notification
+            if (!isNativeAndroid() && 'Notification' in window && Notification.permission === 'granted') {
               try {
                 new Notification(`⏰ ${t.title}`, {
                   body: `OpenTick: Alarme agendado para às ${currentHHMM}!`,
@@ -156,15 +198,32 @@ export default function App() {
   }, [state.tasks, state.settings]);
 
   const handleStopAlarm = () => {
+    if (alarmActiveTask && alarmActiveTask.id) {
+      const now = new Date();
+      const yr = now.getFullYear();
+      const mo = String(now.getMonth() + 1).padStart(2, '0');
+      const dy = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${yr}-${mo}-${dy}`;
+
+      // Persistently record dismissal in LocalStorage and Android SharedPreferences
+      markAlarmDismissed(alarmActiveTask.id, todayStr, alarmActiveTask.startTime);
+      cancelNativeAlarm(alarmActiveTask.id);
+      stopNativeAlarm(alarmActiveTask.id);
+    } else {
+      stopNativeAlarm();
+    }
     soundManager.stopContinuousAlarm();
-    stopNativeAlarm();
     setIsAlarmModalOpen(false);
     setAlarmActiveTask(null);
   };
 
   const handleSnoozeAlarm = () => {
     soundManager.stopContinuousAlarm();
-    stopNativeAlarm();
+    if (alarmActiveTask && alarmActiveTask.id) {
+      stopNativeAlarm(alarmActiveTask.id);
+    } else {
+      stopNativeAlarm();
+    }
     setIsAlarmModalOpen(false);
     if (alarmActiveTask && alarmActiveTask.id !== 'test-alarm') {
       const now = new Date(Date.now() + 5 * 60 * 1000); // +5 minutes

@@ -29,10 +29,12 @@ public class AlarmService extends Service {
     private static Vibrator sVibrator;
     private static Handler sHandler;
     private static Runnable sAutoStopRunnable;
+    private static String sCurrentTaskId = null;
 
     public static final String ACTION_START_ALARM = "com.opentick.app.ACTION_START_ALARM";
     public static final String ACTION_STOP_ALARM = "com.opentick.app.ACTION_STOP_ALARM";
     public static final String ACTION_SNOOZE_ALARM = "com.opentick.app.ACTION_SNOOZE_ALARM";
+    public static final String ACTION_ALARM_STOPPED_BY_USER = "com.opentick.app.ACTION_ALARM_STOPPED_BY_USER";
 
     public static final String EXTRA_TASK_ID = "EXTRA_TASK_ID";
     public static final String EXTRA_TASK_TITLE = "EXTRA_TASK_TITLE";
@@ -55,7 +57,11 @@ public class AlarmService extends Service {
 
         String action = intent.getAction();
         if (ACTION_STOP_ALARM.equals(action)) {
-            stopAlarmInternal();
+            String taskId = intent.getStringExtra(EXTRA_TASK_ID);
+            if (taskId != null && !taskId.isEmpty()) {
+                sCurrentTaskId = taskId;
+            }
+            stopAlarmInternal(false);
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -65,7 +71,7 @@ public class AlarmService extends Service {
             String taskTitle = intent.getStringExtra(EXTRA_TASK_TITLE);
             int minutes = intent.getIntExtra(EXTRA_SNOOZE_MINUTES, 5);
             snoozeInternal(taskId, taskTitle, minutes);
-            stopAlarmInternal();
+            stopAlarmInternal(true);
             stopSelf();
             return START_NOT_STICKY;
         }
@@ -113,7 +119,8 @@ public class AlarmService extends Service {
 
     private void startAlarmInternal(String taskId, String taskTitle) {
         // Stop any running sound/notification
-        stopAlarmInternal();
+        stopAlarmInternal(false);
+        sCurrentTaskId = taskId;
 
         int flag = PendingIntent.FLAG_UPDATE_CURRENT;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -134,6 +141,7 @@ public class AlarmService extends Service {
         // 2. PendingIntent for Dismiss/Stop Action Button directly on Notification
         Intent stopIntent = new Intent(this, AlarmService.class);
         stopIntent.setAction(ACTION_STOP_ALARM);
+        stopIntent.putExtra(EXTRA_TASK_ID, taskId);
         PendingIntent stopPendingIntent = PendingIntent.getService(this, 101, stopIntent, flag);
 
         // 3. PendingIntent for Snooze (+5 min) Action Button on Notification
@@ -257,6 +265,10 @@ public class AlarmService extends Service {
     }
 
     private void stopAlarmInternal() {
+        stopAlarmInternal(false);
+    }
+
+    private void stopAlarmInternal(boolean isSnooze) {
         if (sHandler != null && sAutoStopRunnable != null) {
             sHandler.removeCallbacks(sAutoStopRunnable);
             sAutoStopRunnable = null;
@@ -287,12 +299,30 @@ public class AlarmService extends Service {
             }
         } catch (Exception e) {}
 
+        // Mark dismissed if stopped (not snoozed)
+        String dismissedId = sCurrentTaskId;
+        if (!isSnooze && dismissedId != null) {
+            AlarmStateManager.markDismissed(this, dismissedId);
+        }
+
         // Broadcast to close AlarmActivity if it's open
         try {
             Intent closeIntent = new Intent(AlarmActivity.ACTION_CLOSE_ALARM_ACTIVITY);
             closeIntent.setPackage(getPackageName());
             sendBroadcast(closeIntent);
         } catch (Exception e) {}
+
+        // Broadcast to MainActivity / WebView that alarm was stopped
+        try {
+            Intent stoppedBroadcast = new Intent(ACTION_ALARM_STOPPED_BY_USER);
+            if (dismissedId != null) {
+                stoppedBroadcast.putExtra(EXTRA_TASK_ID, dismissedId);
+            }
+            stoppedBroadcast.setPackage(getPackageName());
+            sendBroadcast(stoppedBroadcast);
+        } catch (Exception e) {}
+
+        sCurrentTaskId = null;
     }
 
     public static void start(Context context, String taskId, String taskTitle) {
@@ -308,8 +338,15 @@ public class AlarmService extends Service {
     }
 
     public static void stop(Context context) {
+        stop(context, null);
+    }
+
+    public static void stop(Context context, String taskId) {
         Intent intent = new Intent(context, AlarmService.class);
         intent.setAction(ACTION_STOP_ALARM);
+        if (taskId != null) {
+            intent.putExtra(EXTRA_TASK_ID, taskId);
+        }
         context.startService(intent);
     }
 
@@ -324,7 +361,7 @@ public class AlarmService extends Service {
 
     @Override
     public void onDestroy() {
-        stopAlarmInternal();
+        stopAlarmInternal(false);
         super.onDestroy();
     }
 }
