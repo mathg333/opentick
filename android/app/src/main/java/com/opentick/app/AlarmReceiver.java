@@ -1,13 +1,18 @@
 package com.opentick.app;
 
+import android.app.ActivityOptions;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.PowerManager;
 
 public class AlarmReceiver extends BroadcastReceiver {
     public static final String EXTRA_TASK_ID = "EXTRA_TASK_ID";
     public static final String EXTRA_TASK_TITLE = "EXTRA_TASK_TITLE";
+    public static final String ACTION_NATIVE_ALARM_TRIGGERED = "com.opentick.app.ACTION_NATIVE_ALARM_TRIGGERED";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -33,7 +38,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                     PowerManager.ON_AFTER_RELEASE,
                     "OpenTick:AlarmWakeLock"
                 );
-                wakeLock.acquire(15000); // Hold wake lock to light up screen and display UI
+                wakeLock.acquire(30000); // Hold wake lock for 30s to keep screen lit
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -52,11 +57,50 @@ public class AlarmReceiver extends BroadcastReceiver {
             launchIntent.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK |
                 Intent.FLAG_ACTIVITY_CLEAR_TOP |
-                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
+                Intent.FLAG_ACTIVITY_SINGLE_TOP
             );
             launchIntent.putExtra(AlarmService.EXTRA_TASK_ID, taskId);
             launchIntent.putExtra(AlarmService.EXTRA_TASK_TITLE, taskTitle);
-            context.startActivity(launchIntent);
+
+            Bundle options = null;
+            if (Build.VERSION.SDK_INT >= 34) {
+                ActivityOptions activityOptions = ActivityOptions.makeBasic();
+                activityOptions.setPendingIntentBackgroundActivityStartMode(
+                    ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+                );
+                options = activityOptions.toBundle();
+            }
+
+            if (options != null) {
+                context.startActivity(launchIntent, options);
+            } else {
+                context.startActivity(launchIntent);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Fallback: try starting via PendingIntent
+            try {
+                Intent piIntent = new Intent(context, AlarmActivity.class);
+                piIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                piIntent.putExtra(AlarmService.EXTRA_TASK_ID, taskId);
+                piIntent.putExtra(AlarmService.EXTRA_TASK_TITLE, taskTitle);
+                int flag = PendingIntent.FLAG_UPDATE_CURRENT;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    flag |= PendingIntent.FLAG_IMMUTABLE;
+                }
+                PendingIntent pi = PendingIntent.getActivity(context, 9999, piIntent, flag);
+                pi.send();
+            } catch (Exception ignored) {}
+        }
+
+        // 4. Also broadcast to MainActivity so if the user is currently using the app, it pops up in-app immediately!
+        try {
+            Intent mainBroadcast = new Intent(ACTION_NATIVE_ALARM_TRIGGERED);
+            mainBroadcast.putExtra("ALARM_TASK_ID", taskId);
+            mainBroadcast.putExtra("ALARM_TASK_TITLE", taskTitle);
+            mainBroadcast.setPackage(context.getPackageName());
+            context.sendBroadcast(mainBroadcast);
         } catch (Exception e) {
             e.printStackTrace();
         }

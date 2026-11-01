@@ -22,7 +22,7 @@ import android.os.Vibrator;
 import androidx.core.app.NotificationCompat;
 
 public class AlarmService extends Service {
-    public static final String CHANNEL_ID = "opentick_alarm_channel_v4";
+    public static final String CHANNEL_ID = "opentick_alarm_channel_v6";
     public static final int NOTIFICATION_ID = 9001;
 
     private static MediaPlayer sMediaPlayer;
@@ -253,11 +253,15 @@ public class AlarmService extends Service {
                 int requestCode = (taskId != null ? taskId.hashCode() : 1) + 999;
                 PendingIntent pi = PendingIntent.getBroadcast(this, requestCode, intent, flag);
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi);
-                } else {
-                    am.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pi);
-                }
+                // Show intent for snooze alarm clock
+                Intent showIntent = new Intent(this, AlarmActivity.class);
+                showIntent.putExtra(EXTRA_TASK_ID, taskId);
+                showIntent.putExtra(EXTRA_TASK_TITLE, taskTitle);
+                showIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                PendingIntent showPi = PendingIntent.getActivity(this, requestCode + 1999, showIntent, flag);
+
+                AlarmManager.AlarmClockInfo clockInfo = new AlarmManager.AlarmClockInfo(triggerAtMillis, showPi);
+                am.setAlarmClock(clockInfo, pi);
             }
         } catch (Exception e) {
             e.printStackTrace();

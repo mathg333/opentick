@@ -27,6 +27,17 @@ public class MainActivity extends BridgeActivity {
         }
     };
 
+    private final BroadcastReceiver mAlarmTriggeredReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String taskId = intent != null ? intent.getStringExtra("ALARM_TASK_ID") : "";
+            String taskTitle = intent != null ? intent.getStringExtra("ALARM_TASK_TITLE") : "Lembrete OpenTick";
+            if (taskId == null) taskId = "";
+            if (taskTitle == null) taskTitle = "Lembrete OpenTick";
+            triggerAlarmInWebView(taskId, taskTitle);
+        }
+    };
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(OpenTickAlarmPlugin.class);
@@ -36,11 +47,14 @@ public class MainActivity extends BridgeActivity {
         configureLockScreenFlags();
 
         // Register receiver for when alarm is stopped natively
-        IntentFilter filter = new IntentFilter(AlarmService.ACTION_ALARM_STOPPED_BY_USER);
+        IntentFilter filterStopped = new IntentFilter(AlarmService.ACTION_ALARM_STOPPED_BY_USER);
+        IntentFilter filterTriggered = new IntentFilter(AlarmReceiver.ACTION_NATIVE_ALARM_TRIGGERED);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(mAlarmStoppedReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(mAlarmStoppedReceiver, filterStopped, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(mAlarmTriggeredReceiver, filterTriggered, Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(mAlarmStoppedReceiver, filter);
+            registerReceiver(mAlarmStoppedReceiver, filterStopped);
+            registerReceiver(mAlarmTriggeredReceiver, filterTriggered);
         }
 
         // Check if opened directly by an active alarm
@@ -75,16 +89,19 @@ public class MainActivity extends BridgeActivity {
             String taskTitle = intent.getStringExtra("ALARM_TASK_TITLE");
             if (taskId == null) taskId = "";
             if (taskTitle == null) taskTitle = "Lembrete OpenTick";
+            triggerAlarmInWebView(taskId, taskTitle);
+        }
+    }
 
-            final String fTaskId = taskId;
-            final String fTaskTitle = taskTitle.replace("'", "\\'");
+    private void triggerAlarmInWebView(String taskId, String taskTitle) {
+        final String fTaskId = taskId;
+        final String fTaskTitle = (taskTitle != null ? taskTitle : "Lembrete OpenTick").replace("'", "\\'");
 
-            if (getBridge() != null && getBridge().getWebView() != null) {
-                getBridge().getWebView().post(() -> {
-                    String js = "window.dispatchEvent(new CustomEvent('nativeAlarmTriggered', { detail: { taskId: '" + fTaskId + "', taskTitle: '" + fTaskTitle + "' } }));";
-                    getBridge().eval(js, null);
-                });
-            }
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().post(() -> {
+                String js = "window.dispatchEvent(new CustomEvent('nativeAlarmTriggered', { detail: { taskId: '" + fTaskId + "', taskTitle: '" + fTaskTitle + "' } }));";
+                getBridge().eval(js, null);
+            });
         }
     }
 
@@ -92,6 +109,9 @@ public class MainActivity extends BridgeActivity {
     public void onDestroy() {
         try {
             unregisterReceiver(mAlarmStoppedReceiver);
+        } catch (Exception e) {}
+        try {
+            unregisterReceiver(mAlarmTriggeredReceiver);
         } catch (Exception e) {}
         super.onDestroy();
     }

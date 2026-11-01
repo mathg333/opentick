@@ -191,6 +191,21 @@ export async function requestExactAlarmPermission() {
 }
 
 /**
+ * Request Full Screen Intent permission (Android 14+)
+ */
+export async function requestFullScreenIntentPermission() {
+  if (!isNativeAndroid()) return;
+  try {
+    const plugin = getAlarmPlugin();
+    if (plugin?.requestFullScreenIntentPermission) {
+      await plugin.requestFullScreenIntentPermission();
+    }
+  } catch (e) {
+    console.warn('Error requesting full screen intent permission:', e);
+  }
+}
+
+/**
  * Synchronize all scheduled tasks to Android's native AlarmManager
  * @param {Array} tasks - List of tasks from store
  */

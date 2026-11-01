@@ -49,20 +49,14 @@ public class AlarmActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        // Configure edge-to-edge translucent frosted glass & lockscreen flags
+        // Configure flags before and after super.onCreate for Samsung One UI & Android 14
         configureWindowAndLockScreen();
+        super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_alarm);
 
         // Read intent data
-        if (getIntent() != null) {
-            String id = getIntent().getStringExtra(AlarmService.EXTRA_TASK_ID);
-            String title = getIntent().getStringExtra(AlarmService.EXTRA_TASK_TITLE);
-            if (id != null) mTaskId = id;
-            if (title != null && !title.trim().isEmpty()) mTaskTitle = title;
-        }
+        readIntentData(getIntent());
 
         TextView titleView = findViewById(R.id.alarm_task_title);
         if (titleView != null) {
@@ -128,30 +122,69 @@ public class AlarmActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        configureWindowAndLockScreen();
+        readIntentData(intent);
+
+        TextView titleView = findViewById(R.id.alarm_task_title);
+        if (titleView != null) {
+            titleView.setText(mTaskTitle);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        configureWindowAndLockScreen();
+    }
+
+    @Override
+    public void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        configureWindowAndLockScreen();
+    }
+
+    private void readIntentData(Intent intent) {
+        if (intent != null) {
+            String id = intent.getStringExtra(AlarmService.EXTRA_TASK_ID);
+            String title = intent.getStringExtra(AlarmService.EXTRA_TASK_TITLE);
+            if (id != null) mTaskId = id;
+            if (title != null && !title.trim().isEmpty()) mTaskTitle = title;
+        }
+    }
+
     private void configureWindowAndLockScreen() {
         // Display directly over lock screen and wake up screen without triggering PIN bouncer
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true);
             setTurnScreenOn(true);
-        } else {
-            getWindow().addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-            );
         }
+
         getWindow().addFlags(
+            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
+            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
             WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         );
 
-        // Edge-to-edge transparent system bars
+        KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        if (km != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            km.requestDismissKeyguard(this, null);
+        }
+
+        // Edge-to-edge system bars
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(Color.TRANSPARENT);
             getWindow().setNavigationBarColor(Color.TRANSPARENT);
             getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
                 View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             );
         }
     }

@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { soundManager } from '../utils/audio';
 import { saveCustomAudioFile, getCustomAudioFile, removeCustomAudioFile } from '../utils/audioStorage';
-import { requestOverlayPermission, requestExactAlarmPermission } from '../utils/nativeAlarm';
+import { requestOverlayPermission, requestExactAlarmPermission, requestFullScreenIntentPermission } from '../utils/nativeAlarm';
 import RankShield2D from './RankShield2D';
 import { calculateGamification } from '../utils/gamification';
 
@@ -382,6 +382,13 @@ export default function SettingsModal({
                   className="py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-emerald-500/50 text-emerald-400 rounded-xl text-xs font-bold text-center active:scale-95 transition-transform"
                 >
                   Permitir Alarme Exato
+                </button>
+                <button
+                  type="button"
+                  onClick={requestFullScreenIntentPermission}
+                  className="col-span-2 py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-blue-500/50 text-blue-400 rounded-xl text-xs font-bold text-center active:scale-95 transition-transform"
+                >
+                  Permitir Avisos em Tela Cheia (Android 14+)
                 </button>
               </div>
             </div>

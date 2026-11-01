@@ -44,11 +44,16 @@ public class OpenTickAlarmPlugin extends Plugin {
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, requestCode, intent, flags);
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent);
-            } else {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent);
-            }
+            // Intent that opens if user taps alarm clock status icon / banner
+            Intent showIntent = new Intent(context, AlarmActivity.class);
+            showIntent.putExtra(AlarmService.EXTRA_TASK_ID, id);
+            showIntent.putExtra(AlarmService.EXTRA_TASK_TITLE, title);
+            showIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            PendingIntent showPendingIntent = PendingIntent.getActivity(context, requestCode + 1000, showIntent, flags);
+
+            // setAlarmClock grants system Alarm Clock exemption and background activity launch permissions!
+            AlarmManager.AlarmClockInfo clockInfo = new AlarmManager.AlarmClockInfo(timeMillis, showPendingIntent);
+            alarmManager.setAlarmClock(clockInfo, pendingIntent);
 
             JSObject ret = new JSObject();
             ret.put("success", true);
@@ -158,10 +163,19 @@ public class OpenTickAlarmPlugin extends Plugin {
             exactAlarmGranted = am.canScheduleExactAlarms();
         }
 
+        boolean fullScreenIntentGranted = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            android.app.NotificationManager nm = (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                fullScreenIntentGranted = nm.canUseFullScreenIntent();
+            }
+        }
+
         JSObject ret = new JSObject();
         ret.put("overlayGranted", overlayGranted);
         ret.put("notificationsGranted", notifGranted);
         ret.put("exactAlarmGranted", exactAlarmGranted);
+        ret.put("fullScreenIntentGranted", fullScreenIntentGranted);
         call.resolve(ret);
     }
 
@@ -175,6 +189,25 @@ public class OpenTickAlarmPlugin extends Plugin {
             );
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
+        }
+        JSObject ret = new JSObject();
+        ret.put("opened", true);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void requestFullScreenIntentPermission(PluginCall call) {
+        Context context = getContext();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            android.app.NotificationManager nm = (android.app.NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null && !nm.canUseFullScreenIntent()) {
+                Intent intent = new Intent(
+                    Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                    Uri.parse("package:" + context.getPackageName())
+                );
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }
         }
         JSObject ret = new JSObject();
         ret.put("opened", true);

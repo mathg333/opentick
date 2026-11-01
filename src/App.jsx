@@ -22,7 +22,11 @@ import {
   cancelNativeAlarm, 
   markAlarmDismissed, 
   isAlarmDismissed, 
-  isNativeAndroid 
+  isNativeAndroid,
+  checkAlarmPermissions,
+  requestOverlayPermission,
+  requestExactAlarmPermission,
+  requestFullScreenIntentPermission
 } from './utils/nativeAlarm';
 import { 
   Menu, 
@@ -55,12 +59,13 @@ export default function App() {
   const [alarmActiveTask, setAlarmActiveTask] = useState(null);
   const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
   const [customAudioInfo, setCustomAudioInfo] = useState(null);
+  const [missingPermissions, setMissingPermissions] = useState(false);
   const triggeredAlarmsRef = useRef(new Set());
 
   const today = new Date();
   const currentDayNumber = today.getDate();
 
-  // Request browser notification permissions on mount
+  // Request browser notification permissions on mount & check Android permissions
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
@@ -69,6 +74,14 @@ export default function App() {
     getCustomAudioFile().then(record => {
       if (record) setCustomAudioInfo(record);
     });
+
+    if (isNativeAndroid()) {
+      checkAlarmPermissions().then(perms => {
+        if (!perms?.overlayGranted || !perms?.exactAlarmGranted || perms?.fullScreenIntentGranted === false) {
+          setMissingPermissions(true);
+        }
+      });
+    }
   }, []);
 
   // Synchronize scheduled alarms to Android native AlarmManager (Exact, Doze-proof, Lock-screen ready)
@@ -489,6 +502,25 @@ export default function App() {
 
       {/* MAIN VIEW CONTENT AREA */}
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#000000] relative">
+        {missingPermissions && (
+          <div className="bg-[#ff6b00]/15 border-b border-[#ff6b00]/30 px-4 py-2.5 flex items-center justify-between text-xs text-neutral-200 z-30">
+            <div className="flex items-center gap-2">
+              <span className="text-[#ff6b00] text-sm">⏰</span>
+              <span>Para o alarme abrir na tela de bloqueio, ative as permissões.</span>
+            </div>
+            <button
+              onClick={() => {
+                requestOverlayPermission();
+                setTimeout(requestExactAlarmPermission, 800);
+                setTimeout(requestFullScreenIntentPermission, 1600);
+                setMissingPermissions(false);
+              }}
+              className="px-2.5 py-1 bg-[#ff6b00] hover:bg-[#ff7d1a] text-black font-bold rounded-lg text-[11px] shrink-0 active:scale-95 transition-transform"
+            >
+              Ativar
+            </button>
+          </div>
+        )}
         <div className="flex-1 overflow-hidden flex">
           {isTaskView && (
             <TaskView
