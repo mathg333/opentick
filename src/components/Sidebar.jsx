@@ -163,11 +163,7 @@ export default function Sidebar({
         {/* Profile Info Row */}
         <div 
           onClick={() => {
-            if (onOpenProfileModal) {
-              onOpenProfileModal();
-            } else if (onOpenSettingsModal) {
-              onOpenSettingsModal();
-            }
+            handleSelectView('stats');
             if (onCloseMobileDrawer) onCloseMobileDrawer();
           }}
           className="p-3 pt-0 pb-3 flex items-center gap-3 cursor-pointer hover:bg-white/2 transition-colors relative"
@@ -259,6 +255,31 @@ export default function Sidebar({
                 {inboxTasksCount}
               </span>
             )}
+          </button>
+
+          {/* Seus Rankings & Escudos 3D */}
+          <button
+            onClick={() => handleSelectView('stats')}
+            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
+              activeView === 'stats'
+                ? 'bg-gradient-to-r from-[#2a1c0e] to-[#1c1c24] text-white shadow-md border border-[#ff6b00]/60 ring-1 ring-[#ff6b00]/30'
+                : 'text-neutral-200 hover:bg-[#1a1a20]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-[#ff6b00] flex items-center justify-center text-white shadow-md shadow-[#ff6b00]/30 shrink-0 p-1">
+                <RankShield2D tier={gamificationStats.currentRank.tier} size={22} showGlow={false} />
+              </div>
+              <div className="text-left">
+                <span className="text-sm font-bold block text-white">Progresso & Rankings</span>
+                <span className="text-[10px] text-amber-300 font-mono">
+                  {gamificationStats.currentRank.name} • Nv.{gamificationStats.level}
+                </span>
+              </div>
+            </div>
+            <span className="text-xs text-amber-400 font-mono font-bold px-2 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/20">
+              {gamificationStats.totalXp} XP
+            </span>
           </button>
 
           {/* Etiquetas */}

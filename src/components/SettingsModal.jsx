@@ -36,7 +36,8 @@ export default function SettingsModal({
   store, 
   onOpenSyncModal,
   onOpenProfileModal,
-  onTriggerTestAlarm
+  onTriggerTestAlarm,
+  onOpenStats
 }) {
   const { state, updateSettings, exportData, importData } = store;
   const settings = state.settings || {};
@@ -226,6 +227,36 @@ export default function SettingsModal({
               <div className="flex items-center gap-1 text-xs text-[#ff6b00] font-bold">
                 <span>Personalizar</span>
                 <ChevronRight className="w-4 h-4 text-neutral-500" />
+              </div>
+            </div>
+
+            {/* Gamification Shield Card */}
+            <div 
+              onClick={() => {
+                if (onOpenStats) onOpenStats();
+                onClose();
+              }}
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-[#20150d] to-[#16161c] border border-[#ff6b00]/40 hover:border-[#ff6b00] cursor-pointer transition-all shadow-lg active:scale-98"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-[#ff6b00] flex items-center justify-center p-1.5 shadow-md shadow-[#ff6b00]/30 shrink-0">
+                  <RankShield2D tier={stats.currentRank.tier} size={32} showGlow={false} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black text-white">Progresso de Nível & Escudos</span>
+                    <span className="text-[10px] bg-amber-400/20 text-amber-300 font-bold px-1.5 py-0.2 rounded border border-amber-400/30">
+                      Elo: {stats.currentRank.shortName}
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-400 mt-0.5">
+                    {stats.totalXp} XP • Nível {stats.level} • Ver todos os 7 Escudos RPG
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-[#ff6b00] font-bold">
+                <span>Ver</span>
+                <ChevronRight className="w-4 h-4 text-[#ff6b00]" />
               </div>
             </div>
 

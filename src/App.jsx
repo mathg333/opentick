@@ -16,6 +16,8 @@ import SearchModal from './components/SearchModal';
 import AlarmOverlayModal from './components/AlarmOverlayModal';
 import AlarmPermissionModal from './components/AlarmPermissionModal';
 import GamificationCelebration from './components/GamificationCelebration';
+import RankShield2D from './components/RankShield2D';
+import { calculateGamification } from './utils/gamification';
 import { soundManager } from './utils/audio';
 import { getCustomAudioFile } from './utils/audioStorage';
 import { 
@@ -454,6 +456,21 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Rank Shield & Level Shortcut */}
+          <button
+            onClick={() => {
+              setActiveView('stats');
+              setSelectedTaskId(null);
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#16161c] hover:bg-[#202028] border border-[#2c2c36] active:scale-95 transition-all shadow-sm"
+            title="Ver Seus Rankings, Escudos e XP"
+          >
+            <RankShield2D tier={calculateGamification(state).currentRank.tier} size={20} showGlow={false} />
+            <span className="text-[11px] font-black text-amber-300 font-mono">
+              Nv.{calculateGamification(state).level}
+            </span>
+          </button>
+
           <button
             onClick={() => setIsSearchOpen(true)}
             className="p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
@@ -636,13 +653,24 @@ export default function App() {
             )}
           </button>
 
-          {/* Tab 4: Pesquisar */}
+          {/* Tab 4: Ranking & Escudos */}
           <button
-            onClick={() => setIsSearchOpen(true)}
-            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl text-neutral-400 hover:text-white active:scale-90 transition-transform"
-            title="Pesquisar"
+            onClick={() => {
+              setActiveView('stats');
+              setSelectedTaskId(null);
+            }}
+            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl active:scale-90 transition-transform"
+            title="Seus Rankings & Escudos"
           >
-            <Search className="w-6 h-6 stroke-[1.8]" />
+            {activeView === 'stats' ? (
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-[#ff6b00] flex items-center justify-center shadow-md shadow-[#ff6b00]/40 p-0.5">
+                <RankShield2D tier={calculateGamification(state).currentRank.tier} size={22} showGlow={false} />
+              </div>
+            ) : (
+              <div className="w-7 h-7 rounded-lg bg-[#18181c] border border-[#2a2a34] flex items-center justify-center p-0.5 hover:border-amber-500/50">
+                <RankShield2D tier={calculateGamification(state).currentRank.tier} size={20} showGlow={false} />
+              </div>
+            )}
           </button>
 
           {/* Tab 5: Mais (•••) */}
@@ -678,6 +706,11 @@ export default function App() {
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
         onOpenProfileModal={() => setIsProfileModalOpen(true)}
         onTriggerTestAlarm={handleTriggerTestAlarm}
+        onOpenStats={() => {
+          setIsSettingsOpen(false);
+          setActiveView('stats');
+          setSelectedTaskId(null);
+        }}
       />
 
       {/* Profile & Cover Customization Modal */}
