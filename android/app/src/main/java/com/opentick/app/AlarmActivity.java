@@ -44,7 +44,7 @@ public class AlarmActivity extends AppCompatActivity {
         @Override
         public void onReceive(Context context, Intent intent) {
             String targetId = intent != null ? intent.getStringExtra(AlarmService.EXTRA_TASK_ID) : null;
-            if (targetId == null || targetId.isEmpty() || targetId.equals(mTaskId)) {
+            if (targetId != null && !targetId.isEmpty() && targetId.equals(mTaskId)) {
                 finish();
             }
         }
@@ -52,9 +52,8 @@ public class AlarmActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Configure flags before and after super.onCreate for Samsung One UI & Android 14
-        configureWindowAndLockScreen();
         super.onCreate(savedInstanceState);
+        configureWindowAndLockScreen();
 
         setContentView(R.layout.activity_alarm);
 
@@ -102,6 +101,11 @@ public class AlarmActivity extends AppCompatActivity {
             btnOpenApp.setOnClickListener(v -> {
                 AlarmStateManager.markDismissed(this, mTaskId);
                 AlarmService.stop(this, mTaskId);
+
+                KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+                if (km != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    km.requestDismissKeyguard(this, null);
+                }
 
                 Intent launchIntent = new Intent(this, MainActivity.class);
                 launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -170,14 +174,8 @@ public class AlarmActivity extends AppCompatActivity {
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
             WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
-            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
             WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         );
-
-        KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-        if (km != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            km.requestDismissKeyguard(this, null);
-        }
 
         // Edge-to-edge system bars
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

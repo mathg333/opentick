@@ -57,6 +57,7 @@ public class OpenTickAlarmPlugin extends Plugin {
             // setAlarmClock grants system Alarm Clock exemption and background activity launch permissions!
             AlarmManager.AlarmClockInfo clockInfo = new AlarmManager.AlarmClockInfo(timeMillis, showPendingIntent);
             alarmManager.setAlarmClock(clockInfo, pendingIntent);
+            android.util.Log.d("OpenTickAlarm", "SUCCESS: setAlarmClock scheduled for id=" + id + " in " + ((timeMillis - System.currentTimeMillis()) / 1000) + "s");
 
             JSObject ret = new JSObject();
             ret.put("success", true);

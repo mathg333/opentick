@@ -112,7 +112,7 @@ export default function App() {
         const mo = String(now.getMonth() + 1).padStart(2, '0');
         const dy = String(now.getDate()).padStart(2, '0');
         const todayStr = `${yr}-${mo}-${dy}`;
-        markAlarmDismissed(stoppedId, todayStr);
+        markAlarmDismissed(stoppedId, todayStr, alarmActiveTask?.startTime);
       }
       soundManager.stopContinuousAlarm();
       // Note: Do NOT call stopNativeAlarm here, as native AlarmService has already stopped!
@@ -246,6 +246,12 @@ export default function App() {
   };
 
   const handleTriggerTestAlarm = async (soundId) => {
+    if (isNativeAndroid()) {
+      // On Native Android, trigger true native system alarm in 2.5 seconds
+      await scheduleNativeAlarm('test-alarm', 'Disparo de Alarme de Teste', Date.now() + 2500);
+      return;
+    }
+
     let customAudioUrl = null;
     let customName = '';
     if (soundId === 'custom') {
@@ -276,43 +282,57 @@ export default function App() {
     setIsAlarmModalOpen(true);
   };
 
+  // Store dynamic states in a Ref to eliminate dependency churn and backButton listener leaks
+  const backStateRef = useRef({});
+  backStateRef.current = {
+    isSearchOpen, 
+    isSettingsOpen, 
+    isSyncModalOpen, 
+    isQuickAddOpen, 
+    isMobileDrawerOpen, 
+    selectedTaskId, 
+    activeView
+  };
+
   // Native Android Hardware / Virtual Back Button Handler (Fixes app closing instead of navigating back)
   useEffect(() => {
     let lastBackPress = 0;
+    let backListenerHandle = null;
 
     const handleBackButton = async () => {
+      const s = backStateRef.current;
       // 1. Close Search Modal
-      if (isSearchOpen) {
+      if (s.isSearchOpen) {
         setIsSearchOpen(false);
         return;
       }
       // 2. Close Settings Modal
-      if (isSettingsOpen) {
+      if (s.isSettingsOpen) {
         setIsSettingsOpen(false);
         return;
       }
       // 3. Close Sync Modal
-      if (isSyncModalOpen) {
+      if (s.isSyncModalOpen) {
         setIsSyncModalOpen(false);
         return;
       }
       // 4. Close Quick Add Modal
-      if (isQuickAddOpen) {
+      if (s.isQuickAddOpen) {
         setIsQuickAddOpen(false);
         return;
       }
       // 5. Close Mobile Drawer
-      if (isMobileDrawerOpen) {
+      if (s.isMobileDrawerOpen) {
         setIsMobileDrawerOpen(false);
         return;
       }
       // 6. Close Task Details Sheet
-      if (selectedTaskId) {
+      if (s.selectedTaskId) {
         setSelectedTaskId(null);
         return;
       }
       // 7. If on another screen, navigate back to 'tasks-today'
-      if (activeView !== 'tasks-today') {
+      if (s.activeView !== 'tasks-today') {
         setActiveView('tasks-today');
         return;
       }
@@ -331,7 +351,6 @@ export default function App() {
       }
     };
 
-    let backListenerHandle = null;
     try {
       CapApp.addListener('backButton', handleBackButton).then(handle => {
         backListenerHandle = handle;
@@ -345,17 +364,7 @@ export default function App() {
         backListenerHandle.remove();
       }
     };
-  }, [
-    isSearchOpen, 
-    isSettingsOpen, 
-    isSyncModalOpen, 
-    isQuickAddOpen, 
-    isMobileDrawerOpen, 
-    selectedTaskId, 
-    activeView, 
-    setActiveView, 
-    setSelectedTaskId
-  ]);
+  }, []);
 
   // Global Keyboard Shortcuts
   useEffect(() => {

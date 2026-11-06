@@ -23,14 +23,6 @@ export function markAlarmDismissed(taskId, dateStr, timeStr) {
     const key = `opentick_dismissed_${taskId}_${dStr}_${tStr}`;
     localStorage.setItem(key, String(Date.now()));
 
-    // Key for today's dismissed tasks
-    const dailyKey = `opentick_dismissed_today_${dStr}`;
-    const existing = JSON.parse(localStorage.getItem(dailyKey) || '[]');
-    if (!existing.includes(taskId)) {
-      existing.push(taskId);
-      localStorage.setItem(dailyKey, JSON.stringify(existing));
-    }
-
     // Inform native plugin
     if (isNativeAndroid()) {
       const plugin = getAlarmPlugin();
@@ -42,7 +34,29 @@ export function markAlarmDismissed(taskId, dateStr, timeStr) {
 }
 
 /**
- * Check if an alarm has already been stopped/dismissed by user today
+ * Clear any dismissed state for this task when newly scheduled or edited
+ */
+export function clearAlarmDismissed(taskId) {
+  if (!taskId) return;
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(`opentick_dismissed_${taskId}_`)) {
+        localStorage.removeItem(k);
+      }
+    }
+    // Also clean legacy daily blacklist
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('opentick_dismissed_today_')) {
+        localStorage.removeItem(k);
+      }
+    }
+  } catch (e) {}
+}
+
+/**
+ * Check if an alarm has already been stopped/dismissed by user
  */
 export function isAlarmDismissed(taskId, dateStr, timeStr) {
   if (!taskId) return false;
@@ -52,12 +66,17 @@ export function isAlarmDismissed(taskId, dateStr, timeStr) {
     
     if (timeStr) {
       const specificKey = `opentick_dismissed_${taskId}_${dStr}_${timeStr}`;
-      if (localStorage.getItem(specificKey)) return true;
+      const dismissedAt = localStorage.getItem(specificKey);
+      if (dismissedAt) {
+        // Debounce: if user tapped STOP within the last 60 seconds, treat as dismissed
+        if (Date.now() - Number(dismissedAt) < 60 * 1000) {
+          return true;
+        } else {
+          localStorage.removeItem(specificKey);
+        }
+      }
     }
-
-    const dailyKey = `opentick_dismissed_today_${dStr}`;
-    const existing = JSON.parse(localStorage.getItem(dailyKey) || '[]');
-    return existing.includes(taskId);
+    return false;
   } catch (e) {
     return false;
   }
@@ -262,6 +281,12 @@ export async function syncTasksToNativeAlarmManager(tasks) {
       const [y, m, d] = dStr.split('-').map(Number);
       const targetDate = new Date(y, m - 1, d, hours, minutes, 0, 0);
       const millis = targetDate.getTime();
+
+      // If scheduled for today and matches the current minute, fire in 1.5s so testing works instantly!
+      if (dStr === todayStr && nowDate.getHours() === hours && nowDate.getMinutes() === minutes) {
+        nextTimestamp = now + 1500;
+        break;
+      }
 
       if (millis > now) {
         if (nextTimestamp === null || millis < nextTimestamp) {

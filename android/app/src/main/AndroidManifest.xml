@@ -50,7 +50,7 @@
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:showForAllUsers="true"
-            android:exported="true" />
+            android:exported="false" />
 
         <!-- Broadcast Receiver for Android AlarmManager -->
         <receiver
@@ -66,7 +66,7 @@
         <service
             android:name=".AlarmService"
             android:enabled="true"
-            android:exported="true"
+            android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
         <provider

@@ -1,0 +1,78 @@
+{
+  "testSuite": "OpenTick Android Alarm Lifecycle End-to-End QA Suite",
+  "device": "Samsung Galaxy S22 (SM-S901E)",
+  "serial": "RXCTC02HNKJ",
+  "androidVersion": "16",
+  "sdkVersion": "36",
+  "package": "com.opentick.app",
+  "timestamp": "2026-11-06T07:49:51.250Z",
+  "tests": [
+    {
+      "testId": "TEST-1",
+      "testName": "Standard Alarm Lifecycle (+15s trigger, Screen ON)",
+      "status": "PASS",
+      "durationMs": 18142,
+      "details": {
+        "scheduledTargetMs": 1793951408855,
+        "dumpsysIntentVerified": true,
+        "alarmServiceForeground": true,
+        "alarmActivityFocused": true,
+        "focusRestored": "mCurrentFocus=Window{a36ff47 u0 Bouncer}"
+      }
+    },
+    {
+      "testId": "TEST-2",
+      "testName": "Lock Screen Alarm Lifecycle (+15s trigger, Screen OFF)",
+      "status": "PASS",
+      "durationMs": 18647,
+      "details": {
+        "screenStateOff": "Dozing",
+        "screenStateTrigger": "Awake",
+        "alarmServiceForeground": true,
+        "alarmActivityOccludesKeyguard": true,
+        "topActivity": "ResumedActivity: ActivityRecord{220793651 u0 com.opentick.app/.AlarmActivity t3726}"
+      }
+    },
+    {
+      "testId": "TEST-3",
+      "testName": "Edge Case 1: Scheduling Task Set to Current Minute",
+      "status": "PASS",
+      "durationMs": 7907,
+      "details": {
+        "behavior": "NOT discarded; OpenTick explicitly fast-forwards current-minute tasks to fire in 1.5s for instant execution",
+        "currentTimeStr": "04:50",
+        "dumpsysIntentVerified": true,
+        "alarmServiceForeground": true,
+        "alarmActivityFocused": true
+      }
+    },
+    {
+      "testId": "TEST-4",
+      "testName": "Edge Case 2: Stop and Immediately Reschedule Same Task",
+      "status": "PASS",
+      "durationMs": 11283,
+      "details": {
+        "behavior": "RINGS; OpenTickAlarmPlugin.scheduleAlarm explicitly invokes AlarmStateManager.clearDismissed(context, id), removing debounce blocks",
+        "rescheduledAlarmRings": true,
+        "alarmServiceForeground": true,
+        "alarmActivityFocused": true
+      }
+    },
+    {
+      "testId": "TEST-5",
+      "testName": "Logcat Error and Exception Audit",
+      "status": "PASS",
+      "details": {
+        "fatalCrashes": "None",
+        "errorLinesCount": 3,
+        "warningLinesCount": 6
+      }
+    }
+  ],
+  "summary": {
+    "totalTests": 5,
+    "passed": 5,
+    "failed": 0,
+    "overallResult": "ALL TESTS PASSED"
+  }
+}

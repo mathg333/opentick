@@ -118,8 +118,8 @@ public class AlarmService extends Service {
     }
 
     private void startAlarmInternal(String taskId, String taskTitle) {
-        // Stop any running sound/notification
-        stopAlarmInternal(false);
+        // Stop any running sound/notification without false user dismissal
+        stopAlarmInternal(false, false);
         sCurrentTaskId = taskId;
 
         int flag = PendingIntent.FLAG_UPDATE_CURRENT;
@@ -285,10 +285,14 @@ public class AlarmService extends Service {
     }
 
     private void stopAlarmInternal() {
-        stopAlarmInternal(false);
+        stopAlarmInternal(false, true);
     }
 
     private void stopAlarmInternal(boolean isSnooze) {
+        stopAlarmInternal(isSnooze, true);
+    }
+
+    private void stopAlarmInternal(boolean isSnooze, boolean isUserAction) {
         if (sHandler != null && sAutoStopRunnable != null) {
             sHandler.removeCallbacks(sAutoStopRunnable);
             sAutoStopRunnable = null;
@@ -319,31 +323,33 @@ public class AlarmService extends Service {
             }
         } catch (Exception e) {}
 
-        // Mark dismissed if stopped (not snoozed)
+        // Mark dismissed if stopped by user (not snoozed and not internal preemption)
         String dismissedId = sCurrentTaskId;
-        if (!isSnooze && dismissedId != null) {
+        if (!isSnooze && isUserAction && dismissedId != null) {
             AlarmStateManager.markDismissed(this, dismissedId);
         }
 
-        // Broadcast to close AlarmActivity if it's open
-        try {
-            Intent closeIntent = new Intent(AlarmActivity.ACTION_CLOSE_ALARM_ACTIVITY);
-            if (dismissedId != null) {
-                closeIntent.putExtra(EXTRA_TASK_ID, dismissedId);
-            }
-            closeIntent.setPackage(getPackageName());
-            sendBroadcast(closeIntent);
-        } catch (Exception e) {}
+        if (isUserAction) {
+            // Broadcast to close AlarmActivity if it's open
+            try {
+                Intent closeIntent = new Intent(AlarmActivity.ACTION_CLOSE_ALARM_ACTIVITY);
+                if (dismissedId != null) {
+                    closeIntent.putExtra(EXTRA_TASK_ID, dismissedId);
+                }
+                closeIntent.setPackage(getPackageName());
+                sendBroadcast(closeIntent);
+            } catch (Exception e) {}
 
-        // Broadcast to MainActivity / WebView that alarm was stopped
-        try {
-            Intent stoppedBroadcast = new Intent(ACTION_ALARM_STOPPED_BY_USER);
-            if (dismissedId != null) {
-                stoppedBroadcast.putExtra(EXTRA_TASK_ID, dismissedId);
-            }
-            stoppedBroadcast.setPackage(getPackageName());
-            sendBroadcast(stoppedBroadcast);
-        } catch (Exception e) {}
+            // Broadcast to MainActivity / WebView that alarm was stopped
+            try {
+                Intent stoppedBroadcast = new Intent(ACTION_ALARM_STOPPED_BY_USER);
+                if (dismissedId != null) {
+                    stoppedBroadcast.putExtra(EXTRA_TASK_ID, dismissedId);
+                }
+                stoppedBroadcast.setPackage(getPackageName());
+                sendBroadcast(stoppedBroadcast);
+            } catch (Exception e) {}
+        }
 
         sCurrentTaskId = null;
     }

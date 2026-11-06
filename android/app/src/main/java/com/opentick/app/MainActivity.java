@@ -93,12 +93,15 @@ public class MainActivity extends BridgeActivity {
     }
 
     private void triggerAlarmInWebView(String taskId, String taskTitle) {
-        final String fTaskId = taskId;
-        final String fTaskTitle = (taskTitle != null ? taskTitle : "Lembrete OpenTick").replace("'", "\\'");
+        final org.json.JSONObject detail = new org.json.JSONObject();
+        try {
+            detail.put("taskId", taskId != null ? taskId : "");
+            detail.put("taskTitle", taskTitle != null ? taskTitle : "Lembrete OpenTick");
+        } catch (Exception ignored) {}
 
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().post(() -> {
-                String js = "window.dispatchEvent(new CustomEvent('nativeAlarmTriggered', { detail: { taskId: '" + fTaskId + "', taskTitle: '" + fTaskTitle + "' } }));";
+                String js = "window.dispatchEvent(new CustomEvent('nativeAlarmTriggered', { detail: " + detail.toString() + " }));";
                 getBridge().eval(js, null);
             });
         }

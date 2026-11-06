@@ -12,6 +12,18 @@ class SoundManager {
     this.alarmTimeout = null;
     this.vibrateInterval = null;
     this.isAlarmRinging = false;
+    this.setupUnlockListeners();
+  }
+
+  setupUnlockListeners() {
+    if (typeof window === 'undefined') return;
+    const unlock = () => {
+      this.init();
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('keydown', unlock);
+    };
+    window.addEventListener('pointerdown', unlock, { once: true, passive: true });
+    window.addEventListener('keydown', unlock, { once: true, passive: true });
   }
 
   init() {

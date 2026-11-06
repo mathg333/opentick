@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { INITIAL_PROJECTS, INITIAL_TASKS, INITIAL_HABITS, INITIAL_POMODORO_SESSIONS } from './initialData';
 import { calculateGamification } from '../utils/gamification';
+import { clearAlarmDismissed } from '../utils/nativeAlarm';
 
 const STORAGE_KEY = 'opentick_app_state_v3';
 
@@ -159,6 +160,9 @@ export function useAppStore() {
   };
 
   const updateTask = (id, updates) => {
+    if (updates.startTime || updates.dueDate || updates.recurringDates) {
+      clearAlarmDismissed(id);
+    }
     setState(prev => ({
       ...prev,
       tasks: prev.tasks.map(t => {
