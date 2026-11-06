@@ -171,11 +171,39 @@ public class OpenTickAlarmPlugin extends Plugin {
             }
         }
 
+        boolean batteryOptimizationIgnored = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            android.os.PowerManager pm = (android.os.PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            if (pm != null) {
+                batteryOptimizationIgnored = pm.isIgnoringBatteryOptimizations(context.getPackageName());
+            }
+        }
+
         JSObject ret = new JSObject();
         ret.put("overlayGranted", overlayGranted);
         ret.put("notificationsGranted", notifGranted);
         ret.put("exactAlarmGranted", exactAlarmGranted);
         ret.put("fullScreenIntentGranted", fullScreenIntentGranted);
+        ret.put("batteryOptimizationIgnored", batteryOptimizationIgnored);
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void requestIgnoreBatteryOptimizations(PluginCall call) {
+        Context context = getContext();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            android.os.PowerManager pm = (android.os.PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            if (pm != null && !pm.isIgnoringBatteryOptimizations(context.getPackageName())) {
+                Intent intent = new Intent(
+                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    Uri.parse("package:" + context.getPackageName())
+                );
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }
+        }
+        JSObject ret = new JSObject();
+        ret.put("opened", true);
         call.resolve(ret);
     }
 

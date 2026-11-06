@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { INITIAL_PROJECTS, INITIAL_TASKS, INITIAL_HABITS, INITIAL_POMODORO_SESSIONS } from './initialData';
+import { calculateGamification } from '../utils/gamification';
 
 const STORAGE_KEY = 'opentick_app_state_v3';
 
@@ -182,11 +183,21 @@ export function useAppStore() {
   };
 
   const toggleTaskCompleted = (id) => {
-    setState(prev => ({
-      ...prev,
-      tasks: prev.tasks.map(t => {
+    setState(prev => {
+      const prevGamification = calculateGamification(prev);
+      const prevTier = prevGamification.currentRank.tier;
+      let gainedXp = 0;
+      let isCompleting = false;
+      let completedTaskTitle = '';
+
+      const nextTasks = prev.tasks.map(t => {
         if (t.id === id) {
           const nextCompleted = !t.completed;
+          isCompleting = nextCompleted;
+          completedTaskTitle = t.title || 'Tarefa Concluída';
+          if (nextCompleted) {
+            gainedXp = (t.priority === 3 ? 50 : (t.priority === 2 ? 35 : 25));
+          }
           return {
             ...t,
             completed: nextCompleted,
@@ -194,8 +205,30 @@ export function useAppStore() {
           };
         }
         return t;
-      })
-    }));
+      });
+
+      const nextState = { ...prev, tasks: nextTasks };
+      const nextGamification = calculateGamification(nextState);
+      const nextTier = nextGamification.currentRank.tier;
+
+      if (isCompleting) {
+        const isRankUp = prevTier !== nextTier;
+        window.dispatchEvent(new CustomEvent('opentickTaskCompleted', {
+          detail: {
+            taskId: id,
+            taskTitle: completedTaskTitle,
+            xpGained: gainedXp,
+            isRankUp,
+            oldRank: prevGamification.currentRank,
+            newRank: nextGamification.currentRank,
+            level: nextGamification.level,
+            totalXp: nextGamification.totalXp
+          }
+        }));
+      }
+
+      return nextState;
+    });
   };
 
   const deleteTask = (id) => {

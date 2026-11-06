@@ -15,6 +15,7 @@ import SettingsModal from './components/SettingsModal';
 import SearchModal from './components/SearchModal';
 import AlarmOverlayModal from './components/AlarmOverlayModal';
 import AlarmPermissionModal from './components/AlarmPermissionModal';
+import GamificationCelebration from './components/GamificationCelebration';
 import { soundManager } from './utils/audio';
 import { getCustomAudioFile } from './utils/audioStorage';
 import { 
@@ -556,27 +557,28 @@ export default function App() {
         </div>
 
         {/* MOBILE FLOATING ACTION BUTTON (FAB: Botão Laranja Circular com +) */}
+        {/* Floating Quick Add Button (Bottom Right) */}
         <button
           onClick={() => setIsQuickAddOpen(true)}
-          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-[#ff6b00] hover:bg-[#ea580c] active:scale-95 text-white rounded-full shadow-[0_0_20px_rgba(255,107,0,0.5)] flex items-center justify-center z-30 transition-transform"
+          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-gradient-to-tr from-[#ff5500] to-[#ff8c00] active:scale-90 text-white rounded-full shadow-[0_8px_25px_rgba(255,107,0,0.55)] flex items-center justify-center z-30 transition-all duration-150"
           title="Nova Tarefa (Rápida)"
         >
           <Plus className="w-7 h-7 stroke-[2.5]" />
         </button>
 
-        {/* MOBILE BOTTOM NAVIGATION BAR (Exact TickTick Android Bottom Bar) */}
-        <nav className="md:hidden flex items-center justify-around bg-[#000000] border-t border-[#18181c] py-2 px-1 z-30 shrink-0">
+        {/* MOBILE BOTTOM NAVIGATION BAR (Touch-First & Safe-Area Optimized) */}
+        <nav className="md:hidden flex items-center justify-around bg-[#000000] border-t border-[#18181c] pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] px-1 z-30 shrink-0">
           {/* Tab 1: Checkbox / Tarefas */}
           <button
             onClick={() => {
               setActiveView('tasks-today');
               setSelectedTaskId(null);
             }}
-            className="flex items-center justify-center p-2 rounded-xl"
+            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl active:scale-90 transition-transform"
             title="Tarefas"
           >
             {isTaskView ? (
-              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center shadow-md">
+              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center shadow-md shadow-[#ff6b00]/30">
                 <CheckSquare className="w-5 h-5 text-white stroke-[2.5]" />
               </div>
             ) : (
@@ -592,11 +594,11 @@ export default function App() {
               setActiveView('calendar');
               setSelectedTaskId(null);
             }}
-            className="flex items-center justify-center p-2 rounded-xl"
+            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl active:scale-90 transition-transform"
             title="Calendário"
           >
             {activeView === 'calendar' ? (
-              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center text-white font-black text-xs shadow-md">
+              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center text-white font-black text-xs shadow-md shadow-[#ff6b00]/30">
                 {currentDayNumber}
               </div>
             ) : (
@@ -616,11 +618,11 @@ export default function App() {
               }
               setSelectedTaskId(null);
             }}
-            className="flex items-center justify-center p-2 rounded-xl"
+            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl active:scale-90 transition-transform"
             title="Matriz & Hábitos"
           >
             {activeView === 'eisenhower' || activeView === 'habits' ? (
-              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center shadow-md">
+              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center shadow-md shadow-[#ff6b00]/30">
                 <Grid className="w-4 h-4 text-white stroke-[2.5]" />
               </div>
             ) : (
@@ -633,7 +635,7 @@ export default function App() {
           {/* Tab 4: Pesquisar */}
           <button
             onClick={() => setIsSearchOpen(true)}
-            className="flex items-center justify-center p-2 rounded-xl text-neutral-400 hover:text-white"
+            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl text-neutral-400 hover:text-white active:scale-90 transition-transform"
             title="Pesquisar"
           >
             <Search className="w-6 h-6 stroke-[1.8]" />
@@ -642,7 +644,7 @@ export default function App() {
           {/* Tab 5: Mais (•••) */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center justify-center p-2 rounded-xl text-neutral-400 hover:text-white"
+            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl text-neutral-400 hover:text-white active:scale-90 transition-transform"
             title="Mais Opções & Configurações"
           >
             <MoreHorizontal className="w-6 h-6 stroke-[1.8]" />
@@ -700,6 +702,9 @@ export default function App() {
 
       {/* Android Alarm & Lockscreen Permission Onboarding Modal */}
       <AlarmPermissionModal />
+
+      {/* Gamification Floating XP & 3D Shield Rank Up Celebration */}
+      <GamificationCelebration />
     </div>
   );
 }

@@ -206,6 +206,21 @@ export async function requestFullScreenIntentPermission() {
 }
 
 /**
+ * Request Whitelist from Samsung / Android Battery Optimization (Doze Mode)
+ */
+export async function requestIgnoreBatteryOptimizations() {
+  if (!isNativeAndroid()) return;
+  try {
+    const plugin = getAlarmPlugin();
+    if (plugin?.requestIgnoreBatteryOptimizations) {
+      await plugin.requestIgnoreBatteryOptimizations();
+    }
+  } catch (e) {
+    console.warn('Error requesting battery optimization exemption:', e);
+  }
+}
+
+/**
  * Synchronize all scheduled tasks to Android's native AlarmManager
  * @param {Array} tasks - List of tasks from store
  */

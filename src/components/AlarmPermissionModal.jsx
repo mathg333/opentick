@@ -5,6 +5,7 @@ import {
   requestOverlayPermission, 
   requestExactAlarmPermission, 
   requestFullScreenIntentPermission,
+  requestIgnoreBatteryOptimizations,
   isNativeAndroid
 } from '../utils/nativeAlarm';
 
@@ -13,7 +14,8 @@ export default function AlarmPermissionModal() {
   const [permissions, setPermissions] = useState({
     overlayGranted: true,
     exactAlarmGranted: true,
-    fullScreenIntentGranted: true
+    fullScreenIntentGranted: true,
+    batteryOptimizationIgnored: true
   });
 
   const check = async () => {
@@ -166,6 +168,27 @@ export default function AlarmPermissionModal() {
               <button
                 onClick={handleGrantExact}
                 className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all shrink-0 flex items-center gap-1"
+              >
+                Ativar <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Permission 4: Battery Optimization Whitelist (Samsung Doze Mode Protection) */}
+          {!permissions.batteryOptimizationIgnored && (
+            <div className="p-3.5 rounded-2xl bg-[#1c1c20] border border-neutral-800 flex items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <ShieldAlert className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Bateria Sem Restrição</h4>
+                  <p className="text-xs text-neutral-400">Impede a Samsung de suspender o despertador em segundo plano</p>
+                </div>
+              </div>
+              <button
+                onClick={requestIgnoreBatteryOptimizations}
+                className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all shrink-0 flex items-center gap-1"
               >
                 Ativar <ChevronRight className="w-3.5 h-3.5" />
               </button>
