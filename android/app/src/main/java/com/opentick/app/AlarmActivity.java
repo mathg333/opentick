@@ -1,6 +1,6 @@
 package com.opentick.app;
 
-import android.app.Activity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -25,7 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class AlarmActivity extends Activity {
+public class AlarmActivity extends AppCompatActivity {
 
     public static final String ACTION_CLOSE_ALARM_ACTIVITY = "com.opentick.app.ACTION_CLOSE_ALARM_ACTIVITY";
 

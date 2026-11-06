@@ -192,6 +192,22 @@ public class AlarmService extends Service {
             e.printStackTrace();
         }
 
+        // 5b. Immediately launch dedicated AlarmActivity directly from Foreground Service
+        try {
+            Intent directIntent = new Intent(this, AlarmActivity.class);
+            directIntent.addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK |
+                Intent.FLAG_ACTIVITY_CLEAR_TOP |
+                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
+                Intent.FLAG_ACTIVITY_SINGLE_TOP
+            );
+            directIntent.putExtra(EXTRA_TASK_ID, taskId);
+            directIntent.putExtra(EXTRA_TASK_TITLE, taskTitle);
+            startActivity(directIntent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         // 6. Play Continuous Alarm Sound
         try {
             Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);

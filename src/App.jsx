@@ -14,6 +14,7 @@ import GlobalQuickAddModal from './components/GlobalQuickAddModal';
 import SettingsModal from './components/SettingsModal';
 import SearchModal from './components/SearchModal';
 import AlarmOverlayModal from './components/AlarmOverlayModal';
+import AlarmPermissionModal from './components/AlarmPermissionModal';
 import { soundManager } from './utils/audio';
 import { getCustomAudioFile } from './utils/audioStorage';
 import { 
@@ -696,6 +697,9 @@ export default function App() {
         onStopAlarm={handleStopAlarm}
         onSnoozeAlarm={handleSnoozeAlarm}
       />
+
+      {/* Android Alarm & Lockscreen Permission Onboarding Modal */}
+      <AlarmPermissionModal />
     </div>
   );
 }
