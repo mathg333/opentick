@@ -115,20 +115,15 @@ export default function App() {
         markAlarmDismissed(stoppedId, todayStr);
       }
       soundManager.stopContinuousAlarm();
-      stopNativeAlarm(stoppedId);
+      // Note: Do NOT call stopNativeAlarm here, as native AlarmService has already stopped!
       setIsAlarmModalOpen(false);
       setAlarmActiveTask(null);
-    };
-
-    window.__openTickStopAlarm = (taskId) => {
-      handleNativeAlarmStopped({ detail: { taskId } });
     };
 
     window.addEventListener('nativeAlarmTriggered', handleNativeAlarm);
     window.addEventListener('nativeAlarmStopped', handleNativeAlarmStopped);
 
     return () => {
-      delete window.__openTickStopAlarm;
       window.removeEventListener('nativeAlarmTriggered', handleNativeAlarm);
       window.removeEventListener('nativeAlarmStopped', handleNativeAlarmStopped);
     };

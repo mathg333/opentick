@@ -328,6 +328,9 @@ public class AlarmService extends Service {
         // Broadcast to close AlarmActivity if it's open
         try {
             Intent closeIntent = new Intent(AlarmActivity.ACTION_CLOSE_ALARM_ACTIVITY);
+            if (dismissedId != null) {
+                closeIntent.putExtra(EXTRA_TASK_ID, dismissedId);
+            }
             closeIntent.setPackage(getPackageName());
             sendBroadcast(closeIntent);
         } catch (Exception e) {}

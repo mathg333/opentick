@@ -30,6 +30,9 @@ public class OpenTickAlarmPlugin extends Plugin {
 
         try {
             Context context = getContext();
+            // Clear any prior dismissed state so this freshly scheduled alarm will ring
+            AlarmStateManager.clearDismissed(context, id);
+
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
 
             Intent intent = new Intent(context, AlarmReceiver.class);

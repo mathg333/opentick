@@ -43,7 +43,10 @@ public class AlarmActivity extends AppCompatActivity {
     private final BroadcastReceiver mCloseReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            finish();
+            String targetId = intent != null ? intent.getStringExtra(AlarmService.EXTRA_TASK_ID) : null;
+            if (targetId == null || targetId.isEmpty() || targetId.equals(mTaskId)) {
+                finish();
+            }
         }
     };
 

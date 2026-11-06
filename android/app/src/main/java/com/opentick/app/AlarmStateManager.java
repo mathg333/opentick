@@ -38,6 +38,23 @@ public class AlarmStateManager {
     }
 
     /**
+     * Clear dismissed status when a task is newly scheduled or rescheduled
+     */
+    public static void clearDismissed(Context context, String taskId) {
+        if (context == null || taskId == null || taskId.trim().isEmpty()) return;
+        try {
+            SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+            String todayStr = getTodayString();
+            prefs.edit()
+                .remove(KEY_PREFIX_DISMISSED + taskId + "_" + todayStr)
+                .remove("dismissed_time_" + taskId)
+                .apply();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * Check if a task's alarm has already been stopped / dismissed
      */
     public static boolean isDismissed(Context context, String taskId) {
@@ -46,14 +63,14 @@ public class AlarmStateManager {
             SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
             String todayStr = getTodayString();
 
-            // Check if dismissed today
-            if (prefs.getBoolean(KEY_PREFIX_DISMISSED + taskId + "_" + todayStr, false)) {
+            // Check if user pressed STOP in the last 60 seconds (anti-duplicate debounce)
+            long dismissedTime = prefs.getLong("dismissed_time_" + taskId, 0);
+            if (dismissedTime > 0 && (System.currentTimeMillis() - dismissedTime) < 60 * 1000) {
                 return true;
             }
 
-            // Also check if dismissed within the last 15 minutes (safety debounce window)
-            long dismissedTime = prefs.getLong("dismissed_time_" + taskId, 0);
-            if (dismissedTime > 0 && (System.currentTimeMillis() - dismissedTime) < 15 * 60 * 1000) {
+            // Check if dismissed today
+            if (prefs.getBoolean(KEY_PREFIX_DISMISSED + taskId + "_" + todayStr, false)) {
                 return true;
             }
         } catch (Exception e) {

@@ -19,8 +19,7 @@ public class MainActivity extends BridgeActivity {
             final String fTaskId = taskId;
             if (getBridge() != null && getBridge().getWebView() != null) {
                 getBridge().getWebView().post(() -> {
-                    String js = "if (window.__openTickStopAlarm) { window.__openTickStopAlarm('" + fTaskId + "'); } " +
-                                "window.dispatchEvent(new CustomEvent('nativeAlarmStopped', { detail: { taskId: '" + fTaskId + "' } }));";
+                    String js = "window.dispatchEvent(new CustomEvent('nativeAlarmStopped', { detail: { taskId: '" + fTaskId + "' } }));";
                     getBridge().eval(js, null);
                 });
             }
