@@ -17,10 +17,13 @@ import {
 import TimePickerModal from './TimePickerModal';
 
 export default function CalendarView({ store }) {
-  const { state, addTask, toggleTaskCompleted, setSelectedTaskId } = store;
+  const { state, addTask, toggleTaskCompleted, setSelectedTaskId, calendarViewMode, setCalendarViewMode } = store;
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDayDate, setSelectedDayDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState('list'); // 'list', 'month', 'week', '3days', 'day', 'year'
+  const viewMode = calendarViewMode || 'month';
+  const setViewMode = (mode) => {
+    if (setCalendarViewMode) setCalendarViewMode(mode);
+  };
   const [isViewMenuOpen, setIsViewMenuOpen] = useState(false);
   const [quickTitle, setQuickTitle] = useState('');
   const [selectedSlotHour, setSelectedSlotHour] = useState(null);

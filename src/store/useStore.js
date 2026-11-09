@@ -93,6 +93,8 @@ export function useAppStore() {
 
   const [activeView, setActiveView] = useState('tasks-today'); // 'tasks-inbox', 'tasks-today', 'tasks-completed', 'calendar', 'eisenhower', 'habits', 'pomodoro', 'stats', 'project-[id]'
   const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [calendarViewMode, setCalendarViewMode] = useState('month'); // 'day', '3days', 'week', 'month', 'year', 'list'
+  const [taskViewLayout, setTaskViewLayout] = useState('list'); // 'list' or 'kanban'
 
   useEffect(() => {
     try {
@@ -495,6 +497,10 @@ export function useAppStore() {
     setActiveView,
     selectedTaskId,
     setSelectedTaskId,
+    calendarViewMode,
+    setCalendarViewMode,
+    taskViewLayout,
+    setTaskViewLayout,
     updateUserProfile,
     addBonusXp,
     addTask,

@@ -17,6 +17,7 @@ import AlarmOverlayModal from './components/AlarmOverlayModal';
 import AlarmPermissionModal from './components/AlarmPermissionModal';
 import GamificationCelebration from './components/GamificationCelebration';
 import RankShield2D from './components/RankShield2D';
+import ViewFormatSelectorModal from './components/ViewFormatSelectorModal';
 import { calculateGamification } from './utils/gamification';
 import { soundManager } from './utils/audio';
 import { getCustomAudioFile } from './utils/audioStorage';
@@ -36,6 +37,7 @@ import {
   Menu, 
   CheckSquare, 
   Calendar as CalendarIcon, 
+  CalendarDays,
   Grid, 
   Flame, 
   Clock, 
@@ -53,6 +55,7 @@ export default function App() {
 
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isViewSelectorOpen, setIsViewSelectorOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -589,97 +592,87 @@ export default function App() {
 
         {/* MOBILE BOTTOM NAVIGATION BAR (Touch-First & Safe-Area Optimized) */}
         <nav className="md:hidden flex items-center justify-around bg-[#000000] border-t border-[#18181c] pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] px-1 z-30 shrink-0">
-          {/* Tab 1: Checkbox / Tarefas */}
+          {/* Tab 1: Tarefas (Hoje) */}
           <button
             onClick={() => {
+              store.setTaskViewLayout('list');
               setActiveView('tasks-today');
               setSelectedTaskId(null);
             }}
-            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl active:scale-90 transition-transform"
-            title="Tarefas"
+            className="flex flex-col items-center justify-center min-w-[54px] min-h-[48px] p-1.5 rounded-xl active:scale-90 transition-transform"
+            title="Tarefas de Hoje"
           >
-            {isTaskView ? (
-              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center shadow-md shadow-[#ff6b00]/30">
+            {isTaskView && store.taskViewLayout !== 'kanban' ? (
+              <div className="w-8 h-8 rounded-xl bg-[#ff6b00] flex items-center justify-center shadow-lg shadow-[#ff6b00]/30">
                 <CheckSquare className="w-5 h-5 text-white stroke-[2.5]" />
               </div>
             ) : (
-              <div className="w-7 h-7 rounded-lg border border-neutral-600 flex items-center justify-center text-neutral-500">
+              <div className="w-8 h-8 rounded-xl border border-neutral-700 bg-[#121215] flex items-center justify-center text-neutral-400">
                 <CheckSquare className="w-4 h-4" />
               </div>
             )}
+            <span className={`text-[10px] font-bold mt-1 ${isTaskView && store.taskViewLayout !== 'kanban' ? 'text-[#ff6b00]' : 'text-neutral-500'}`}>
+              Tarefas
+            </span>
           </button>
 
-          {/* Tab 2: Calendário with Current Day Number (e.g. 28) */}
+          {/* Tab 2: Segundo Ícone do Lado Esquerdo -> Formatos de Visualização (Diário, Semanal, Mensal, Anual, Kanban, Matriz, Listas) */}
           <button
             onClick={() => {
-              setActiveView('calendar');
-              setSelectedTaskId(null);
+              setIsViewSelectorOpen(true);
             }}
-            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl active:scale-90 transition-transform"
-            title="Calendário"
+            className="flex flex-col items-center justify-center min-w-[54px] min-h-[48px] p-1.5 rounded-xl active:scale-90 transition-transform"
+            title="Escolher Formato de Visualização"
           >
-            {activeView === 'calendar' ? (
-              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center text-white font-black text-xs shadow-md shadow-[#ff6b00]/30">
-                {currentDayNumber}
+            {activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits' || store.taskViewLayout === 'kanban' ? (
+              <div className="w-8 h-8 rounded-xl bg-[#ff6b00] flex items-center justify-center shadow-lg shadow-[#ff6b00]/30">
+                <CalendarDays className="w-5 h-5 text-white stroke-[2.5]" />
               </div>
             ) : (
-              <div className="w-7 h-7 rounded-lg border border-neutral-600 flex items-center justify-center text-neutral-400 font-bold text-xs">
-                {currentDayNumber}
+              <div className="w-8 h-8 rounded-xl border border-neutral-700 bg-[#121215] flex items-center justify-center text-neutral-400 hover:border-neutral-500">
+                <CalendarDays className="w-4 h-4" />
               </div>
             )}
+            <span className={`text-[10px] font-bold mt-1 ${activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits' || store.taskViewLayout === 'kanban' ? 'text-[#ff6b00]' : 'text-neutral-500'}`}>
+              Visualizações
+            </span>
           </button>
 
-          {/* Tab 3: Matriz / Hábitos */}
-          <button
-            onClick={() => {
-              if (activeView === 'eisenhower') {
-                setActiveView('habits');
-              } else {
-                setActiveView('eisenhower');
-              }
-              setSelectedTaskId(null);
-            }}
-            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl active:scale-90 transition-transform"
-            title="Matriz & Hábitos"
-          >
-            {activeView === 'eisenhower' || activeView === 'habits' ? (
-              <div className="w-7 h-7 rounded-lg bg-[#ff6b00] flex items-center justify-center shadow-md shadow-[#ff6b00]/30">
-                <Grid className="w-4 h-4 text-white stroke-[2.5]" />
-              </div>
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-[#1c1c1e] flex items-center justify-center text-neutral-400 font-bold text-xs">
-                L
-              </div>
-            )}
-          </button>
-
-          {/* Tab 4: Ranking & Escudos */}
+          {/* Tab 3: Ranking & Escudos */}
           <button
             onClick={() => {
               setActiveView('stats');
               setSelectedTaskId(null);
             }}
-            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl active:scale-90 transition-transform"
+            className="flex flex-col items-center justify-center min-w-[54px] min-h-[48px] p-1.5 rounded-xl active:scale-90 transition-transform"
             title="Seus Rankings & Escudos"
           >
             {activeView === 'stats' ? (
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-[#ff6b00] flex items-center justify-center shadow-md shadow-[#ff6b00]/40 p-0.5">
-                <RankShield2D tier={calculateGamification(state).currentRank.tier} size={22} showGlow={false} />
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-[#ff6b00] flex items-center justify-center shadow-lg shadow-[#ff6b00]/40 p-0.5">
+                <RankShield2D tier={calculateGamification(state).currentRank.tier} size={24} showGlow={false} />
               </div>
             ) : (
-              <div className="w-7 h-7 rounded-lg bg-[#18181c] border border-[#2a2a34] flex items-center justify-center p-0.5 hover:border-amber-500/50">
-                <RankShield2D tier={calculateGamification(state).currentRank.tier} size={20} showGlow={false} />
+              <div className="w-8 h-8 rounded-xl bg-[#121215] border border-neutral-700 flex items-center justify-center p-0.5 hover:border-amber-500/50">
+                <RankShield2D tier={calculateGamification(state).currentRank.tier} size={22} showGlow={false} />
               </div>
             )}
+            <span className={`text-[10px] font-bold mt-1 ${activeView === 'stats' ? 'text-amber-400' : 'text-neutral-500'}`}>
+              Escudo
+            </span>
           </button>
 
-          {/* Tab 5: Mais (•••) */}
+          {/* Tab 4: Mais / Configurações */}
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="flex items-center justify-center min-w-[48px] min-h-[48px] p-2 rounded-xl text-neutral-400 hover:text-white active:scale-90 transition-transform"
+            className="flex flex-col items-center justify-center min-w-[54px] min-h-[48px] p-1.5 rounded-xl text-neutral-400 hover:text-white active:scale-90 transition-transform"
             title="Mais Opções & Configurações"
           >
-            <MoreHorizontal className="w-6 h-6 stroke-[1.8]" />
+            <div className="w-8 h-8 rounded-xl border border-neutral-700 bg-[#121215] flex items-center justify-center text-neutral-400 hover:text-white">
+              <MoreHorizontal className="w-5 h-5 stroke-[2]" />
+            </div>
+            <span className="text-[10px] font-bold mt-1 text-neutral-500">
+              Mais
+            </span>
           </button>
         </nav>
       </main>
@@ -739,6 +732,13 @@ export default function App() {
 
       {/* Android Alarm & Lockscreen Permission Onboarding Modal */}
       <AlarmPermissionModal />
+
+      {/* View Format Selector Modal (Diário, Semanal, Mensal, Anual, Kanban, Matriz Eisenhower, Listas) */}
+      <ViewFormatSelectorModal
+        isOpen={isViewSelectorOpen}
+        onClose={() => setIsViewSelectorOpen(false)}
+        store={store}
+      />
 
       {/* Gamification Floating XP & 3D Shield Rank Up Celebration */}
       <GamificationCelebration />

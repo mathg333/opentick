@@ -39,10 +39,15 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     addSubtask,
     toggleSubtask,
     deleteSubtask,
-    addProject
+    addProject,
+    taskViewLayout,
+    setTaskViewLayout
   } = store;
 
-  const [viewLayout, setViewLayout] = useState('list'); // 'list' or 'kanban'
+  const viewLayout = taskViewLayout || 'list';
+  const setViewLayout = (l) => {
+    if (setTaskViewLayout) setTaskViewLayout(l);
+  };
   const [isCustomDateModalOpen, setIsCustomDateModalOpen] = useState(false);
   const [isEditListModalOpen, setIsEditListModalOpen] = useState(false);
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { TrendingUp, MoreHorizontal, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, CheckCircle2 } from 'lucide-react';
 
 export default function SegmentedProgressCard({ store, onOpenStats }) {
   const { state, setActiveView } = store;
@@ -63,7 +63,7 @@ export default function SegmentedProgressCard({ store, onOpenStats }) {
 
   return (
     <div className="bg-[#0a0a0c] border border-[#222226] rounded-2xl p-4 md:p-5 shadow-2xl relative overflow-hidden transition-all hover:border-[#2f2f36]">
-      {/* Top Row: Tags + Menu */}
+      {/* Top Row: Tags (3 dots menu removed per user request) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
           {tags.map((tag, idx) => (
@@ -76,17 +76,9 @@ export default function SegmentedProgressCard({ store, onOpenStats }) {
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            if (onOpenStats) onOpenStats();
-            else if (setActiveView) setActiveView('stats');
-          }}
-          className="text-neutral-500 hover:text-white p-1 rounded-md transition-colors"
-          title="Ver Estatísticas Detalhadas"
-        >
-          <MoreHorizontal className="w-4 h-4" />
-        </button>
+        <span className="text-[10px] font-mono font-semibold text-neutral-400 bg-[#141418] border border-[#222228] px-2 py-0.5 rounded-md">
+          {todayDone}/{todayTotal} feitas
+        </span>
       </div>
 
       {/* Title */}
@@ -104,7 +96,7 @@ export default function SegmentedProgressCard({ store, onOpenStats }) {
         {subtitle}
       </p>
 
-      {/* Percentage & Trend Row */}
+      {/* Percentage & Trend Row: Clear Daily Performance Display */}
       <div className="flex items-baseline gap-3 mt-2.5">
         <span className="text-3xl md:text-4xl font-extrabold text-white tracking-tight font-sans">
           {percentage}%
@@ -116,7 +108,7 @@ export default function SegmentedProgressCard({ store, onOpenStats }) {
             <span>{trendPercent}%</span>
           </span>
           <span className="text-xs text-neutral-400 font-normal">
-            since you last checked
+            desempenho diário ({todayDone} de {todayTotal} metas)
           </span>
         </div>
       </div>
