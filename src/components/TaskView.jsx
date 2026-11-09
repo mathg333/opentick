@@ -22,6 +22,8 @@ import {
 import CustomDatePickerModal from './CustomDatePickerModal';
 import EditListModal from './EditListModal';
 import TimePickerModal from './TimePickerModal';
+import SegmentedProgressCard from './SegmentedProgressCard';
+import HomeHabitCard from './HomeHabitCard';
 
 export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMenu }) {
   const { 
@@ -277,25 +279,29 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               </button>
             </form>
 
-            {/* In "Hoje" View: Show tasks of today directly filling the full screen without nested accordion or extra 'Hoje' titles! */}
+            {/* In "Hoje" View: Show Extended Segmented Progress Card, Today's Tasks, and Rich Habit Tracker Card! */}
             {activeView === 'tasks-today' ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
+                {/* 1. Extended Segmented Progress Meter Bar Card (Image 2) */}
+                <SegmentedProgressCard store={store} />
+
+                {/* 2. Tasks for Today */}
                 {todayTasks.length === 0 ? (
-                  <div className="py-20 flex flex-col items-center justify-center text-center px-4">
-                    <div className="w-16 h-16 rounded-full bg-[#1c1c1e] border border-[#2c2c2e] flex items-center justify-center mb-3 text-2xl shadow-xl">
+                  <div className="py-6 bg-[#0f0f12] border border-[#222226] rounded-2xl flex flex-col items-center justify-center text-center px-4 shadow-lg">
+                    <div className="w-11 h-11 rounded-full bg-[#18181c] border border-[#282830] flex items-center justify-center mb-2 text-xl shadow-inner">
                       ☀️
                     </div>
-                    <h3 className="text-base font-bold text-white mb-1">Nenhuma tarefa pendente para hoje!</h3>
-                    <p className="text-xs text-neutral-400 max-w-xs mb-5">
-                      Adicione uma nova tarefa acima ou selecione datas específicas no calendário.
+                    <h3 className="text-sm font-bold text-white mb-0.5">Nenhuma tarefa pendente para hoje!</h3>
+                    <p className="text-[11px] text-neutral-400 max-w-xs mb-3">
+                      Adicione uma nova tarefa no campo acima ou selecione datas específicas no calendário.
                     </p>
                     <button
                       type="button"
                       onClick={() => setIsCustomDateModalOpen(true)}
-                      className="px-4 py-2 bg-[#ff6b00] hover:bg-[#ea580c] text-white text-xs font-bold rounded-xl shadow-lg flex items-center gap-2"
+                      className="px-3.5 py-1.5 bg-[#ff6b00] hover:bg-[#ea580c] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2"
                     >
-                      <CalendarIcon className="w-4 h-4" />
-                      <span>Agendar Tarefas no Calendário</span>
+                      <CalendarIcon className="w-3.5 h-3.5" />
+                      <span>Agendar no Calendário</span>
                     </button>
                   </div>
                 ) : (
@@ -416,58 +422,8 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                   </div>
                 )}
 
-                {/* Rich Bottom Daily Productivity Card */}
-                <div className="mt-3 p-4 rounded-2xl bg-[#141416] border border-[#242428] space-y-3 shadow-xl">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-white uppercase tracking-wider">
-                        Resumo do Dia
-                      </span>
-                      <span className="text-[10px] bg-[#ff6b00]/20 text-[#ff6b00] font-black px-1.5 py-0.2 rounded border border-[#ff6b00]/30">
-                        HOJE
-                      </span>
-                    </div>
-                    <span className="text-xs font-mono font-bold text-[#ff6b00]">
-                      {completedTasks.length} de {todayTasks.length + completedTasks.length} concluídas ({todayTasks.length + completedTasks.length > 0 ? Math.round((completedTasks.length / (todayTasks.length + completedTasks.length)) * 100) : 100}%)
-                    </span>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="w-full h-2 rounded-full bg-[#202024] overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-[#ff6b00] to-[#ea580c] transition-all duration-500 rounded-full"
-                      style={{
-                        width: `${todayTasks.length + completedTasks.length > 0 ? (completedTasks.length / (todayTasks.length + completedTasks.length)) * 100 : 100}%`
-                      }}
-                    />
-                  </div>
-
-                  {/* Mini Stats Grid */}
-                  <div className="grid grid-cols-3 gap-2 pt-1 text-center">
-                    <div className="p-2 rounded-xl bg-[#1c1c1e] border border-[#262629]">
-                      <span className="text-[10px] text-neutral-400 block font-medium">Sequência</span>
-                      <span className="text-xs font-black text-amber-400 flex items-center justify-center gap-1 mt-0.5">
-                        🔥 12 dias
-                      </span>
-                    </div>
-                    <div className="p-2 rounded-xl bg-[#1c1c1e] border border-[#262629]">
-                      <span className="text-[10px] text-neutral-400 block font-medium">Foco Pomodoro</span>
-                      <span className="text-xs font-black text-rose-400 flex items-center justify-center gap-1 mt-0.5">
-                        🍅 45 min
-                      </span>
-                    </div>
-                    <div className="p-2 rounded-xl bg-[#1c1c1e] border border-[#262629]">
-                      <span className="text-[10px] text-neutral-400 block font-medium">Pendentes</span>
-                      <span className="text-xs font-black text-white flex items-center justify-center gap-1 mt-0.5">
-                        📋 {todayTasks.length} tarefas
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-[10px] text-neutral-500 text-center italic pt-0.5">
-                    "Pequenos passos diários constroem grandes conquistas."
-                  </p>
-                </div>
+                {/* 3. Rich Home Habit Tracking Card with Yellow 7-Row Heatmap Matrix & Done Button (Image 1) */}
+                <HomeHabitCard store={store} />
               </div>
             ) : (
               /* In other views: render sections as usual */
