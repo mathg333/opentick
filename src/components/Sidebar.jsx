@@ -140,23 +140,7 @@ export default function Sidebar({
             >
               <Camera className="w-3.5 h-3.5 text-[#facc15]" />
             </button>
-            <button
-              onClick={() => {
-                if (onOpenSettingsModal) onOpenSettingsModal();
-                if (onCloseMobileDrawer) onCloseMobileDrawer();
-              }}
-              className="p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
-              title="Configurações"
-            >
-              <Settings className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={onCloseMobileDrawer}
-              className="md:hidden p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
-              title="Fechar menu"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+            
           </div>
         </div>
 
@@ -245,7 +229,7 @@ export default function Sidebar({
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15] shadow-sm shrink-0">
                 <Inbox className="w-4 h-4 stroke-[2.5]" />
               </div>
               <span className="text-sm">Caixa de Entrada</span>
@@ -285,29 +269,13 @@ export default function Sidebar({
           {/* Etiquetas */}
           <div className="flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-semibold text-neutral-300 hover:bg-[#1a1a1e] cursor-pointer transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center text-white shadow-md shadow-amber-500/20 shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15] shadow-sm shrink-0">
                 <Tag className="w-4 h-4" />
               </div>
               <span className="text-sm">Etiquetas</span>
             </div>
             <ChevronRight className="w-4 h-4 text-neutral-500" />
-            <button
-              onClick={() => {
-                if (onOpenSettingsModal) onOpenSettingsModal();
-                if (onCloseMobileDrawer) onCloseMobileDrawer();
-              }}
-              className="p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
-              title="Configurações"
-            >
-              <Settings className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={onCloseMobileDrawer}
-              className="md:hidden p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
-              title="Fechar menu"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+            
           </div>
         </div>
 
@@ -407,7 +375,7 @@ export default function Sidebar({
                 }`}
               >
                 <div className="flex items-center gap-3 truncate">
-                  <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${bgGradient} flex items-center justify-center text-sm shadow-sm shrink-0`}>
+                  <div className={`w-7 h-7 rounded-xl bg-[#facc15]/15 border border-[#facc15]/30 flex items-center justify-center text-sm shadow-sm shrink-0`}>
                     {listEmoji}
                   </div>
                   <span className="truncate text-sm font-medium">{proj.name}</span>
@@ -465,7 +433,7 @@ export default function Sidebar({
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-7 h-7 rounded-xl bg-gradient-to-br ${tool.gradient} flex items-center justify-center text-white shadow-sm shrink-0`}>
+                  <div className="w-7 h-7 rounded-xl bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15] shadow-sm shrink-0">
                     <Icon className="w-4 h-4 stroke-[2.2]" />
                   </div>
                   <span className="truncate text-sm font-medium">{tool.label}</span>
@@ -486,7 +454,7 @@ export default function Sidebar({
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-sm shrink-0">
+              <div className="w-7 h-7 rounded-xl bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15] shadow-sm shrink-0">
                 <CheckSquare className="w-4 h-4 stroke-[2.5]" />
               </div>
               <span className="text-sm font-medium">Concluído</span>

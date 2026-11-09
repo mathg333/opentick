@@ -89,15 +89,15 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
               onClick={() => handleSelectCalendar('day')}
               className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all active:scale-95 ${
                 isDailyActive
-                  ? 'bg-[#18181e] border-amber-400/80 shadow-md shadow-amber-400/10'
+                  ? 'bg-[#18181e] border-[#facc15]/80 shadow-md shadow-[#facc15]/10'
                   : 'bg-[#121215] border-[#222228] hover:border-[#33333d]'
               }`}
             >
               <div className="flex items-center justify-between w-full mb-1.5">
-                <div className="w-7 h-7 rounded-lg bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400">
+                <div className="w-7 h-7 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15]">
                   <Sun className="w-4 h-4" />
                 </div>
-                {isDailyActive && <Check className="w-4 h-4 text-amber-400" />}
+                {isDailyActive && <Check className="w-4 h-4 text-[#facc15]" />}
               </div>
               <div>
                 <div className="text-xs font-bold text-white">Diário</div>
@@ -111,15 +111,15 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
               onClick={() => handleSelectCalendar('week')}
               className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all active:scale-95 ${
                 isWeeklyActive
-                  ? 'bg-[#18181e] border-amber-400/80 shadow-md shadow-amber-400/10'
+                  ? 'bg-[#18181e] border-[#facc15]/80 shadow-md shadow-[#facc15]/10'
                   : 'bg-[#121215] border-[#222228] hover:border-[#33333d]'
               }`}
             >
               <div className="flex items-center justify-between w-full mb-1.5">
-                <div className="w-7 h-7 rounded-lg bg-sky-400/10 border border-sky-400/30 flex items-center justify-center text-sky-400">
+                <div className="w-7 h-7 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15]">
                   <CalendarRange className="w-4 h-4" />
                 </div>
-                {isWeeklyActive && <Check className="w-4 h-4 text-amber-400" />}
+                {isWeeklyActive && <Check className="w-4 h-4 text-[#facc15]" />}
               </div>
               <div>
                 <div className="text-xs font-bold text-white">Semanal</div>
@@ -133,15 +133,15 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
               onClick={() => handleSelectCalendar('month')}
               className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all active:scale-95 ${
                 isMonthlyActive
-                  ? 'bg-[#18181e] border-amber-400/80 shadow-md shadow-amber-400/10'
+                  ? 'bg-[#18181e] border-[#facc15]/80 shadow-md shadow-[#facc15]/10'
                   : 'bg-[#121215] border-[#222228] hover:border-[#33333d]'
               }`}
             >
               <div className="flex items-center justify-between w-full mb-1.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+                <div className="w-7 h-7 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15]">
                   <Calendar className="w-4 h-4" />
                 </div>
-                {isMonthlyActive && <Check className="w-4 h-4 text-amber-400" />}
+                {isMonthlyActive && <Check className="w-4 h-4 text-[#facc15]" />}
               </div>
               <div>
                 <div className="text-xs font-bold text-white">Mensal</div>
@@ -155,15 +155,15 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
               onClick={() => handleSelectCalendar('year')}
               className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all active:scale-95 ${
                 isYearlyActive
-                  ? 'bg-[#18181e] border-amber-400/80 shadow-md shadow-amber-400/10'
+                  ? 'bg-[#18181e] border-[#facc15]/80 shadow-md shadow-[#facc15]/10'
                   : 'bg-[#121215] border-[#222228] hover:border-[#33333d]'
               }`}
             >
               <div className="flex items-center justify-between w-full mb-1.5">
-                <div className="w-7 h-7 rounded-lg bg-purple-400/10 border border-purple-400/30 flex items-center justify-center text-purple-400">
+                <div className="w-7 h-7 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15]">
                   <CalendarDays className="w-4 h-4" />
                 </div>
-                {isYearlyActive && <Check className="w-4 h-4 text-amber-400" />}
+                {isYearlyActive && <Check className="w-4 h-4 text-[#facc15]" />}
               </div>
               <div>
                 <div className="text-xs font-bold text-white">Anual</div>
@@ -186,12 +186,12 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
               onClick={() => handleSelectTaskFormat('tasks-today', 'list')}
               className={`w-full p-2.5 rounded-xl border flex items-center justify-between transition-all active:scale-98 ${
                 isListActive
-                  ? 'bg-[#18181e] border-amber-400/80'
+                  ? 'bg-[#18181e] border-[#facc15]/80'
                   : 'bg-[#121215] border-[#222228] hover:border-[#33333d]'
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#18181c] border border-[#26262e] flex items-center justify-center text-neutral-300">
+                <div className="w-8 h-8 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15]">
                   <ListTodo className="w-4 h-4" />
                 </div>
                 <div className="text-left">
@@ -199,7 +199,7 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
                   <div className="text-[10px] text-neutral-400">Visualização clássica e filtros</div>
                 </div>
               </div>
-              {isListActive && <Check className="w-4 h-4 text-amber-400" />}
+              {isListActive && <Check className="w-4 h-4 text-[#facc15]" />}
             </button>
 
             {/* Kanban */}
@@ -208,12 +208,12 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
               onClick={() => handleSelectTaskFormat('tasks-today', 'kanban')}
               className={`w-full p-2.5 rounded-xl border flex items-center justify-between transition-all active:scale-98 ${
                 isKanbanActive
-                  ? 'bg-[#18181e] border-amber-400/80'
+                  ? 'bg-[#18181e] border-[#facc15]/80'
                   : 'bg-[#121215] border-[#222228] hover:border-[#33333d]'
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                <div className="w-8 h-8 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15]">
                   <Kanban className="w-4 h-4" />
                 </div>
                 <div className="text-left">
@@ -221,7 +221,7 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
                   <div className="text-[10px] text-neutral-400">A Fazer, Em Progresso e Concluído</div>
                 </div>
               </div>
-              {isKanbanActive && <Check className="w-4 h-4 text-amber-400" />}
+              {isKanbanActive && <Check className="w-4 h-4 text-[#facc15]" />}
             </button>
 
             {/* Matriz Eisenhower */}
@@ -230,12 +230,12 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
               onClick={() => handleSelectTaskFormat('eisenhower')}
               className={`w-full p-2.5 rounded-xl border flex items-center justify-between transition-all active:scale-98 ${
                 isEisenhowerActive
-                  ? 'bg-[#18181e] border-amber-400/80'
+                  ? 'bg-[#18181e] border-[#facc15]/80'
                   : 'bg-[#121215] border-[#222228] hover:border-[#33333d]'
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                <div className="w-8 h-8 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15]">
                   <Grid2X2 className="w-4 h-4" />
                 </div>
                 <div className="text-left">
@@ -243,7 +243,7 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
                   <div className="text-[10px] text-neutral-400">4 quadrantes: Urgente vs Importante</div>
                 </div>
               </div>
-              {isEisenhowerActive && <Check className="w-4 h-4 text-amber-400" />}
+              {isEisenhowerActive && <Check className="w-4 h-4 text-[#facc15]" />}
             </button>
 
             {/* Rastreador de Hábitos */}
@@ -252,12 +252,12 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
               onClick={() => handleSelectTaskFormat('habits')}
               className={`w-full p-2.5 rounded-xl border flex items-center justify-between transition-all active:scale-98 ${
                 isHabitsActive
-                  ? 'bg-[#18181e] border-amber-400/80'
+                  ? 'bg-[#18181e] border-[#facc15]/80'
                   : 'bg-[#121215] border-[#222228] hover:border-[#33333d]'
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <div className="w-8 h-8 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15]">
                   <Flame className="w-4 h-4" />
                 </div>
                 <div className="text-left">
@@ -265,7 +265,7 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
                   <div className="text-[10px] text-neutral-400">Sequências, metas e heatmap</div>
                 </div>
               </div>
-              {isHabitsActive && <Check className="w-4 h-4 text-amber-400" />}
+              {isHabitsActive && <Check className="w-4 h-4 text-[#facc15]" />}
             </button>
 
             {/* Pomodoro Timer */}
@@ -274,12 +274,12 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
               onClick={() => handleSelectTaskFormat('pomodoro')}
               className={`w-full p-2.5 rounded-xl border flex items-center justify-between transition-all active:scale-98 ${
                 isPomodoroActive
-                  ? 'bg-[#18181e] border-amber-400/80'
+                  ? 'bg-[#18181e] border-[#facc15]/80'
                   : 'bg-[#121215] border-[#222228] hover:border-[#33333d]'
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
+                <div className="w-8 h-8 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15]">
                   <Timer className="w-4 h-4" />
                 </div>
                 <div className="text-left">
@@ -287,7 +287,7 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store }) {
                   <div className="text-[10px] text-neutral-400">Timer integrado de foco e pausas</div>
                 </div>
               </div>
-              {isPomodoroActive && <Check className="w-4 h-4 text-amber-400" />}
+              {isPomodoroActive && <Check className="w-4 h-4 text-[#facc15]" />}
             </button>
           </div>
         </div>

@@ -48,7 +48,7 @@ export default function HabitTracker({ store }) {
       <div className="px-4 py-3 md:px-8 md:pt-6 md:pb-4 border-b border-[#222226] bg-[#0c0c0e] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-[#18181c] border border-[#27272a] flex items-center justify-center shrink-0">
-            <Flame className="w-4 h-4 text-orange-400" />
+            <Flame className="w-4 h-4 text-[#facc15]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export default function HabitTracker({ store }) {
                         {habit.name}
                       </h3>
                       <div className="flex items-center gap-3 mt-1 text-xs text-neutral-400">
-                        <span className="flex items-center gap-1 text-orange-400 font-semibold">
+                        <span className="flex items-center gap-1 text-[#facc15] font-semibold">
                           <Flame className="w-3.5 h-3.5 fill-current" />
                           {habit.currentStreak} dias seguidos
                         </span>

@@ -481,13 +481,7 @@ export default function App() {
           >
             <Search className="w-5 h-5" />
           </button>
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
-            title="Configurações"
-          >
-            <MoreVertical className="w-5 h-5" />
-          </button>
+          
         </div>
       </header>
 

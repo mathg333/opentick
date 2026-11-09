@@ -790,7 +790,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               {/* Touch-Friendly Time Button */}
               <div className="flex items-center justify-between pt-2 border-t border-[#262629]">
                 <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-amber-400" />
+                  <Clock className="w-4 h-4 text-[#facc15]" />
                   Horário
                 </span>
                 <button

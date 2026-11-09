@@ -322,7 +322,7 @@ export default function ProductivityStats({ store }) {
           <div className="bg-[#121215] border border-[#27272a] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
               <span className="font-bold">Tarefas Concluídas</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <CheckCircle2 className="w-4 h-4 text-[#facc15]" />
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{completedTasks}</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
@@ -333,7 +333,7 @@ export default function ProductivityStats({ store }) {
           <div className="bg-[#121215] border border-[#27272a] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
               <span className="font-bold">Tempo de Foco</span>
-              <Clock className="w-4 h-4 text-amber-400" />
+              <Clock className="w-4 h-4 text-[#facc15]" />
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{totalFocusHours}h</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
@@ -344,7 +344,7 @@ export default function ProductivityStats({ store }) {
           <div className="bg-[#121215] border border-[#27272a] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
               <span className="font-bold">Maior Sequência</span>
-              <Flame className="w-4 h-4 text-orange-400" />
+              <Flame className="w-4 h-4 text-[#facc15]" />
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{bestHabitStreak} dias</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
@@ -355,7 +355,7 @@ export default function ProductivityStats({ store }) {
           <div className="bg-[#121215] border border-[#27272a] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
               <span className="font-bold">Taxa de Conclusão</span>
-              <TrendingUp className="w-4 h-4 text-indigo-400" />
+              <TrendingUp className="w-4 h-4 text-[#facc15]" />
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{completionRate}%</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
@@ -368,7 +368,7 @@ export default function ProductivityStats({ store }) {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-neutral-200 uppercase tracking-wider flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-400" />
+              <Award className="w-4 h-4 text-[#facc15]" />
               Sala de Conquistas & Insígnias ({stats.unlockedAchievementsCount}/{stats.achievements.length})
             </h3>
           </div>

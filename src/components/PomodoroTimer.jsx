@@ -126,7 +126,7 @@ export default function PomodoroTimer({ store, activeTask }) {
 
         <div className="flex items-center gap-2 text-xs">
           <div className="bg-[#09090b] px-2.5 py-1 rounded-xl border border-[#222226] flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-orange-400 fill-current" />
+            <Flame className="w-3.5 h-3.5 text-[#facc15] fill-current" />
             <span className="font-bold text-neutral-100">{totalMinutesToday} min</span>
             <span className="text-neutral-500 hidden sm:inline">({todaySessions.length} sessões)</span>
           </div>

@@ -45,22 +45,22 @@ export default function HomeHabitCard({ store }) {
   const activeHabit = habits[selectedHabitIndex] || habits[0];
   const isDoneToday = !!activeHabit?.checkIns?.[todayStr];
 
-  // Derive icon according to habit name
+  // Derive icon according to habit name - unified in minimalist yellow #FACC15
   const habitIcon = useMemo(() => {
     const n = (activeHabit?.name || '').toLowerCase();
     if (n.includes('walk') || n.includes('passos') || n.includes('caminh')) {
-      return <Footprints className="w-5 h-5 text-amber-300" />;
+      return <Footprints className="w-5 h-5 text-[#facc15]" />;
     }
     if (n.includes('work') || n.includes('trabalho') || n.includes('cop') || n.includes('dev')) {
-      return <Briefcase className="w-5 h-5 text-sky-400" />;
+      return <Briefcase className="w-5 h-5 text-[#facc15]" />;
     }
     if (n.includes('leitura') || n.includes('livro') || n.includes('estud')) {
-      return <BookOpen className="w-5 h-5 text-emerald-400" />;
+      return <BookOpen className="w-5 h-5 text-[#facc15]" />;
     }
     if (n.includes('treino') || n.includes('academia') || n.includes('força')) {
-      return <Dumbbell className="w-5 h-5 text-rose-400" />;
+      return <Dumbbell className="w-5 h-5 text-[#facc15]" />;
     }
-    return <Target className="w-5 h-5 text-amber-400" />;
+    return <Target className="w-5 h-5 text-[#facc15]" />;
   }, [activeHabit]);
 
   // Derive goal text if missing
@@ -339,7 +339,7 @@ export default function HomeHabitCard({ store }) {
             onClick={() => setNoteModalOpen(!noteModalOpen)}
             className="flex-1 py-3 px-4 rounded-xl bg-[#16161a] hover:bg-[#202026] text-neutral-200 border border-[#26262e] font-bold text-xs flex items-center justify-center gap-2 transition-colors"
           >
-            <FileText className="w-4 h-4 text-amber-400" />
+            <FileText className="w-4 h-4 text-[#facc15]" />
             <span>Add Note</span>
           </button>
 
@@ -394,8 +394,8 @@ export default function HomeHabitCard({ store }) {
           className="bg-[#0a0a0c]/80 border border-[#1e1e24] rounded-2xl p-3.5 shadow-lg flex items-center justify-between cursor-pointer hover:border-[#2f2f36] transition-all opacity-85"
         >
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#141418] border border-[#222228] flex items-center justify-center text-xs">
-              <Briefcase className="w-4 h-4 text-sky-400" />
+            <div className="w-8 h-8 rounded-lg bg-[#facc15]/10 border border-[#facc15]/30 flex items-center justify-center text-xs">
+              <Briefcase className="w-4 h-4 text-[#facc15]" />
             </div>
             <div>
               <h4 className="text-xs font-bold text-neutral-200">
@@ -407,7 +407,7 @@ export default function HomeHabitCard({ store }) {
             </div>
           </div>
 
-          <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-lg">
+          <span className="text-[10px] font-bold text-[#facc15] bg-[#facc15]/10 border border-[#facc15]/20 px-2 py-0.5 rounded-lg">
             Ver Hábito ➔
           </span>
         </div>

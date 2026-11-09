@@ -226,11 +226,7 @@ export default function CalendarView({ store }) {
             <Columns className="w-5 h-5" />
           </button>
 
-          <button
-            className="p-2 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
-          >
-            <MoreVertical className="w-5 h-5" />
-          </button>
+          
 
           {/* View Switcher Dropdown Modal */}
           {isViewMenuOpen && (

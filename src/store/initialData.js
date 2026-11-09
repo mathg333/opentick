@@ -4,13 +4,13 @@ const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 const inTwoDays = new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0];
 
 export const INITIAL_PROJECTS = [
-  { id: 'inbox', name: 'Caixa de Entrada', color: '#3b82f6', isDefault: true, icon: 'Inbox' },
-  { id: 'proj-tech', name: 'Trilha Tecnologia — Aprender...', color: '#ef4444', icon: 'BookOpen' },
-  { id: 'proj-sprint', name: 'Sprint de dias — Limpeza e Neg...', color: '#f59e0b', icon: 'Rocket' },
-  { id: 'proj-alta', name: 'Alta Prioridade', color: '#ef4444', icon: 'Flame' },
-  { id: 'proj-media', name: 'Média Prioridade', color: '#f59e0b', icon: 'Zap' },
-  { id: 'proj-leitura', name: 'Leitura', color: '#10b981', icon: 'BookOpen' },
-  { id: 'proj-nao-fazer', name: 'O QUE NÃO FAZER', color: '#6b7280', icon: 'Slash' }
+  { id: 'inbox', name: 'Caixa de Entrada', color: '#facc15', isDefault: true, icon: 'Inbox' },
+  { id: 'proj-tech', name: 'Trilha Tecnologia — Aprender...', color: '#facc15', icon: 'BookOpen' },
+  { id: 'proj-sprint', name: 'Sprint de dias — Limpeza e Neg...', color: '#facc15', icon: 'Rocket' },
+  { id: 'proj-alta', name: 'Alta Prioridade', color: '#facc15', icon: 'Flame' },
+  { id: 'proj-media', name: 'Média Prioridade', color: '#facc15', icon: 'Zap' },
+  { id: 'proj-leitura', name: 'Leitura', color: '#facc15', icon: 'BookOpen' },
+  { id: 'proj-nao-fazer', name: 'O QUE NÃO FAZER', color: '#facc15', icon: 'Slash' }
 ];
 
 export const INITIAL_TASKS = [
@@ -94,7 +94,7 @@ export const INITIAL_HABITS = [
   {
     id: 'h-1',
     name: 'Estudo Diário (1h)',
-    color: '#3b82f6',
+    color: '#facc15',
     frequency: 'daily',
     checkIns: {
       [today]: true,
@@ -106,7 +106,7 @@ export const INITIAL_HABITS = [
   {
     id: 'h-2',
     name: 'Treino de Força',
-    color: '#10b981',
+    color: '#facc15',
     frequency: 'daily',
     checkIns: {
       [yesterday]: true
@@ -117,7 +117,7 @@ export const INITIAL_HABITS = [
   {
     id: 'h-3',
     name: 'Leitura 20 Páginas',
-    color: '#f59e0b',
+    color: '#facc15',
     frequency: 'daily',
     checkIns: {},
     currentStreak: 2,
