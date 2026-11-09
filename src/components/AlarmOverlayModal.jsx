@@ -47,7 +47,7 @@ export default function AlarmOverlayModal({
       <div className="absolute inset-0 bg-gradient-to-b from-[#06060a]/90 via-[#06060a]/70 to-[#06060a]/95 pointer-events-none" />
 
       {/* Background Ambient Glowing Orbs */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-[#ff6b00]/15 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-[#facc15]/15 blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-72 h-72 rounded-full bg-[#ff3d00]/10 blur-3xl pointer-events-none" />
 
       {/* Top Header Status Pill */}
@@ -72,11 +72,11 @@ export default function AlarmOverlayModal({
         {/* Multi-layer Concentric Glass Soundwaves */}
         <div className="relative flex items-center justify-center my-2">
           {/* Outer Ripple */}
-          <div className="absolute w-44 h-44 rounded-full border border-[#ff7a00]/30 bg-[#ff6b00]/5 animate-ping opacity-60 duration-1000" />
+          <div className="absolute w-44 h-44 rounded-full border border-[#ff7a00]/30 bg-[#facc15]/5 animate-ping opacity-60 duration-1000" />
           {/* Mid Ripple */}
-          <div className="absolute w-36 h-36 rounded-full border border-[#ff7a00]/40 bg-[#ff6b00]/10 animate-pulse duration-700" />
+          <div className="absolute w-36 h-36 rounded-full border border-[#ff7a00]/40 bg-[#facc15]/10 animate-pulse duration-700" />
           {/* Center Glowing Sphere */}
-          <div className="relative w-24 h-24 rounded-full bg-gradient-to-tr from-[#ff6b00] via-[#ff5500] to-[#e63900] flex items-center justify-center shadow-[0_0_50px_rgba(255,107,0,0.55)] border border-white/20">
+          <div className="relative w-24 h-24 rounded-full bg-gradient-to-tr from-[#facc15] via-[#facc15] to-[#e63900] flex items-center justify-center shadow-[0_0_50px_rgba(255,107,0,0.55)] border border-white/20">
             <Bell className="w-12 h-12 text-white animate-bounce stroke-[2.2]" />
           </div>
         </div>
@@ -126,7 +126,7 @@ export default function AlarmOverlayModal({
         {/* Liquid Neon Orange Stop Button */}
         <button
           onClick={onStopAlarm}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#ff7a00] via-[#ff5500] to-[#e63900] hover:brightness-110 active:scale-98 text-white font-black text-base uppercase tracking-wider shadow-[0_0_35px_rgba(255,107,0,0.45)] border border-white/20 transition-all flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#ff7a00] via-[#facc15] to-[#e63900] hover:brightness-110 active:scale-98 text-white font-black text-base uppercase tracking-wider shadow-[0_0_35px_rgba(255,107,0,0.45)] border border-white/20 transition-all flex items-center justify-center gap-2"
         >
           <Check className="w-6 h-6 stroke-[3]" />
           <span>Parar Alarme</span>

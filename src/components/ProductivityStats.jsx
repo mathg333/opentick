@@ -73,9 +73,9 @@ export default function ProductivityStats({ store }) {
       {/* Desktop Header - Limpo e Minimalista */}
       <div className="hidden md:flex px-8 pt-5 pb-4 border-b border-[#1c1c22] bg-[#0c0c0e] items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-[#ff6b00] p-0.5 shadow-md shadow-[#ff6b00]/20 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-[#facc15] p-0.5 shadow-md shadow-[#facc15]/20 flex items-center justify-center shrink-0">
             <div className="w-full h-full rounded-[10px] bg-[#121215] flex items-center justify-center">
-              <Trophy className="w-4 h-4 text-[#ff6b00]" />
+              <Trophy className="w-4 h-4 text-[#facc15]" />
             </div>
           </div>
           <div>
@@ -89,7 +89,7 @@ export default function ProductivityStats({ store }) {
           onClick={() => setIsProfileModalOpen(true)}
           className="text-xs font-bold text-white bg-[#1c1c22] hover:bg-[#25252d] border border-[#2c2c34] px-3.5 py-1.5 rounded-xl flex items-center gap-2 transition-all shadow"
         >
-          <Camera className="w-3.5 h-3.5 text-[#ff6b00]" />
+          <Camera className="w-3.5 h-3.5 text-[#facc15]" />
           <span>Editar Perfil & Capa</span>
         </button>
       </div>
@@ -111,7 +111,7 @@ export default function ProductivityStats({ store }) {
               className="relative z-10 text-[11px] sm:text-xs font-bold text-white bg-black/65 hover:bg-black/85 px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md flex items-center gap-1.5 shadow transition-all active:scale-95"
               title="Trocar Foto de Perfil ou Imagem de Capa"
             >
-              <Camera className="w-3.5 h-3.5 text-[#ff6b00]" />
+              <Camera className="w-3.5 h-3.5 text-[#facc15]" />
               <span>Trocar Foto / Capa</span>
             </button>
           </div>
@@ -125,7 +125,7 @@ export default function ProductivityStats({ store }) {
                 className="relative group shrink-0 cursor-pointer" 
                 title="Toque para alterar avatar e perfil"
               >
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-amber-500 via-[#ff6b00] to-orange-400 p-1 shadow-2xl ring-4 ring-[#121215] group-hover:scale-105 transition-transform">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-amber-500 via-[#facc15] to-orange-400 p-1 shadow-2xl ring-4 ring-[#121215] group-hover:scale-105 transition-transform">
                   <div className="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center font-black text-white text-3xl sm:text-4xl select-none">
                     {profile.avatarType === 'image' && profile.avatar ? (
                       <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -134,7 +134,7 @@ export default function ProductivityStats({ store }) {
                     )}
                   </div>
                 </div>
-                <div className="absolute bottom-0 right-0 bg-[#ff6b00] text-white rounded-full p-1.5 shadow-md border-2 border-[#121215] flex items-center justify-center">
+                <div className="absolute bottom-0 right-0 bg-[#facc15] text-black rounded-full p-1.5 shadow-md border-2 border-[#121215] flex items-center justify-center">
                   <Camera className="w-3.5 h-3.5" />
                 </div>
               </div>
@@ -218,7 +218,7 @@ export default function ProductivityStats({ store }) {
             {/* Barra Visual */}
             <div className="w-full h-3 rounded-full bg-[#1c1c24] border border-[#272730] overflow-hidden p-0.5">
               <div 
-                className="h-full rounded-full bg-gradient-to-r from-amber-500 via-[#ff6b00] to-[#ff3d00] transition-all duration-500 shadow-[0_0_12px_rgba(255,107,0,0.5)]"
+                className="h-full rounded-full bg-gradient-to-r from-amber-500 via-[#facc15] to-[#ff3d00] transition-all duration-500 shadow-[0_0_12px_rgba(255,107,0,0.5)]"
                 style={{ width: `${stats.tierProgressPct}%` }}
               />
             </div>
@@ -242,14 +242,14 @@ export default function ProductivityStats({ store }) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-xl bg-[#ff6b00]/15 border border-[#ff6b00]/30 text-[#ff6b00]">
+              <div className="p-1.5 rounded-xl bg-[#facc15]/15 border border-[#facc15]/30 text-[#facc15]">
                 <Shield className="w-5 h-5" />
               </div>
               <h3 className="text-base sm:text-lg font-black text-white tracking-tight">
                 Seus Rankings
               </h3>
             </div>
-            <span className="text-xs font-bold text-[#ff6b00] bg-[#ff6b00]/10 px-3 py-1 rounded-full border border-[#ff6b00]/25">
+            <span className="text-xs font-bold text-[#facc15] bg-[#facc15]/10 px-3 py-1 rounded-full border border-[#facc15]/25">
               Elo: {stats.currentRank.name}
             </span>
           </div>
@@ -266,7 +266,7 @@ export default function ProductivityStats({ store }) {
                   onClick={() => setPreviewRank(rank)}
                   className={`rounded-2xl border p-3 flex flex-col items-center text-center relative transition-all cursor-pointer active:scale-95 ${
                     isSelected
-                      ? 'bg-gradient-to-b from-[#1e1e28] to-[#121218] border-[#ff6b00] ring-2 ring-[#ff6b00]/40 shadow-xl shadow-[#ff6b00]/20 scale-102'
+                      ? 'bg-gradient-to-b from-[#1e1e28] to-[#121218] border-[#facc15] ring-2 ring-[#facc15]/40 shadow-xl shadow-[#facc15]/20 scale-102'
                       : isUnlocked
                       ? 'bg-[#121216] border-[#2c2c36] hover:border-neutral-500'
                       : 'bg-[#0a0a0c] border-[#1c1c20] opacity-45 hover:opacity-75'
@@ -274,7 +274,7 @@ export default function ProductivityStats({ store }) {
                   title={`Toque para visualizar o escudo de ${rank.shortName}`}
                 >
                   {isCurrent && (
-                    <span className="absolute -top-2.5 bg-[#ff6b00] text-white text-[9px] font-black px-2.5 py-0.5 rounded-full shadow tracking-wider uppercase">
+                    <span className="absolute -top-2.5 bg-[#facc15] text-black text-[9px] font-black px-2.5 py-0.5 rounded-full shadow tracking-wider uppercase">
                       Seu Elo
                     </span>
                   )}

@@ -38,7 +38,7 @@ export function useAppStore() {
             bonusXp: parsed.bonusXp || 450,
             settings: {
               theme: 'amoled',
-              accentColor: '#ff6b00',
+              accentColor: '#facc15',
               sound: 'chime',
               volume: 0.8,
               vibration: true,
@@ -49,7 +49,7 @@ export function useAppStore() {
               defaultDueDate: 'today',
               delayedSection: 'top',
               ...parsed.settings,
-              accentColor: '#ff6b00' // Force orange
+              accentColor: '#facc15' // Force yellow (#facc15)
             }
           };
         }
@@ -73,7 +73,7 @@ export function useAppStore() {
       bonusXp: 450,
       settings: {
         theme: 'amoled',
-        accentColor: '#ff6b00', // Vibrant Orange
+        accentColor: '#facc15', // Vibrant Yellow (#facc15)
         sound: 'chime',
         volume: 0.8,
         vibration: true,
@@ -294,7 +294,7 @@ export function useAppStore() {
       id: 'habit-' + Date.now(),
       name: habitData.name,
       icon: habitData.icon || 'Flame',
-      color: habitData.color || '#ff6b00',
+      color: habitData.color || '#facc15',
       frequency: habitData.frequency || 'daily',
       targetDays: habitData.targetDays || [0, 1, 2, 3, 4, 5, 6],
       currentStreak: 0,
@@ -361,7 +361,7 @@ export function useAppStore() {
     const newProj = {
       id: 'proj-' + Date.now(),
       name: projectData.name,
-      color: projectData.color || '#ff6b00',
+      color: projectData.color || '#facc15',
       icon: projectData.icon || 'Folder'
     };
     setState(prev => ({ ...prev, projects: [...prev.projects, newProj] }));
@@ -406,7 +406,7 @@ export function useAppStore() {
       const newProjects = projects.map(p => ({
         id: 'tt-proj-' + p.id,
         name: p.name,
-        color: p.color || '#ff6b00',
+        color: p.color || '#facc15',
         icon: 'Folder'
       }));
 

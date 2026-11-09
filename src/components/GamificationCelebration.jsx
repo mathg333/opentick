@@ -51,7 +51,7 @@ export default function GamificationCelebration() {
         {xpToasts.map(toast => (
           <div
             key={toast.id}
-            className="animate-float-xp bg-gradient-to-r from-amber-500/90 to-[#ff6b00]/95 text-black font-black text-sm px-4 py-1.5 rounded-full shadow-lg shadow-[#ff6b00]/30 flex items-center gap-1.5 border border-amber-300/60 backdrop-blur-md"
+            className="animate-float-xp bg-gradient-to-r from-amber-500/90 to-[#facc15]/95 text-black font-black text-sm px-4 py-1.5 rounded-full shadow-lg shadow-[#facc15]/30 flex items-center gap-1.5 border border-amber-300/60 backdrop-blur-md"
           >
             <Sparkles className="w-4 h-4 fill-black" />
             <span>+{toast.xpGained} XP</span>
@@ -66,11 +66,11 @@ export default function GamificationCelebration() {
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
             <div 
               className="w-[450px] h-[450px] rounded-full blur-[90px] opacity-40 animate-pulse"
-              style={{ background: rankUpData.newRank.color || '#ff6b00' }}
+              style={{ background: rankUpData.newRank.color || '#facc15' }}
             />
           </div>
 
-          <div className="bg-[#121214] border border-[#ff6b00]/40 rounded-3xl w-full max-w-sm p-6 text-center text-white shadow-2xl relative overflow-hidden flex flex-col items-center">
+          <div className="bg-[#121214] border border-[#facc15]/40 rounded-3xl w-full max-w-sm p-6 text-center text-white shadow-2xl relative overflow-hidden flex flex-col items-center">
             {/* Top Close Button */}
             <button
               onClick={() => setRankUpData(null)}
@@ -89,7 +89,7 @@ export default function GamificationCelebration() {
             <div className="relative my-2 py-4 flex items-center justify-center w-full">
               <div 
                 className="absolute inset-0 m-auto w-36 h-36 rounded-full blur-2xl opacity-50"
-                style={{ background: rankUpData.newRank.color || '#ff6b00' }}
+                style={{ background: rankUpData.newRank.color || '#facc15' }}
               />
               <div className="relative animate-bounce-gentle">
                 <RankShield2D tier={rankUpData.newRank.tier} size={150} />
@@ -111,7 +111,7 @@ export default function GamificationCelebration() {
             {/* Action Button */}
             <button
               onClick={() => setRankUpData(null)}
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 via-[#ff6b00] to-[#ff3d00] hover:opacity-95 text-black font-black text-sm rounded-2xl shadow-lg shadow-[#ff6b00]/30 active:scale-95 transition-all flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 via-[#facc15] to-[#ff3d00] hover:opacity-95 text-black font-black text-sm rounded-2xl shadow-lg shadow-[#facc15]/30 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               <span>Continuar Dominando! ⚔️</span>
               <ChevronRight className="w-4 h-4 stroke-[3]" />

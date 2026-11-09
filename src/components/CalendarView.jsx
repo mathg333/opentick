@@ -220,7 +220,7 @@ export default function CalendarView({ store }) {
           {/* View switcher dropdown icon */}
           <button
             onClick={() => setIsViewMenuOpen(!isViewMenuOpen)}
-            className="p-2 text-neutral-300 hover:text-[#ff6b00] rounded-lg active:bg-neutral-800 transition-colors"
+            className="p-2 text-neutral-300 hover:text-[#facc15] rounded-lg active:bg-neutral-800 transition-colors"
             title="Alternar Modo de Visualização"
           >
             <Columns className="w-5 h-5" />
@@ -262,10 +262,10 @@ export default function CalendarView({ store }) {
                       className="w-full px-4 py-2.5 text-left text-xs font-medium flex items-center justify-between text-neutral-200 hover:bg-[#28282e] transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <Icon className={`w-4 h-4 ${isChecked ? 'text-[#ff6b00]' : 'text-neutral-400'}`} />
-                        <span className={isChecked ? 'text-[#ff6b00] font-bold' : ''}>{item.label}</span>
+                        <Icon className={`w-4 h-4 ${isChecked ? 'text-[#facc15]' : 'text-neutral-400'}`} />
+                        <span className={isChecked ? 'text-[#facc15] font-bold' : ''}>{item.label}</span>
                       </div>
-                      {isChecked && <Check className="w-4 h-4 text-[#ff6b00] stroke-[2.5]" />}
+                      {isChecked && <Check className="w-4 h-4 text-[#facc15] stroke-[2.5]" />}
                     </button>
                   );
                 })}
@@ -303,14 +303,14 @@ export default function CalendarView({ store }) {
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
                       isSelected
-                        ? 'bg-[#ff6b00] text-white shadow-lg'
+                        ? 'bg-[#facc15] text-black font-bold shadow-lg'
                         : 'text-neutral-200 hover:bg-[#1c1c1e]'
                     }`}>
                       {day.getDate()}
                     </div>
                     <div className="h-1.5 flex items-center justify-center mt-0.5">
                       {hasTasks && (
-                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#ff6b00]'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#facc15]'}`} />
                       )}
                     </div>
                   </button>
@@ -332,7 +332,7 @@ export default function CalendarView({ store }) {
 
             <div className="space-y-2.5">
               {selectedDayTasks.map(task => {
-                const leftBarColor = task.priority === 3 ? 'bg-rose-500' : task.priority === 2 ? 'bg-[#ff6b00]' : task.priority === 1 ? 'bg-blue-500' : 'bg-neutral-600';
+                const leftBarColor = task.priority === 3 ? 'bg-rose-500' : task.priority === 2 ? 'bg-[#facc15]' : task.priority === 1 ? 'bg-blue-500' : 'bg-neutral-600';
                 return (
                   <div
                     key={task.id}
@@ -345,7 +345,7 @@ export default function CalendarView({ store }) {
                         <h3 className="text-sm font-bold text-white tracking-wide truncate">
                           {task.title}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-[#ff6b00] font-semibold">
+                        <div className="flex items-center gap-2 mt-1 text-xs text-[#facc15] font-semibold">
                           <span>{selectedDayStr === todayStr ? 'Hoje' : task.dueDate}</span>
                           {task.startTime && (
                             <span>• {task.startTime}{task.endTime ? ` - ${task.endTime}` : ''}</span>
@@ -368,7 +368,7 @@ export default function CalendarView({ store }) {
                             toggleTaskCompleted(task.id);
                           }}
                           className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                            task.completed ? 'bg-[#ff6b00] border-[#ff6b00] text-white' : 'border-neutral-500'
+                            task.completed ? 'bg-[#facc15] border-[#facc15] text-black' : 'border-neutral-500'
                           }`}
                         >
                           {task.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -406,7 +406,7 @@ export default function CalendarView({ store }) {
                     </span>
                     <div className="flex-1">
                       {isEditingThisSlot ? (
-                        <div className="bg-[#1c1c1e] p-2 rounded-xl border border-[#ff6b00] flex items-center gap-2">
+                        <div className="bg-[#1c1c1e] p-2 rounded-xl border border-[#facc15] flex items-center gap-2">
                           <input
                             type="text"
                             placeholder={`Evento às ${hourFormatted}...`}
@@ -421,7 +421,7 @@ export default function CalendarView({ store }) {
                           />
                           <button
                             onClick={() => handleAddQuickAtSlot(hour)}
-                            className="px-2.5 py-1 bg-[#ff6b00] text-white rounded-lg text-xs font-bold"
+                            className="px-2.5 py-1 bg-[#facc15] text-black font-bold rounded-lg text-xs font-bold"
                           >
                             Salvar
                           </button>
@@ -480,18 +480,18 @@ export default function CalendarView({ store }) {
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
                     isSelected
-                      ? 'bg-[#ff6b00] text-white font-bold shadow-lg scale-105'
+                      ? 'bg-[#facc15] text-black font-bold font-bold shadow-lg scale-105'
                       : !item.isCurrentMonth
                       ? 'text-neutral-600'
                       : isToday
-                      ? 'text-[#ff6b00] font-bold ring-1 ring-[#ff6b00]'
+                      ? 'text-[#facc15] font-bold ring-1 ring-[#facc15]'
                       : 'text-neutral-200 hover:bg-[#1c1c1e]'
                   }`}>
                     {item.date.getDate()}
                   </div>
                   <div className="h-1.5 flex items-center justify-center mt-0.5">
                     {hasTasks && (
-                      <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#ff6b00]'}`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#facc15]'}`} />
                     )}
                   </div>
                 </button>
@@ -518,7 +518,7 @@ export default function CalendarView({ store }) {
                         {t.title}
                       </span>
                       {t.startTime && (
-                        <div className="text-[11px] text-[#ff6b00] mt-0.5 font-medium">
+                        <div className="text-[11px] text-[#facc15] mt-0.5 font-medium">
                           {t.startTime} - {t.endTime || ''}
                         </div>
                       )}
@@ -529,7 +529,7 @@ export default function CalendarView({ store }) {
                         toggleTaskCompleted(t.id);
                       }}
                       className={`w-5 h-5 rounded-md border flex items-center justify-center ${
-                        t.completed ? 'bg-[#ff6b00] border-[#ff6b00] text-white' : 'border-neutral-500'
+                        t.completed ? 'bg-[#facc15] border-[#facc15] text-black' : 'border-neutral-500'
                       }`}
                     >
                       {t.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -558,7 +558,7 @@ export default function CalendarView({ store }) {
             <div className="grid grid-cols-8 gap-1 border-b border-[#222226] pb-2 text-center text-xs text-neutral-400 font-semibold sticky top-0 bg-[#000000] z-10">
               <div>Hora</div>
               {weekDays.map(d => (
-                <div key={formatDate(d)} className={formatDate(d) === selectedDayStr ? 'text-[#ff6b00] font-bold' : ''}>
+                <div key={formatDate(d)} className={formatDate(d) === selectedDayStr ? 'text-[#facc15] font-bold' : ''}>
                   <div>{d.toLocaleDateString('pt-BR', { weekday: 'short' })}</div>
                   <div>{d.getDate()}</div>
                 </div>
@@ -586,7 +586,7 @@ export default function CalendarView({ store }) {
                             e.stopPropagation();
                             setSelectedTaskId(t.id);
                           }}
-                          className="bg-[#ff6b00] text-white rounded p-1 text-[10px] font-bold truncate shadow-sm"
+                          className="bg-[#facc15] text-black font-bold rounded p-1 text-[10px] font-bold truncate shadow-sm"
                         >
                           {t.title}
                         </div>
@@ -607,7 +607,7 @@ export default function CalendarView({ store }) {
             <div className="grid grid-cols-4 gap-2 border-b border-[#222226] pb-2 text-center text-xs text-neutral-400 font-semibold sticky top-0 bg-[#000000] z-10">
               <div>Hora</div>
               {threeDays.map(d => (
-                <div key={formatDate(d)} className={formatDate(d) === selectedDayStr ? 'text-[#ff6b00] font-bold' : ''}>
+                <div key={formatDate(d)} className={formatDate(d) === selectedDayStr ? 'text-[#facc15] font-bold' : ''}>
                   <div>{d.toLocaleDateString('pt-BR', { weekday: 'short' })}</div>
                   <div>{d.getDate()}</div>
                 </div>
@@ -635,7 +635,7 @@ export default function CalendarView({ store }) {
                             e.stopPropagation();
                             setSelectedTaskId(t.id);
                           }}
-                          className="bg-[#ff6b00] text-white rounded p-1 text-[11px] font-semibold truncate shadow-sm mb-1"
+                          className="bg-[#facc15] text-black font-bold rounded p-1 text-[11px] font-semibold truncate shadow-sm mb-1"
                         >
                           {t.title}
                         </div>
@@ -671,7 +671,7 @@ export default function CalendarView({ store }) {
                       className="bg-[#1c1c1e] border border-[#2c2c2e] p-3 rounded-xl flex items-center justify-between cursor-pointer"
                     >
                       <span className="text-xs font-bold text-white">{t.title}</span>
-                      <span className="text-[11px] text-[#ff6b00] font-mono">{t.startTime} - {t.endTime || ''}</span>
+                      <span className="text-[11px] text-[#facc15] font-mono">{t.startTime} - {t.endTime || ''}</span>
                     </div>
                   ))}
                   {tasksInSlot.length === 0 && (

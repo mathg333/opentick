@@ -151,7 +151,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-[#28282b]">
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-[#ff6b00]" />
+            <Clock className="w-5 h-5 text-[#facc15]" />
             <h2 className="text-base font-bold text-white">Selecionar Horário</h2>
           </div>
           <button 
@@ -171,14 +171,14 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
             onClick={() => setActiveMode('hour')}
             className={`px-4 py-2 rounded-2xl text-4xl font-mono font-black transition-all ${
               activeMode === 'hour'
-                ? 'bg-[#ff6b00]/20 text-[#ff6b00] border-2 border-[#ff6b00] shadow-[0_0_20px_rgba(255,107,0,0.3)] scale-105'
+                ? 'bg-[#facc15]/20 text-[#facc15] border-2 border-[#facc15] shadow-[0_0_20px_rgba(255,107,0,0.3)] scale-105'
                 : 'bg-[#141416] text-white border border-[#2c2c2e] hover:border-neutral-500'
             }`}
           >
             {String(hour).padStart(2, '0')}
           </button>
 
-          <span className="text-3xl font-black text-[#ff6b00] animate-pulse">:</span>
+          <span className="text-3xl font-black text-[#facc15] animate-pulse">:</span>
 
           {/* Minute Box */}
           <button
@@ -186,7 +186,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
             onClick={() => setActiveMode('minute')}
             className={`px-4 py-2 rounded-2xl text-4xl font-mono font-black transition-all ${
               activeMode === 'minute'
-                ? 'bg-[#ff6b00]/20 text-[#ff6b00] border-2 border-[#ff6b00] shadow-[0_0_20px_rgba(255,107,0,0.3)] scale-105'
+                ? 'bg-[#facc15]/20 text-[#facc15] border-2 border-[#facc15] shadow-[0_0_20px_rgba(255,107,0,0.3)] scale-105'
                 : 'bg-[#141416] text-white border border-[#2c2c2e] hover:border-neutral-500'
             }`}
           >
@@ -200,7 +200,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
             type="button"
             onClick={() => setActiveMode('hour')}
             className={`flex-1 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
-              activeMode === 'hour' ? 'bg-[#ff6b00] text-white shadow-md' : 'text-neutral-400 hover:text-white'
+              activeMode === 'hour' ? 'bg-[#facc15] text-black font-bold shadow-md' : 'text-neutral-400 hover:text-white'
             }`}
           >
             <span>Horas (24h)</span>
@@ -209,7 +209,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
             type="button"
             onClick={() => setActiveMode('minute')}
             className={`flex-1 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
-              activeMode === 'minute' ? 'bg-[#ff6b00] text-white shadow-md' : 'text-neutral-400 hover:text-white'
+              activeMode === 'minute' ? 'bg-[#facc15] text-black font-bold shadow-md' : 'text-neutral-400 hover:text-white'
             }`}
           >
             <span>Minutos (00-59)</span>
@@ -228,7 +228,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
           >
             {/* Center Pivot Point */}
             <div 
-              className="absolute w-3 h-3 rounded-full bg-[#ff6b00] z-20 shadow-md"
+              className="absolute w-3 h-3 rounded-full bg-[#facc15] z-20 shadow-md"
               style={{
                 left: center - 6,
                 top: center - 6
@@ -246,7 +246,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
                 y1={center}
                 x2={handEndX}
                 y2={handEndY}
-                stroke="#ff6b00"
+                stroke="#facc15"
                 strokeWidth="2.5"
                 strokeLinecap="round"
               />
@@ -254,7 +254,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
                 cx={handEndX}
                 cy={handEndY}
                 r="16"
-                fill="#ff6b00"
+                fill="#facc15"
                 className="drop-shadow-[0_0_8px_rgba(255,107,0,0.8)]"
               />
             </svg>
@@ -342,7 +342,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
                 onClick={() => handlePreset(p.time)}
                 className={`px-2 py-1 rounded-xl text-xs font-semibold flex items-center justify-between border transition-colors ${
                   `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}` === p.time
-                    ? 'bg-[#ff6b00] text-white border-[#ff6b00] shadow-md'
+                    ? 'bg-[#facc15] text-black font-bold border-[#facc15] shadow-md'
                     : 'bg-[#141416] hover:bg-[#28282e] text-neutral-300 border-[#28282b]'
                 }`}
               >
@@ -365,7 +365,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
           <button
             type="button"
             onClick={handleConfirm}
-            className="px-6 py-2 rounded-xl text-xs font-bold bg-[#ff6b00] hover:bg-[#ea580c] active:scale-98 text-white shadow-lg flex items-center gap-1.5"
+            className="px-6 py-2 rounded-xl text-xs font-bold bg-[#facc15] hover:bg-[#eab308] active:scale-98 text-white shadow-lg flex items-center gap-1.5"
           >
             <Check className="w-4 h-4 stroke-[2.5]" />
             <span>Confirmar {String(hour).padStart(2, '0')}:{String(minute).padStart(2, '0')}</span>

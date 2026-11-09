@@ -166,7 +166,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
                 onClick={() => fileInputCoverRef.current?.click()}
                 className="relative z-10 text-[11px] font-bold text-white bg-black/60 hover:bg-black/80 px-2.5 py-1 rounded-full border border-white/20 backdrop-blur-md flex items-center gap-1.5 shadow"
               >
-                <Camera className="w-3.5 h-3.5 text-[#ff6b00]" />
+                <Camera className="w-3.5 h-3.5 text-[#facc15]" />
                 Trocar Capa
               </button>
             </div>
@@ -175,7 +175,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
             <div className="px-4 pb-4 pt-0 relative flex items-end justify-between -mt-8">
               {/* Avatar with Camera Icon */}
               <div className="relative group">
-                <div className="w-18 h-18 rounded-full bg-gradient-to-tr from-emerald-500 via-amber-500 to-[#ff6b00] p-1 shadow-2xl ring-4 ring-[#0a0a0c]">
+                <div className="w-18 h-18 rounded-full bg-gradient-to-tr from-emerald-500 via-amber-500 to-[#facc15] p-1 shadow-2xl ring-4 ring-[#0a0a0c]">
                   <div className="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center font-black text-white text-3xl select-none">
                     {avatarType === 'image' && avatar ? (
                       <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -187,7 +187,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
 
                 <button
                   onClick={() => fileInputAvatarRef.current?.click()}
-                  className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-[#ff6b00] hover:bg-[#ea580c] text-white flex items-center justify-center shadow-lg border border-black"
+                  className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-[#facc15] hover:bg-[#eab308] text-black flex items-center justify-center shadow-lg border border-black"
                   title="Upload Foto"
                 >
                   <Camera className="w-3.5 h-3.5" />
@@ -231,12 +231,12 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
-                <ImageIcon className="w-4 h-4 text-[#ff6b00]" />
+                <ImageIcon className="w-4 h-4 text-[#facc15]" />
                 1. Capa do Perfil (Banner)
               </span>
               <button
                 onClick={() => fileInputCoverRef.current?.click()}
-                className="text-xs text-[#ff6b00] hover:underline font-bold flex items-center gap-1"
+                className="text-xs text-[#facc15] hover:underline font-bold flex items-center gap-1"
               >
                 <Upload className="w-3 h-3" />
                 Foto da Galeria
@@ -255,7 +255,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
                     }}
                     className={`h-16 rounded-xl relative overflow-hidden border transition-all ${
                       isSelected 
-                        ? 'border-[#ff6b00] ring-2 ring-[#ff6b00]/40 scale-102' 
+                        ? 'border-[#facc15] ring-2 ring-[#facc15]/40 scale-102' 
                         : 'border-[#27272a] hover:border-neutral-500 opacity-80 hover:opacity-100'
                     }`}
                     style={{
@@ -270,7 +270,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
                       </span>
                     </div>
                     {isSelected && (
-                      <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#ff6b00] flex items-center justify-center text-white">
+                      <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#facc15] flex items-center justify-center text-white">
                         <Check className="w-2.5 h-2.5 stroke-[3]" />
                       </div>
                     )}
@@ -284,12 +284,12 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Palette className="w-4 h-4 text-[#ff6b00]" />
+                <Palette className="w-4 h-4 text-[#facc15]" />
                 2. Foto de Perfil (Avatar)
               </span>
               <button
                 onClick={() => fileInputAvatarRef.current?.click()}
-                className="text-xs text-[#ff6b00] hover:underline font-bold flex items-center gap-1"
+                className="text-xs text-[#facc15] hover:underline font-bold flex items-center gap-1"
               >
                 <Upload className="w-3 h-3" />
                 Carregar Minha Foto
@@ -308,7 +308,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
                     }}
                     className={`w-10 h-10 rounded-xl bg-[#18181c] flex items-center justify-center text-xl transition-all border ${
                       isSelected 
-                        ? 'border-[#ff6b00] bg-[#ff6b00]/20 scale-110 shadow-lg shadow-[#ff6b00]/25' 
+                        ? 'border-[#facc15] bg-[#facc15]/20 scale-110 shadow-lg shadow-[#facc15]/25' 
                         : 'border-[#27272a] hover:border-neutral-500 hover:bg-neutral-800'
                     }`}
                   >
@@ -336,7 +336,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ex: Mathx"
                   maxLength={25}
-                  className="w-full bg-[#18181c] border border-[#27272a] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-colors"
+                  className="w-full bg-[#18181c] border border-[#27272a] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#facc15] transition-colors"
                 />
               </div>
 
@@ -350,7 +350,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ex: Mestre da Produtividade"
                   maxLength={35}
-                  className="w-full bg-[#18181c] border border-[#27272a] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#ff6b00] transition-colors"
+                  className="w-full bg-[#18181c] border border-[#27272a] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#facc15] transition-colors"
                 />
               </div>
             </div>
@@ -368,7 +368,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
           </button>
           <button
             onClick={handleSave}
-            className="px-5 py-2.5 rounded-xl bg-[#ff6b00] hover:bg-[#ea580c] text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#ff6b00]/30 transition-all flex items-center gap-1.5"
+            className="px-5 py-2.5 rounded-xl bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#facc15]/30 transition-all flex items-center gap-1.5"
           >
             <Check className="w-4 h-4 stroke-[3]" />
             Salvar Perfil

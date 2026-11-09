@@ -44,7 +44,7 @@ export default function Sidebar({
   const { state, activeView, setActiveView, addProject, deleteProject } = store;
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectColor, setNewProjectColor] = useState('#ff6b00');
+  const [newProjectColor, setNewProjectColor] = useState('#facc15');
 
   const today = new Date();
   const dayOfMonth = today.getDate();
@@ -138,7 +138,7 @@ export default function Sidebar({
               className="p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
               title="Personalizar Perfil"
             >
-              <Camera className="w-3.5 h-3.5 text-[#ff6b00]" />
+              <Camera className="w-3.5 h-3.5 text-[#facc15]" />
             </button>
             <button
               onClick={() => {
@@ -170,7 +170,7 @@ export default function Sidebar({
         >
           {/* Larger Avatar with Iridescent Glowing Gradient Ring */}
           <div className="relative shrink-0 -mt-6">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 via-amber-500 to-[#ff6b00] p-1 shadow-xl ring-2 ring-[#0e0e10]">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500 via-amber-500 to-[#facc15] p-1 shadow-xl ring-2 ring-[#0e0e10]">
               <div className="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center font-black text-white text-2xl select-none">
                 {profile.avatarType === 'image' && profile.avatar ? (
                   <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -223,13 +223,13 @@ export default function Sidebar({
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#ff6b00] to-[#ea580c] flex items-center justify-center text-white font-black text-xs shadow-md shadow-[#ff6b00]/30 shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#facc15] to-[#eab308] flex items-center justify-center text-white font-black text-xs shadow-md shadow-[#facc15]/30 shrink-0">
                 {dayOfMonth}
               </div>
               <span className="text-sm font-bold">Hoje</span>
             </div>
             {todayTasksCount > 0 && (
-              <span className="text-xs bg-[#ff6b00]/20 text-[#ff6b00] font-mono font-bold px-2 py-0.5 rounded-full border border-[#ff6b00]/30">
+              <span className="text-xs bg-[#facc15]/20 text-[#facc15] font-mono font-bold px-2 py-0.5 rounded-full border border-[#facc15]/30">
                 {todayTasksCount}
               </span>
             )}
@@ -262,12 +262,12 @@ export default function Sidebar({
             onClick={() => handleSelectView('stats')}
             className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
               activeView === 'stats'
-                ? 'bg-gradient-to-r from-[#2a1c0e] to-[#1c1c24] text-white shadow-md border border-[#ff6b00]/60 ring-1 ring-[#ff6b00]/30'
+                ? 'bg-gradient-to-r from-[#2a1c0e] to-[#1c1c24] text-white shadow-md border border-[#facc15]/60 ring-1 ring-[#facc15]/30'
                 : 'text-neutral-200 hover:bg-[#1a1a20]'
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-[#ff6b00] flex items-center justify-center text-white shadow-md shadow-[#ff6b00]/30 shrink-0 p-1">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-[#facc15] flex items-center justify-center text-white shadow-md shadow-[#facc15]/30 shrink-0 p-1">
                 <RankShield2D tier={gamificationStats.currentRank.tier} size={22} showGlow={false} />
               </div>
               <div className="text-left">
@@ -338,7 +338,7 @@ export default function Sidebar({
               />
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-1.5">
-                  {['#ff6b00', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b'].map((c) => (
+                  {['#facc15', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b'].map((c) => (
                     <button
                       key={c}
                       type="button"
@@ -358,7 +358,7 @@ export default function Sidebar({
                   </button>
                   <button
                     type="submit"
-                    className="text-xs px-3 py-1 bg-[#ff6b00] hover:bg-[#ea580c] text-white font-bold rounded-xl shadow-md"
+                    className="text-xs px-3 py-1 bg-[#facc15] hover:bg-[#eab308] text-black font-bold font-bold rounded-xl shadow-md"
                   >
                     Salvar
                   </button>
@@ -518,7 +518,7 @@ export default function Sidebar({
           onClick={() => setIsAddingProject(true)}
           className="flex items-center gap-2 text-xs font-bold text-neutral-200 hover:text-white px-3 py-2 rounded-xl bg-[#1c1c1e] border border-[#2a2a2e] shadow-sm active:scale-95 transition-transform"
         >
-          <Plus className="w-4 h-4 text-[#ff6b00]" />
+          <Plus className="w-4 h-4 text-[#facc15]" />
           <span>Criar Lista</span>
         </button>
 

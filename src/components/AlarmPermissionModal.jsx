@@ -68,9 +68,9 @@ export default function AlarmPermissionModal() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="bg-[#141416] border border-[#ff6b00]/30 rounded-3xl w-full max-w-md p-6 text-neutral-100 shadow-2xl relative overflow-hidden">
+      <div className="bg-[#141416] border border-[#facc15]/30 rounded-3xl w-full max-w-md p-6 text-neutral-100 shadow-2xl relative overflow-hidden">
         {/* Ambient Top Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-[#ff6b00]/20 blur-3xl pointer-events-none rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-[#facc15]/20 blur-3xl pointer-events-none rounded-full" />
 
         {/* Close Button */}
         <button
@@ -83,8 +83,8 @@ export default function AlarmPermissionModal() {
 
         {/* Header Icon & Title */}
         <div className="flex items-center gap-3.5 mb-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#ff6b00] to-[#ff9e3b] p-0.5 shadow-lg shadow-[#ff6b00]/25 flex items-center justify-center">
-            <div className="w-full h-full bg-[#121214] rounded-[14px] flex items-center justify-center text-[#ff6b00]">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#facc15] to-[#ff9e3b] p-0.5 shadow-lg shadow-[#facc15]/25 flex items-center justify-center">
+            <div className="w-full h-full bg-[#121214] rounded-[14px] flex items-center justify-center text-[#facc15]">
               <Bell className="w-6 h-6 animate-pulse" />
             </div>
           </div>
@@ -110,7 +110,7 @@ export default function AlarmPermissionModal() {
                 {permissions.overlayGranted ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 ) : (
-                  <ShieldAlert className="w-5 h-5 text-[#ff6b00]" />
+                  <ShieldAlert className="w-5 h-5 text-[#facc15]" />
                 )}
               </div>
               <div>
@@ -121,7 +121,7 @@ export default function AlarmPermissionModal() {
             {!permissions.overlayGranted ? (
               <button
                 onClick={handleGrantOverlay}
-                className="px-3 py-1.5 bg-[#ff6b00] hover:bg-[#ff7d1a] text-black font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all shrink-0 flex items-center gap-1"
+                className="px-3 py-1.5 bg-[#facc15] hover:bg-[#ff7d1a] text-black font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all shrink-0 flex items-center gap-1"
               >
                 Ativar <ChevronRight className="w-3.5 h-3.5" />
               </button>

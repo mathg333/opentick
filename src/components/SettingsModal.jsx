@@ -193,7 +193,7 @@ export default function SettingsModal({
               className="flex items-center justify-between p-3.5 rounded-2xl bg-[#1c1c1e] border border-[#28282b] hover:bg-[#222226] cursor-pointer transition-colors shadow-lg"
             >
               <div className="flex items-center gap-3">
-                <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-600 via-amber-600 to-[#ff6b00] p-0.5 shadow-md">
+                <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-600 via-amber-600 to-[#facc15] p-0.5 shadow-md">
                   <div className="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center font-bold text-white text-xl select-none">
                     {profile.avatarType === 'image' && profile.avatar ? (
                       <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -205,7 +205,7 @@ export default function SettingsModal({
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-base font-bold text-white">{profile.name || 'Mathx'}</span>
-                    <span className="text-[10px] bg-[#ff6b00]/20 text-[#ff6b00] font-bold px-1.5 py-0.2 rounded border border-[#ff6b00]/30">
+                    <span className="text-[10px] bg-[#facc15]/20 text-[#facc15] font-bold px-1.5 py-0.2 rounded border border-[#facc15]/30">
                       👑 PRO
                     </span>
                   </div>
@@ -224,7 +224,7 @@ export default function SettingsModal({
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 text-xs text-[#ff6b00] font-bold">
+              <div className="flex items-center gap-1 text-xs text-[#facc15] font-bold">
                 <span>Personalizar</span>
                 <ChevronRight className="w-4 h-4 text-neutral-500" />
               </div>
@@ -236,10 +236,10 @@ export default function SettingsModal({
                 if (onOpenStats) onOpenStats();
                 onClose();
               }}
-              className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-[#20150d] to-[#16161c] border border-[#ff6b00]/40 hover:border-[#ff6b00] cursor-pointer transition-all shadow-lg active:scale-98"
+              className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-[#20150d] to-[#16161c] border border-[#facc15]/40 hover:border-[#facc15] cursor-pointer transition-all shadow-lg active:scale-98"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-[#ff6b00] flex items-center justify-center p-1.5 shadow-md shadow-[#ff6b00]/30 shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-[#facc15] flex items-center justify-center p-1.5 shadow-md shadow-[#facc15]/30 shrink-0">
                   <RankShield2D tier={stats.currentRank.tier} size={32} showGlow={false} />
                 </div>
                 <div>
@@ -254,16 +254,16 @@ export default function SettingsModal({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-xs text-[#ff6b00] font-bold">
+              <div className="flex items-center gap-1 text-xs text-[#facc15] font-bold">
                 <span>Ver</span>
-                <ChevronRight className="w-4 h-4 text-[#ff6b00]" />
+                <ChevronRight className="w-4 h-4 text-[#facc15]" />
               </div>
             </div>
 
             {/* Premium Status Banner */}
             <div className="p-4 rounded-2xl bg-[#1c1c1e] border border-[#28282b] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-[#ff6b00]/20 text-[#ff6b00] flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-full bg-[#facc15]/20 text-[#facc15] flex items-center justify-center font-bold">
                   <Crown className="w-5 h-5" />
                 </div>
                 <div>
@@ -282,7 +282,7 @@ export default function SettingsModal({
               className="rounded-2xl bg-[#1c1c1e] border border-[#28282b] p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <Layers className="w-5 h-5 text-[#ff6b00]" />
+                <Layers className="w-5 h-5 text-[#facc15]" />
                 <span className="text-sm font-semibold text-white">Barra de Abas</span>
               </div>
               <ChevronRight className="w-5 h-5 text-neutral-500" />
@@ -295,7 +295,7 @@ export default function SettingsModal({
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Palette className="w-5 h-5 text-[#ff6b00]" />
+                  <Palette className="w-5 h-5 text-[#facc15]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Aparência</span>
                     <p className="text-[11px] text-neutral-400">Tema AMOLED, Laranja TickTick e Estilo</p>
@@ -309,7 +309,7 @@ export default function SettingsModal({
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-[#ff6b00]" />
+                  <Clock className="w-5 h-5 text-[#facc15]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Data hora</span>
                     <p className="text-[11px] text-neutral-400">Formato {settings.timeFormat || '24h'}, Início no {settings.startOfWeek || 'Domingo'}</p>
@@ -323,7 +323,7 @@ export default function SettingsModal({
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-[#ff6b00]" />
+                  <Bell className="w-5 h-5 text-[#facc15]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Sons e Notificações</span>
                     <p className="text-[11px] text-neutral-400">
@@ -339,7 +339,7 @@ export default function SettingsModal({
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <Sparkles className="w-5 h-5 text-[#ff6b00]" />
+                  <Sparkles className="w-5 h-5 text-[#facc15]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Funções de IA</span>
                     <p className="text-[11px] text-neutral-400">Assistente Gemini & Time-blocking</p>
@@ -353,7 +353,7 @@ export default function SettingsModal({
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
               >
                 <div className="flex items-center gap-3">
-                  <SettingsIcon className="w-5 h-5 text-[#ff6b00]" />
+                  <SettingsIcon className="w-5 h-5 text-[#facc15]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Geral</span>
                     <p className="text-[11px] text-neutral-400">Avisar antes de sair, Padrões</p>
@@ -386,7 +386,7 @@ export default function SettingsModal({
             {/* LOCK SCREEN & OVERLAY PERMISSIONS CARD */}
             <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3 shadow-xl">
               <div className="flex items-center gap-2.5 text-white">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#ff6b00] to-[#ea580c] flex items-center justify-center text-white shadow-md shadow-[#ff6b00]/30 shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#facc15] to-[#eab308] flex items-center justify-center text-white shadow-md shadow-[#facc15]/30 shrink-0">
                   <Smartphone className="w-4 h-4" />
                 </div>
                 <div>
@@ -403,7 +403,7 @@ export default function SettingsModal({
                 <button
                   type="button"
                   onClick={requestOverlayPermission}
-                  className="py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-[#ff6b00]/50 text-[#ff6b00] rounded-xl text-xs font-bold text-center active:scale-95 transition-transform"
+                  className="py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-[#facc15]/50 text-[#facc15] rounded-xl text-xs font-bold text-center active:scale-95 transition-transform"
                 >
                   Permitir Sobre Apps
                 </button>
@@ -433,13 +433,13 @@ export default function SettingsModal({
                   onClick={() => updateSettings({ alarmMode: 'continuous' })}
                   className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
                     (settings.alarmMode !== 'short')
-                      ? 'bg-[#28282e] border-[#ff6b00] text-white shadow-md'
+                      ? 'bg-[#28282e] border-[#facc15] text-white shadow-md'
                       : 'bg-[#141416] border-[#262629] text-neutral-400'
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="text-xs font-bold text-white">Alarme Contínuo</span>
-                    {settings.alarmMode !== 'short' && <Check className="w-4 h-4 text-[#ff6b00]" />}
+                    {settings.alarmMode !== 'short' && <Check className="w-4 h-4 text-[#facc15]" />}
                   </div>
                   <span className="text-[10px] text-neutral-400 leading-tight">
                     Toca por até 5 minutos como despertador até você parar
@@ -451,13 +451,13 @@ export default function SettingsModal({
                   onClick={() => updateSettings({ alarmMode: 'short' })}
                   className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
                     (settings.alarmMode === 'short')
-                      ? 'bg-[#28282e] border-[#ff6b00] text-white shadow-md'
+                      ? 'bg-[#28282e] border-[#facc15] text-white shadow-md'
                       : 'bg-[#141416] border-[#262629] text-neutral-400'
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-1">
                     <span className="text-xs font-bold text-white">Notificação Curta</span>
-                    {settings.alarmMode === 'short' && <Check className="w-4 h-4 text-[#ff6b00]" />}
+                    {settings.alarmMode === 'short' && <Check className="w-4 h-4 text-[#facc15]" />}
                   </div>
                   <span className="text-[10px] text-neutral-400 leading-tight">
                     Apenas 1 toque rápido de alerta sonoro
@@ -471,7 +471,7 @@ export default function SettingsModal({
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <Music className="w-4 h-4 text-[#ff6b00]" />
+                    <Music className="w-4 h-4 text-[#facc15]" />
                     Áudio Personalizado do Celular
                   </h3>
                   <p className="text-xs text-neutral-400">
@@ -492,7 +492,7 @@ export default function SettingsModal({
               {customAudio ? (
                 <div className={`p-3 rounded-xl border flex flex-col gap-2 transition-all ${
                   settings.sound === 'custom' 
-                    ? 'bg-[#28282e] border-[#ff6b00]' 
+                    ? 'bg-[#28282e] border-[#facc15]' 
                     : 'bg-[#141416] border-[#262629]'
                 }`}>
                   <div className="flex items-center justify-between">
@@ -500,7 +500,7 @@ export default function SettingsModal({
                       onClick={() => updateSettings({ sound: 'custom' })}
                       className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-[#ff6b00]/20 text-[#ff6b00] flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-[#facc15]/20 text-[#facc15] flex items-center justify-center shrink-0">
                         <Music className="w-4 h-4" />
                       </div>
                       <div className="truncate">
@@ -524,7 +524,7 @@ export default function SettingsModal({
                             handleTestSound('custom');
                           }
                         }}
-                        className="px-2.5 py-1.5 bg-[#ff6b00] hover:bg-[#ea580c] text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-md"
+                        className="px-2.5 py-1.5 bg-[#facc15] hover:bg-[#eab308] text-black text-xs font-bold rounded-lg flex items-center gap-1 shadow-md"
                       >
                         {testPlaying && settings.sound === 'custom' ? (
                           <>
@@ -555,7 +555,7 @@ export default function SettingsModal({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-[#ff6b00] font-semibold hover:underline"
+                      className="text-[#facc15] font-semibold hover:underline"
                     >
                       Trocar Arquivo
                     </button>
@@ -566,7 +566,7 @@ export default function SettingsModal({
                   type="button"
                   disabled={isUploading}
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-3.5 px-4 bg-[#141416] hover:bg-[#202024] border border-dashed border-[#ff6b00]/60 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-[#ff6b00] transition-colors"
+                  className="w-full py-3.5 px-4 bg-[#141416] hover:bg-[#202024] border border-dashed border-[#facc15]/60 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-[#facc15] transition-colors"
                 >
                   <Upload className="w-4 h-4" />
                   <span>{isUploading ? 'Carregando áudio...' : 'Selecionar Áudio / MP3 do Celular'}</span>
@@ -600,12 +600,12 @@ export default function SettingsModal({
                       }}
                       className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
                         isSelected 
-                          ? 'bg-[#28282e] border-[#ff6b00] text-white shadow-md' 
+                          ? 'bg-[#28282e] border-[#facc15] text-white shadow-md' 
                           : 'bg-[#141416] border-[#262629] text-neutral-300 hover:bg-[#1a1a1e]'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Volume2 className={`w-4 h-4 ${isSelected ? 'text-[#ff6b00]' : 'text-neutral-500'}`} />
+                        <Volume2 className={`w-4 h-4 ${isSelected ? 'text-[#facc15]' : 'text-neutral-500'}`} />
                         <div>
                           <span className="text-xs font-semibold block">{item.label}</span>
                           <span className="text-[10px] text-neutral-400">{item.desc}</span>
@@ -623,7 +623,7 @@ export default function SettingsModal({
                             }}
                             className={`p-1 rounded-lg text-xs flex items-center gap-1 px-2.5 py-1 border transition-colors ${
                               isThisPlaying
-                                ? 'bg-[#ff6b00] text-white border-[#ff6b00]'
+                                ? 'bg-[#facc15] text-black border-[#facc15]'
                                 : 'bg-[#1e1e22] text-neutral-300 hover:text-white border-[#323236]'
                             }`}
                           >
@@ -640,7 +640,7 @@ export default function SettingsModal({
                             )}
                           </button>
                         )}
-                        {isSelected && <Check className="w-4 h-4 text-[#ff6b00] stroke-[2.5]" />}
+                        {isSelected && <Check className="w-4 h-4 text-[#facc15] stroke-[2.5]" />}
                       </div>
                     </div>
                   );
@@ -655,7 +655,7 @@ export default function SettingsModal({
                   <span className="text-sm font-semibold text-white block">Duração Máxima do Alarme</span>
                   <span className="text-xs text-neutral-400">Tempo que o som tocará até auto-desligar</span>
                 </div>
-                <span className="text-xs font-mono text-[#ff6b00] font-bold">
+                <span className="text-xs font-mono text-[#facc15] font-bold">
                   {settings.alarmDuration || 5} Minutos
                 </span>
               </div>
@@ -667,7 +667,7 @@ export default function SettingsModal({
                     onClick={() => updateSettings({ alarmDuration: mins })}
                     className={`py-2 text-xs font-bold rounded-xl border transition-colors ${
                       (settings.alarmDuration || 5) === mins
-                        ? 'bg-[#ff6b00] text-white border-[#ff6b00]'
+                        ? 'bg-[#facc15] text-black border-[#facc15]'
                         : 'bg-[#141416] text-neutral-400 border-[#262629]'
                     }`}
                   >
@@ -695,7 +695,7 @@ export default function SettingsModal({
                 step="0.05"
                 value={settings.volume ?? 0.8}
                 onChange={e => updateSettings({ volume: parseFloat(e.target.value) })}
-                className="w-full accent-[#ff6b00]"
+                className="w-full accent-[#facc15]"
               />
             </div>
 
@@ -709,7 +709,7 @@ export default function SettingsModal({
                 type="button"
                 onClick={() => updateSettings({ vibration: !settings.vibration })}
                 className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                  settings.vibration !== false ? 'bg-[#ff6b00]' : 'bg-neutral-700'
+                  settings.vibration !== false ? 'bg-[#facc15]' : 'bg-neutral-700'
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
@@ -727,7 +727,7 @@ export default function SettingsModal({
                   onTriggerTestAlarm(settings.sound || (customAudio ? 'custom' : 'radar'));
                 }
               }}
-              className="w-full py-3.5 bg-gradient-to-r from-[#ff6b00] to-[#ea580c] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all"
+              className="w-full py-3.5 bg-gradient-to-r from-[#facc15] to-[#eab308] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all"
             >
               <Bell className="w-4 h-4 animate-bounce" />
               <span>Disparar Alarme de Teste em Tela Cheia</span>
@@ -750,7 +750,7 @@ export default function SettingsModal({
                   onClick={() => updateSettings({ theme: t.id })}
                   className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer ${
                     (settings.theme || 'amoled') === t.id 
-                      ? 'bg-[#28282e] border-[#ff6b00] text-white shadow-md' 
+                      ? 'bg-[#28282e] border-[#facc15] text-white shadow-md' 
                       : 'bg-[#141416] border-[#262629] text-neutral-300'
                   }`}
                 >
@@ -758,7 +758,7 @@ export default function SettingsModal({
                     <span className="text-xs font-bold block">{t.label}</span>
                     <span className="text-[11px] text-neutral-400">{t.desc}</span>
                   </div>
-                  {(settings.theme || 'amoled') === t.id && <Check className="w-4 h-4 text-[#ff6b00]" />}
+                  {(settings.theme || 'amoled') === t.id && <Check className="w-4 h-4 text-[#facc15]" />}
                 </div>
               ))}
             </div>
@@ -767,7 +767,7 @@ export default function SettingsModal({
               <h3 className="text-sm font-bold text-white">Cor de Destaque</h3>
               <div className="flex gap-3">
                 {[
-                  { color: '#ff6b00', label: 'Laranja TickTick Pop' },
+                  { color: '#facc15', label: 'Laranja TickTick Pop' },
                   { color: '#4c82f7', label: 'Azul Clássico' },
                   { color: '#10b981', label: 'Esmeralda' },
                   { color: '#8b5cf6', label: 'Roxo' },
@@ -777,11 +777,11 @@ export default function SettingsModal({
                     key={c.color}
                     onClick={() => updateSettings({ accentColor: c.color })}
                     className={`w-9 h-9 rounded-full flex items-center justify-center transition-transform ${
-                      (settings.accentColor || '#ff6b00') === c.color ? 'scale-115 ring-2 ring-white' : ''
+                      (settings.accentColor || '#facc15') === c.color ? 'scale-115 ring-2 ring-white' : ''
                     }`}
                     style={{ backgroundColor: c.color }}
                   >
-                    {(settings.accentColor || '#ff6b00') === c.color && <Check className="w-4 h-4 text-white stroke-[3]" />}
+                    {(settings.accentColor || '#facc15') === c.color && <Check className="w-4 h-4 text-white stroke-[3]" />}
                   </button>
                 ))}
               </div>
@@ -801,7 +801,7 @@ export default function SettingsModal({
                     onClick={() => updateSettings({ timeFormat: fmt })}
                     className={`p-3 rounded-xl border text-xs font-bold transition-colors ${
                       (settings.timeFormat || '24h') === fmt
-                        ? 'bg-[#ff6b00] text-white border-[#ff6b00]'
+                        ? 'bg-[#facc15] text-black border-[#facc15]'
                         : 'bg-[#141416] text-neutral-300 border-[#262629]'
                     }`}
                   >
@@ -823,7 +823,7 @@ export default function SettingsModal({
                     onClick={() => updateSettings({ startOfWeek: d.id })}
                     className={`p-3 rounded-xl border text-xs font-bold transition-colors ${
                       (settings.startOfWeek || 'domingo') === d.id
-                        ? 'bg-[#ff6b00] text-white border-[#ff6b00]'
+                        ? 'bg-[#facc15] text-black border-[#facc15]'
                         : 'bg-[#141416] text-neutral-300 border-[#262629]'
                     }`}
                   >
@@ -842,7 +842,7 @@ export default function SettingsModal({
                 type="button"
                 onClick={() => updateSettings({ showWeekNumbers: !settings.showWeekNumbers })}
                 className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                  settings.showWeekNumbers ? 'bg-[#ff6b00]' : 'bg-neutral-700'
+                  settings.showWeekNumbers ? 'bg-[#facc15]' : 'bg-neutral-700'
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
@@ -865,7 +865,7 @@ export default function SettingsModal({
                 type="button"
                 onClick={() => updateSettings({ confirmExit: !settings.confirmExit })}
                 className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                  settings.confirmExit !== false ? 'bg-[#ff6b00]' : 'bg-neutral-700'
+                  settings.confirmExit !== false ? 'bg-[#facc15]' : 'bg-neutral-700'
                 }`}
               >
                 <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
@@ -886,7 +886,7 @@ export default function SettingsModal({
                     onClick={() => updateSettings({ delayedSection: pos.id })}
                     className={`p-2.5 rounded-xl border text-xs font-semibold ${
                       (settings.delayedSection || 'top') === pos.id 
-                        ? 'bg-[#ff6b00] text-white border-[#ff6b00]' 
+                        ? 'bg-[#facc15] text-black border-[#facc15]' 
                         : 'bg-[#141416] text-neutral-400 border-[#262629]'
                     }`}
                   >
@@ -914,7 +914,7 @@ export default function SettingsModal({
                   onClose();
                   if (onOpenSyncModal) onOpenSyncModal();
                 }}
-                className="w-full py-2.5 bg-[#ff6b00] hover:bg-[#ea580c] text-white text-xs font-bold rounded-xl shadow-md"
+                className="w-full py-2.5 bg-[#facc15] hover:bg-[#eab308] text-black text-xs font-bold rounded-xl shadow-md"
               >
                 Abrir Assistente de Sincronização API
               </button>
@@ -922,7 +922,7 @@ export default function SettingsModal({
 
             <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Download className="w-4 h-4 text-[#ff6b00]" />
+                <Download className="w-4 h-4 text-[#facc15]" />
                 Backup Completo (Exportar / Importar)
               </h3>
               <p className="text-xs text-neutral-400">
@@ -975,7 +975,7 @@ export default function SettingsModal({
         {activeScreen === 'ai' && (
           <div className="space-y-4 animate-in fade-in">
             <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
-              <div className="flex items-center gap-2 text-[#ff6b00]">
+              <div className="flex items-center gap-2 text-[#facc15]">
                 <Sparkles className="w-5 h-5" />
                 <h3 className="text-sm font-bold text-white">Assistente de Produtividade Gemini</h3>
               </div>
