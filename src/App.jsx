@@ -578,7 +578,7 @@ export default function App() {
         {/* Floating Quick Add Button (Bottom Right) */}
         <button
           onClick={() => setIsQuickAddOpen(true)}
-          className="md:hidden fixed bottom-20 right-4 w-14 h-14 bg-[#facc15] hover:bg-[#eab308] active:scale-90 text-black rounded-full shadow-[0_8px_25px_rgba(250,204,21,0.55)] flex items-center justify-center z-30 transition-all duration-150"
+          className="md:hidden fixed bottom-28 right-5 w-14 h-14 bg-[#facc15] hover:bg-[#eab308] active:scale-90 text-black rounded-full shadow-[0_8px_25px_rgba(250,204,21,0.55)] flex items-center justify-center z-30 transition-all duration-150"
           title="Nova Tarefa (Rápida)"
         >
           <Plus className="w-7 h-7 stroke-[3] text-black" />
