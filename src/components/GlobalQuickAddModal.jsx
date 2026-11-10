@@ -35,9 +35,9 @@ export default function GlobalQuickAddModal({ store, isOpen, onClose }) {
 
   const priorityColors = {
     0: 'text-neutral-500',
-    1: 'text-blue-400',
-    2: 'text-amber-400',
-    3: 'text-rose-500'
+    1: 'text-[#facc15]/60',
+    2: 'text-[#facc15]',
+    3: 'text-[#facc15] fill-[#facc15]'
   };
 
   return (
@@ -113,7 +113,7 @@ export default function GlobalQuickAddModal({ store, isOpen, onClose }) {
                 type="button"
                 onClick={() => setUrgent(!urgent)}
                 className={`text-[11px] px-2.5 py-1.5 rounded-lg border font-semibold ${
-                  urgent ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-[#151518] border-[#27272a] text-neutral-500'
+                  urgent ? 'bg-[#facc15]/20 border-[#facc15]/60 text-[#facc15]' : 'bg-[#151518] border-[#27272a] text-neutral-500'
                 }`}
               >
                 ⚡ Urgente
@@ -122,7 +122,7 @@ export default function GlobalQuickAddModal({ store, isOpen, onClose }) {
                 type="button"
                 onClick={() => setImportant(!important)}
                 className={`text-[11px] px-2.5 py-1.5 rounded-lg border font-semibold ${
-                  important ? 'bg-amber-950/60 border-amber-800 text-amber-300' : 'bg-[#151518] border-[#27272a] text-neutral-500'
+                  important ? 'bg-[#facc15]/20 border-[#facc15]/60 text-[#facc15]' : 'bg-[#151518] border-[#27272a] text-neutral-500'
                 }`}
               >
                 🎯 Importante

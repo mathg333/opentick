@@ -145,8 +145,8 @@ export default function ProductivityStats({ store }) {
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                     {profile.name || 'Mathx'}
                   </h2>
-                  <span className="bg-amber-400/15 text-amber-300 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full border border-amber-400/30 font-mono flex items-center gap-1">
-                    <Zap className="w-3 h-3 fill-amber-300 text-amber-300" />
+                  <span className="bg-[#facc15]/15 text-[#facc15] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full border border-[#facc15]/30 font-mono flex items-center gap-1">
+                    <Zap className="w-3 h-3 fill-[#facc15] text-[#facc15]" />
                     Nível {stats.level}
                   </span>
                 </div>
@@ -205,7 +205,7 @@ export default function ProductivityStats({ store }) {
           <div className="px-4 sm:px-6 pb-5 pt-3 border-t border-[#1c1c22]">
             <div className="flex items-center justify-between text-xs font-bold mb-2">
               <span className="text-neutral-200 flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <Zap className="w-3.5 h-3.5 text-[#facc15] fill-[#facc15]" />
                 Progresso para o próximo Ranking
               </span>
               <span className="text-neutral-400 font-mono text-[11px]">
@@ -301,7 +301,7 @@ export default function ProductivityStats({ store }) {
                   <div className="mt-2.5 w-full pt-2 border-t border-white/5 flex items-center justify-center">
                     {isUnlocked ? (
                       <span className="inline-flex items-center gap-1.5 text-[10px] text-amber-300 font-extrabold">
-                        <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                        <Crown className="w-3.5 h-3.5 text-[#facc15] fill-[#facc15]" />
                         Conquistado
                       </span>
                     ) : (

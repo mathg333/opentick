@@ -113,9 +113,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
   const priorityColors = {
     0: 'text-neutral-500',
-    1: 'text-blue-400',
-    2: 'text-amber-400',
-    3: 'text-rose-500'
+    1: 'text-[#facc15]/60',
+    2: 'text-[#facc15]',
+    3: 'text-[#facc15] fill-[#facc15]'
   };
 
   const handleQuickAdd = (e) => {
@@ -246,7 +246,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               className="p-2 text-neutral-300 hover:text-[#facc15] bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl transition-colors flex items-center justify-center"
               title="Agendamento Múltiplo / Calendário"
             >
-              <CalendarIcon className="w-4 h-4" />
+              <CalendarIcon className="w-4 h-4 text-[#facc15]" />
             </button>
           </div>
         </div>
@@ -259,7 +259,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               onSubmit={handleQuickAdd}
               className="bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl px-3 py-2 flex items-center gap-2 shadow-md"
             >
-              <Plus className="w-4 h-4 text-neutral-400 shrink-0 ml-0.5" />
+              <Plus className="w-4 h-4 text-[#facc15] shrink-0 ml-0.5" />
               <input
                 type="text"
                 placeholder={`Adicionar em "${viewTitle}"...`}
@@ -273,7 +273,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 className="p-1 text-neutral-400 hover:text-[#facc15]"
                 title="Escolher datas múltiplas / horário"
               >
-                <CalendarIcon className="w-4 h-4" />
+                <CalendarIcon className="w-4 h-4 text-[#facc15]" />
               </button>
               <button
                 type="submit"
@@ -345,7 +345,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                 )}
                                 {recurCount > 1 && (
                                   <span className="text-[10px] bg-[#facc15]/20 text-[#facc15] font-bold px-2 py-0.5 rounded-full border border-[#facc15]/30 flex items-center gap-1">
-                                    <Repeat className="w-3 h-3" />
+                                    <Repeat className="w-3 h-3 text-[#facc15]" />
                                     {recurCount} datas agendadas
                                   </span>
                                 )}
@@ -366,7 +366,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                               className="p-1.5 text-neutral-400 hover:text-[#facc15] rounded-lg transition-colors"
                               title="Iniciar Foco"
                             >
-                              <Play className="w-4 h-4" />
+                              <Play className="w-4 h-4 text-[#facc15]" />
                             </button>
                           </div>
                         </div>
@@ -610,9 +610,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
         {viewLayout === 'kanban' && (
           <div className="flex-1 overflow-x-auto p-4 flex gap-4 pb-32">
             {[
-              { id: 'todo', label: 'A Fazer', color: 'border-blue-500/40', badge: 'bg-blue-950 text-blue-300', tasks: kanbanTodo },
-              { id: 'in_progress', label: 'Em Andamento', color: 'border-amber-500/40', badge: 'bg-amber-950 text-amber-300', tasks: kanbanInProgress },
-              { id: 'done', label: 'Concluído', color: 'border-emerald-500/40', badge: 'bg-emerald-950 text-emerald-300', tasks: kanbanDone }
+              { id: 'todo', label: 'A Fazer', color: 'border-[#facc15]/30', badge: 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30', tasks: kanbanTodo },
+              { id: 'in_progress', label: 'Em Andamento', color: 'border-[#facc15]/30', badge: 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30', tasks: kanbanInProgress },
+              { id: 'done', label: 'Concluído', color: 'border-[#facc15]/30', badge: 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30', tasks: kanbanDone }
             ].map(col => (
               <div 
                 key={col.id} 

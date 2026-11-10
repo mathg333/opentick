@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  Inbox, 
+  Inbox,
+  Laptop, 
   Calendar as CalendarIcon, 
   CalendarDays, 
   CheckSquare, 
@@ -124,7 +125,7 @@ export default function Sidebar({
               className="p-1.5 text-white/80 hover:text-white rounded-lg bg-black/40 hover:bg-black/60 backdrop-blur-md transition-colors"
               title="Pesquisar"
             >
-              <Search className="w-3.5 h-3.5" />
+              <Search className="w-3.5 h-3.5 text-[#facc15]" />
             </button>
             <button
               onClick={() => {
@@ -274,7 +275,7 @@ export default function Sidebar({
               </div>
               <span className="text-sm">Etiquetas</span>
             </div>
-            <ChevronRight className="w-4 h-4 text-neutral-500" />
+            <ChevronRight className="w-4 h-4 text-[#facc15]" />
             
           </div>
         </div>
@@ -290,7 +291,7 @@ export default function Sidebar({
               className="p-1 rounded-lg bg-[#1c1c1e] text-neutral-300 hover:text-white border border-[#2c2c2e] transition-colors"
               title="Nova Lista"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3.5 h-3.5 text-[#facc15]" />
             </button>
           </div>
 
@@ -339,29 +340,24 @@ export default function Sidebar({
             const count = state.tasks.filter(t => !t.completed && t.projectId === proj.id).length;
             const isActive = activeView === `project-${proj.id}`;
 
-            // Map custom emoji per list
-            let listEmoji = '📁';
-            let bgGradient = 'from-blue-500 to-indigo-600';
+            // Unified Lucide vector icon per list in #FACC15
+            let ListIconComponent = Folder;
             const nameLower = proj.name.toLowerCase();
 
             if (nameLower.includes('tecnologia')) {
-              listEmoji = '💻';
-              bgGradient = 'from-cyan-500 to-blue-600';
+              ListIconComponent = Laptop;
             } else if (nameLower.includes('sprint')) {
-              listEmoji = '🚀';
-              bgGradient = 'from-violet-500 to-purple-600';
+              ListIconComponent = Rocket;
             } else if (nameLower.includes('alta') || nameLower.includes('urgente')) {
-              listEmoji = '🔥';
-              bgGradient = 'from-rose-500 to-red-600';
+              ListIconComponent = Flame;
             } else if (nameLower.includes('média') || nameLower.includes('media')) {
-              listEmoji = '⚡';
-              bgGradient = 'from-amber-500 to-orange-600';
+              ListIconComponent = Zap;
             } else if (nameLower.includes('leitura') || nameLower.includes('livro')) {
-              listEmoji = '📚';
-              bgGradient = 'from-emerald-500 to-teal-600';
+              ListIconComponent = BookOpen;
             } else if (nameLower.includes('fazer')) {
-              listEmoji = '📝';
-              bgGradient = 'from-blue-500 to-indigo-600';
+              ListIconComponent = CheckSquare;
+            } else if (proj.id === 'inbox') {
+              ListIconComponent = Inbox;
             }
 
             return (
@@ -375,8 +371,8 @@ export default function Sidebar({
                 }`}
               >
                 <div className="flex items-center gap-3 truncate">
-                  <div className={`w-7 h-7 rounded-xl bg-[#facc15]/15 border border-[#facc15]/30 flex items-center justify-center text-sm shadow-sm shrink-0`}>
-                    {listEmoji}
+                  <div className="w-7 h-7 rounded-xl bg-[#facc15]/15 border border-[#facc15]/30 flex items-center justify-center shadow-sm shrink-0">
+                    <ListIconComponent className="w-3.5 h-3.5 text-[#facc15]" />
                   </div>
                   <span className="truncate text-sm font-medium">{proj.name}</span>
                 </div>

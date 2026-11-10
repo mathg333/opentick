@@ -451,7 +451,7 @@ export default function App() {
             className="p-1 -ml-1 text-white hover:text-neutral-300 active:scale-95 transition-transform"
             title="Abrir Menu de Listas"
           >
-            <Menu className="w-6 h-6 stroke-[2]" />
+            <Menu className="w-6 h-6 stroke-[2] text-[#facc15]" />
           </button>
           <h1 className="text-lg font-bold text-white tracking-tight truncate max-w-[270px]">
             {getHeaderTitle()}
@@ -479,7 +479,7 @@ export default function App() {
             className="p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
             title="Pesquisar"
           >
-            <Search className="w-5 h-5" />
+            <Search className="w-5 h-5 text-[#facc15]" />
           </button>
           
         </div>
@@ -601,8 +601,8 @@ export default function App() {
                 <CheckSquare className="w-5 h-5 text-black stroke-[2.5]" />
               </div>
             ) : (
-              <div className="w-8 h-8 rounded-xl border border-neutral-700 bg-[#121215] flex items-center justify-center text-neutral-400">
-                <CheckSquare className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl border border-[#facc15]/30 bg-[#121215] flex items-center justify-center text-[#facc15]">
+                <CheckSquare className="w-4 h-4 text-[#facc15]" />
               </div>
             )}
             <span className={`text-[10px] font-bold mt-1 ${isTaskView && store.taskViewLayout !== 'kanban' ? 'text-[#facc15]' : 'text-neutral-500'}`}>
@@ -623,8 +623,8 @@ export default function App() {
                 <CalendarDays className="w-5 h-5 text-black stroke-[2.5]" />
               </div>
             ) : (
-              <div className="w-8 h-8 rounded-xl border border-neutral-700 bg-[#121215] flex items-center justify-center text-neutral-400 hover:border-neutral-500">
-                <CalendarDays className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl border border-[#facc15]/30 bg-[#121215] flex items-center justify-center text-[#facc15] hover:border-[#facc15]/50">
+                <CalendarDays className="w-4 h-4 text-[#facc15]" />
               </div>
             )}
             <span className={`text-[10px] font-bold mt-1 ${activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits' || store.taskViewLayout === 'kanban' ? 'text-[#facc15]' : 'text-neutral-500'}`}>
@@ -646,7 +646,7 @@ export default function App() {
                 <RankShield2D tier={calculateGamification(state).currentRank.tier} size={24} showGlow={false} />
               </div>
             ) : (
-              <div className="w-8 h-8 rounded-xl bg-[#121215] border border-neutral-700 flex items-center justify-center p-0.5 hover:border-yellow-400/50">
+              <div className="w-8 h-8 rounded-xl bg-[#121215] border border-[#facc15]/30 flex items-center justify-center p-0.5 hover:border-[#facc15]/50">
                 <RankShield2D tier={calculateGamification(state).currentRank.tier} size={22} showGlow={false} />
               </div>
             )}
@@ -661,8 +661,8 @@ export default function App() {
             className="flex flex-col items-center justify-center min-w-[54px] min-h-[48px] p-1.5 rounded-xl text-neutral-400 hover:text-white active:scale-90 transition-transform"
             title="Mais Opções & Configurações"
           >
-            <div className="w-8 h-8 rounded-xl border border-neutral-700 bg-[#121215] flex items-center justify-center text-neutral-400 hover:text-white">
-              <MoreHorizontal className="w-5 h-5 stroke-[2]" />
+            <div className="w-8 h-8 rounded-xl border border-[#facc15]/30 bg-[#121215] flex items-center justify-center text-[#facc15] hover:border-[#facc15]/50">
+              <MoreHorizontal className="w-5 h-5 stroke-[2] text-[#facc15]" />
             </div>
             <span className="text-[10px] font-bold mt-1 text-neutral-500">
               Mais

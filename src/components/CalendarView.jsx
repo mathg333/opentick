@@ -190,14 +190,14 @@ export default function CalendarView({ store }) {
                 className="p-1 text-neutral-400 hover:text-white"
                 title="Anterior"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4 text-[#facc15]" />
               </button>
               <button 
                 onClick={nextPeriod}
                 className="p-1 text-neutral-400 hover:text-white"
                 title="Próximo"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4 text-[#facc15]" />
               </button>
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function CalendarView({ store }) {
             className="p-2 text-neutral-300 hover:text-[#facc15] rounded-lg active:bg-neutral-800 transition-colors"
             title="Alternar Modo de Visualização"
           >
-            <Columns className="w-5 h-5" />
+            <Columns className="w-5 h-5 text-[#facc15]" />
           </button>
 
           
@@ -328,7 +328,7 @@ export default function CalendarView({ store }) {
 
             <div className="space-y-2.5">
               {selectedDayTasks.map(task => {
-                const leftBarColor = task.priority === 3 ? 'bg-rose-500' : task.priority === 2 ? 'bg-[#facc15]' : task.priority === 1 ? 'bg-blue-500' : 'bg-neutral-600';
+                const leftBarColor = task.priority === 3 ? 'bg-[#facc15]' : task.priority === 2 ? 'bg-[#facc15]/80' : task.priority === 1 ? 'bg-[#facc15]/50' : 'bg-neutral-600';
                 return (
                   <div
                     key={task.id}

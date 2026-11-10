@@ -188,7 +188,7 @@ export default function HomeHabitCard({ store }) {
                   }`}
                 >
                   <span className="truncate">{h.name}</span>
-                  {i === selectedHabitIndex && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                  {i === selectedHabitIndex && <Check className="w-3.5 h-3.5 text-[#facc15] shrink-0" />}
                 </button>
               ))}
 
@@ -201,7 +201,7 @@ export default function HomeHabitCard({ store }) {
                   }}
                   className="w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-neutral-400 hover:text-white flex items-center gap-1.5"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3.5 h-3.5 text-[#facc15]" />
                   <span>Gerenciar / Criar Hábito</span>
                 </button>
               </div>

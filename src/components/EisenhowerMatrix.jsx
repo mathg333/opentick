@@ -179,7 +179,7 @@ export default function EisenhowerMatrix({ store }) {
                 {/* Quadrant Header */}
                 <div className="p-3 md:p-3.5 border-b border-[#1c1c20] flex items-center justify-between bg-[#0f0f13]">
                   <div className="flex items-center gap-2.5">
-                    <Icon className="w-4 h-4 text-neutral-300 shrink-0" />
+                    <Icon className="w-4 h-4 text-[#facc15] shrink-0" />
                     <div>
                       <h2 className="text-xs font-bold text-neutral-100 leading-tight">
                         {q.title}
@@ -213,7 +213,7 @@ export default function EisenhowerMatrix({ store }) {
                       disabled={!quickInputs[q.key]?.trim()}
                       className="bg-neutral-200 hover:bg-white disabled:opacity-30 text-black px-2.5 py-1 rounded-lg text-xs font-bold transition-colors shrink-0"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="w-3.5 h-3.5 text-[#facc15]" />
                     </button>
                   </form>
                 </div>
