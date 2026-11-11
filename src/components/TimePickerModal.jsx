@@ -36,25 +36,10 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
 
   if (!isOpen) return null;
 
-  const quickPresets = [
-    { label: 'Manhã', time: '08:00' },
-    { label: 'Almoço', time: '12:00' },
-    { label: 'Tarde', time: '14:00' },
-    { label: 'Foco', time: '16:20' },
-    { label: 'Noite', time: '19:00' },
-    { label: 'Dormir', time: '22:00' }
-  ];
-
   const handleConfirm = () => {
     const formatted = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
     onSelectTime(formatted);
     onClose();
-  };
-
-  const handlePreset = (presetTime) => {
-    const [h, m] = presetTime.split(':');
-    setHour(parseInt(h, 10));
-    setMinute(parseInt(m, 10));
   };
 
   // Dial Center & Radius geometry
@@ -146,7 +131,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
   const handEndY = center + handLength * Math.sin(handRad);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4 backdrop-blur-xs select-none animate-in fade-in">
+    <div className="fixed inset-0 z-[120] bg-black/85 flex items-center justify-center p-4 backdrop-blur-xs select-none animate-in fade-in">
       <div 
         onClick={e => e.stopPropagation()} 
         className="w-full max-w-sm bg-[#1c1c1e] border border-[#2c2c2e] rounded-3xl p-5 shadow-2xl space-y-4 text-white"
@@ -174,7 +159,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
             onClick={() => setActiveMode('hour')}
             className={`px-4 py-2 rounded-2xl text-4xl font-mono font-black transition-all ${
               activeMode === 'hour'
-                ? 'bg-[#facc15]/20 text-[#facc15] border-2 border-[#facc15] shadow-[0_0_20px_rgba(255,107,0,0.3)] scale-105'
+                ? 'bg-[#facc15]/20 text-[#facc15] border-2 border-[#facc15] scale-105'
                 : 'bg-[#141416] text-white border border-[#2c2c2e] hover:border-neutral-500'
             }`}
           >
@@ -189,7 +174,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
             onClick={() => setActiveMode('minute')}
             className={`px-4 py-2 rounded-2xl text-4xl font-mono font-black transition-all ${
               activeMode === 'minute'
-                ? 'bg-[#facc15]/20 text-[#facc15] border-2 border-[#facc15] shadow-[0_0_20px_rgba(255,107,0,0.3)] scale-105'
+                ? 'bg-[#facc15]/20 text-[#facc15] border-2 border-[#facc15] scale-105'
                 : 'bg-[#141416] text-white border border-[#2c2c2e] hover:border-neutral-500'
             }`}
           >
@@ -258,7 +243,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
                 cy={handEndY}
                 r="16"
                 fill="#facc15"
-                className="drop-shadow-[0_0_8px_rgba(255,107,0,0.8)]"
+                className="drop-shadow-[0_0_6px_rgba(250,204,21,0.35)]"
               />
             </svg>
 
@@ -277,7 +262,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
                     <div
                       key={`outer-${h}`}
                       className={`absolute w-7 h-7 -ml-3.5 -mt-3.5 rounded-full flex items-center justify-center text-[11px] font-mono font-bold transition-transform z-15 ${
-                        isSelected ? 'text-white font-black scale-110' : 'text-neutral-400 hover:text-white'
+                        isSelected ? 'text-black font-black scale-110' : 'text-neutral-400 hover:text-white'
                       }`}
                       style={{ left: x, top: y }}
                     >
@@ -298,7 +283,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
                     <div
                       key={`inner-${h}`}
                       className={`absolute w-6 h-6 -ml-3 -mt-3 rounded-full flex items-center justify-center text-[10px] font-mono font-bold transition-transform z-15 ${
-                        isSelected ? 'text-white font-black scale-110' : 'text-neutral-500 hover:text-neutral-200'
+                        isSelected ? 'text-black font-black scale-110' : 'text-neutral-500 hover:text-neutral-200'
                       }`}
                       style={{ left: x, top: y }}
                     >
@@ -320,7 +305,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
                   <div
                     key={`min-${m}`}
                     className={`absolute w-7 h-7 -ml-3.5 -mt-3.5 rounded-full flex items-center justify-center text-xs font-mono font-bold transition-transform z-15 ${
-                      isSelected ? 'text-white font-black scale-110' : 'text-neutral-300 hover:text-white'
+                      isSelected ? 'text-black font-black scale-110' : 'text-neutral-300 hover:text-white'
                     }`}
                     style={{ left: x, top: y }}
                   >
@@ -329,30 +314,6 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
                 );
               })
             )}
-          </div>
-        </div>
-
-        {/* Quick Presets Pills */}
-        <div>
-          <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider block mb-1">
-            Atalhos de Horário
-          </span>
-          <div className="grid grid-cols-3 gap-1.5">
-            {quickPresets.map(p => (
-              <button
-                key={p.time}
-                type="button"
-                onClick={() => handlePreset(p.time)}
-                className={`px-2 py-1 rounded-xl text-xs font-semibold flex items-center justify-between border transition-colors ${
-                  `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}` === p.time
-                    ? 'bg-[#facc15] text-black font-bold border-[#facc15] shadow-md'
-                    : 'bg-[#141416] hover:bg-[#28282e] text-neutral-300 border-[#28282b]'
-                }`}
-              >
-                <span className="text-[11px] text-neutral-400">{p.label}</span>
-                <span className="font-mono font-bold">{p.time}</span>
-              </button>
-            ))}
           </div>
         </div>
 

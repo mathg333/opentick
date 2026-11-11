@@ -17,7 +17,6 @@ import AlarmOverlayModal from './components/AlarmOverlayModal';
 import AlarmPermissionModal from './components/AlarmPermissionModal';
 import GamificationCelebration from './components/GamificationCelebration';
 import RankShield2D from './components/RankShield2D';
-import ViewFormatSelectorModal from './components/ViewFormatSelectorModal';
 import CustomDatePickerModal from './components/CustomDatePickerModal';
 import { getTaskTimes, isTaskOnDate, getTodayYMD, addDaysYMD } from './utils/taskSchedule';
 import { calculateGamification } from './utils/gamification';
@@ -74,7 +73,6 @@ export default function App() {
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddPrefill, setQuickAddPrefill] = useState(null);
-  const [isViewSelectorOpen, setIsViewSelectorOpen] = useState(false);
   const [isGlobalCustomModalOpen, setIsGlobalCustomModalOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -394,7 +392,6 @@ export default function App() {
     isAlarmModalOpen,
     isGlobalCustomModalOpen,
     isProfileModalOpen,
-    isViewSelectorOpen,
     isSearchOpen,
     isSettingsOpen,
     isSyncModalOpen,
@@ -422,10 +419,6 @@ export default function App() {
       }
       if (s.isProfileModalOpen) {
         setIsProfileModalOpen(false);
-        return;
-      }
-      if (s.isViewSelectorOpen) {
-        setIsViewSelectorOpen(false);
         return;
       }
       // 1. Close Search Modal
@@ -719,34 +712,37 @@ export default function App() {
             title="Tarefas de Hoje"
           >
             <div className={`w-7 h-7 rounded-[4px] flex items-center justify-center transition-colors border ${
-              isTaskView && store.taskViewLayout !== 'kanban'
+              isTaskView
                 ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
                 : 'bg-transparent border-transparent text-neutral-400 hover:text-neutral-200'
             }`}>
               <CheckSquare className="w-4 h-4" />
             </div>
             <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${
-              isTaskView && store.taskViewLayout !== 'kanban' ? 'text-[#facc15]' : 'text-neutral-500'
+              isTaskView ? 'text-[#facc15]' : 'text-neutral-500'
             }`}>
               Tarefas
             </span>
           </button>
 
-          {/* Tab 2: Visualizar */}
+          {/* Tab 2: Visualizar -> Direto para Calendário (Dia | Semanal | Mês | Anual | Lista) */}
           <button
-            onClick={() => setIsViewSelectorOpen(true)}
+            onClick={() => {
+              setActiveView('calendar');
+              setSelectedTaskId(null);
+            }}
             className="w-full min-w-0 flex flex-col items-center justify-center py-0.5 active:scale-95 transition-transform"
-            title="Escolher Formato de Visualização"
+            title="Calendário e Modos de Tempo"
           >
             <div className={`w-7 h-7 rounded-[4px] flex items-center justify-center transition-colors border ${
-              activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits' || store.taskViewLayout === 'kanban'
+              activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits'
                 ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
                 : 'bg-transparent border-transparent text-neutral-400 hover:text-neutral-200'
             }`}>
               <CalendarDays className="w-4 h-4" />
             </div>
             <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${
-              activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits' || store.taskViewLayout === 'kanban'
+              activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits'
                 ? 'text-[#facc15]'
                 : 'text-neutral-500'
             }`}>
@@ -876,15 +872,7 @@ export default function App() {
       {/* Android Alarm & Lockscreen Permission Onboarding Modal */}
       <AlarmPermissionModal />
 
-      {/* View Format Selector Modal (Diário, Semanal, Mensal, Anual, Kanban, Matriz Eisenhower, Listas) */}
-      <ViewFormatSelectorModal
-        isOpen={isViewSelectorOpen}
-        onClose={() => setIsViewSelectorOpen(false)}
-        store={store}
-        onOpenCustomRecurrence={() => setIsGlobalCustomModalOpen(true)}
-      />
-
-      {/* Global Personalizado Recurrence Modal (launched from ViewFormatSelectorModal) */}
+      {/* Global Personalizado Recurrence Modal */}
       <CustomDatePickerModal
         isOpen={isGlobalCustomModalOpen}
         onClose={() => setIsGlobalCustomModalOpen(false)}

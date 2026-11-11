@@ -453,25 +453,25 @@ export default function CalendarView({ store, onQuickCreateAt }) {
               {weekDays.map(day => {
                 const dStr = formatDate(day);
                 const isSelected = dStr === selectedDayStr;
+                const isToday = dStr === todayStr;
                 const hasTasks = getTasksForDate(dStr).some(t => !t.completed);
 
                 return (
                   <button
                     key={dStr}
                     onClick={() => handleDateCellPress(dStr, day)}
-                    className="flex flex-col items-center justify-center py-1 rounded-[4px] transition-all"
+                    className="flex flex-col items-center justify-center py-1.5 rounded-[4px] transition-all"
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
                       isSelected
-                        ? 'bg-[#facc15] text-black font-bold'
+                        ? 'bg-[#facc15] text-black font-black'
+                        : hasTasks
+                        ? `bg-[#facc15]/22 border border-[#facc15]/60 ${isToday ? 'text-[#facc15] ring-1 ring-[#facc15]' : 'text-white'}`
+                        : isToday
+                        ? 'border border-[#facc15]/80 text-[#facc15]'
                         : 'text-neutral-200 hover:bg-[#1c1c1e]'
                     }`}>
                       {day.getDate()}
-                    </div>
-                    <div className="h-1.5 flex items-center justify-center mt-0.5">
-                      {hasTasks && (
-                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#facc15]'}`} />
-                      )}
                     </div>
                   </button>
                 );
@@ -644,23 +644,26 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                 <button
                   key={idx}
                   onClick={() => handleDateCellPress(dStr, item.date)}
-                  className="flex flex-col items-center justify-center py-1 transition-all"
+                  className="flex flex-col items-center justify-center py-1.5 transition-all"
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all ${
                     isSelected
-                      ? 'bg-[#facc15]/20 border border-[#facc15] text-[#facc15] font-bold'
+                      ? 'bg-[#facc15] text-black font-black'
+                      : hasTasks
+                      ? `bg-[#facc15]/22 border border-[#facc15]/60 font-bold ${
+                          !item.isCurrentMonth
+                            ? 'text-neutral-300 opacity-75'
+                            : isToday
+                            ? 'text-[#facc15] ring-1 ring-[#facc15]'
+                            : 'text-white'
+                        }`
                       : !item.isCurrentMonth
-                      ? 'text-neutral-600'
+                      ? 'text-neutral-600 font-semibold'
                       : isToday
                       ? 'text-[#facc15] font-bold ring-1 ring-[#facc15]'
-                      : 'text-neutral-200 hover:bg-[#1c1c1e]'
+                      : 'text-neutral-200 font-semibold hover:bg-[#1c1c1e]'
                   }`}>
                     {item.date.getDate()}
-                  </div>
-                  <div className="h-1.5 flex items-center justify-center mt-0.5">
-                    {hasTasks && (
-                      <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-[#facc15]'}`} />
-                    )}
                   </div>
                 </button>
               );
@@ -988,7 +991,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                   {Array.from({ length: daysCount }).map((_, i) => {
                     const dayNum = i + 1;
                     const dStr = `${year}-${String(mIdx + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-                    const hasTask = getTasksForDate(dStr).length > 0;
+                    const hasTask = getTasksForDate(dStr).some(t => !t.completed);
                     const isTodayCell = dStr === todayStr;
                     return (
                       <span
@@ -997,9 +1000,9 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                           e.stopPropagation();
                           handleDateCellPress(dStr, new Date(year, mIdx, dayNum));
                         }}
-                        className={`py-0.5 rounded-[3px] leading-tight cursor-pointer transition-colors ${
+                        className={`w-[18px] h-[18px] mx-auto rounded-full flex items-center justify-center leading-none cursor-pointer transition-colors ${
                           hasTask
-                            ? 'bg-[#facc15]/20 border border-[#facc15]/50 text-[#facc15] font-bold'
+                            ? `bg-[#facc15]/25 border border-[#facc15]/60 font-bold ${isTodayCell ? 'text-[#facc15] ring-1 ring-[#facc15]' : 'text-white'}`
                             : isTodayCell
                             ? 'border border-[#facc15] text-[#facc15] font-bold'
                             : 'text-neutral-300 hover:bg-white/10'

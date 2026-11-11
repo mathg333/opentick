@@ -35,7 +35,6 @@ const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
-const QUICK_TIME_PRESETS = ['07:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
 
 export default function CustomDatePickerModal({
   isOpen,
@@ -226,15 +225,6 @@ export default function CustomDatePickerModal({
         return prev.filter(d => d !== dateStr);
       }
       return [...prev, dateStr].sort();
-    });
-  };
-
-  const toggleTimePreset = (timeStr) => {
-    setSelectedTimes(prev => {
-      if (prev.includes(timeStr)) {
-        return prev.filter(t => t !== timeStr);
-      }
-      return [...prev, timeStr].sort();
     });
   };
 
@@ -1037,31 +1027,17 @@ export default function CustomDatePickerModal({
                 ))}
               </div>
             ) : (
-              <p className="text-[11px] text-[#8E8E93]">
-                Sem horário fixo (toque em + Adicionar Horário ou use um atalho abaixo para marcar vários).
-              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingTimeTarget(null);
+                  setShowTimePicker(true);
+                }}
+                className="w-full text-left text-[11px] text-[#8E8E93] hover:text-neutral-200 py-1 transition-colors"
+              >
+                Sem horário fixo — toque em <span className="text-[#facc15] font-semibold">+ Adicionar Horário</span> para escolher no relógio analógico.
+              </button>
             )}
-
-            {/* Quick 1-Tap Multi-Time Presets */}
-            <div className="flex flex-wrap gap-1 pt-0.5">
-              {QUICK_TIME_PRESETS.map(preset => {
-                const active = selectedTimes.includes(preset);
-                return (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => toggleTimePreset(preset)}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all ${
-                      active
-                        ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
-                        : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
-                    }`}
-                  >
-                    {preset}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           {/* Selected Summary Bar */}
