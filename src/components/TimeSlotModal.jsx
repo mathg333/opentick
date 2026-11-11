@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Clock,
@@ -185,7 +186,7 @@ export default function TimeSlotModal({
     return cells;
   }, [monthCursor]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const primaryDate = resolvedDates[0] || singleDate || getTodayYMD();
   const parsedPrimary = parseYMD(primaryDate);
@@ -251,20 +252,18 @@ export default function TimeSlotModal({
     { id: 'annual', label: 'Anual' }
   ];
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="w-full max-w-md bg-[#0A0A0C] border border-white/15 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+      <div className="w-full max-w-[390px] bg-[#0B0B0E] border border-white/10 rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="px-4 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#111114] shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#facc15]/15 border border-[#facc15]/30 flex items-center justify-center text-[#facc15] shrink-0">
-              <Clock size={18} />
-            </div>
+        <div className="px-3.5 py-2.5 border-b border-white/[0.08] flex items-center justify-between bg-[#101014] shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <Clock size={15} className="text-neutral-400 shrink-0" />
             <div className="min-w-0">
-              <h3 className="text-sm font-black text-white tracking-tight truncate">
+              <h3 className="text-[13px] font-semibold text-white tracking-tight truncate">
                 Reservar Horário
               </h3>
-              <p className="text-[11px] text-[#facc15]/85 font-medium capitalize truncate">
+              <p className="text-[11px] text-neutral-400 font-normal capitalize truncate">
                 {formattedDateLabel} · {startTime}
               </p>
             </div>
@@ -272,18 +271,18 @@ export default function TimeSlotModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-[#facc15] hover:bg-white/10 rounded-xl transition-colors shrink-0"
+            className="p-1.5 text-neutral-400 hover:text-white hover:bg-white/[0.06] rounded-md transition-colors shrink-0"
             aria-label="Fechar"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSave} className="flex-1 overflow-y-auto px-4 py-3.5 space-y-3.5">
+        <form onSubmit={handleSave} className="flex-1 overflow-y-auto overflow-x-hidden px-3.5 py-3 space-y-3">
           {/* Title */}
           <div>
-            <label className="text-[11px] font-bold text-[#A1A1AA] uppercase tracking-wider block mb-1.5">
+            <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
               Título / Tarefa
             </label>
             <input
@@ -292,70 +291,70 @@ export default function TimeSlotModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={`O que você vai fazer às ${startTime}?`}
-              className="w-full bg-[#141417] border border-white/10 focus:border-[#facc15]/60 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-[#555558] outline-none font-medium"
+              className="w-full bg-[#121216] border border-white/[0.08] focus:border-white/25 rounded-md px-3 py-2 text-xs text-white placeholder-neutral-600 outline-none font-medium transition-colors"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="text-[11px] font-bold text-[#A1A1AA] uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
-              <AlignLeft size={13} className="text-[#facc15]" />
+            <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+              <AlignLeft size={12} className="text-neutral-500" />
               <span>Descrição</span>
             </label>
             <textarea
               rows={2}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Adicione observações, link, local ou detalhes deste horário..."
-              className="w-full bg-[#141417] border border-white/10 focus:border-[#facc15]/60 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-[#555558] outline-none resize-none leading-relaxed"
+              placeholder="Adicione observações, link, local ou detalhes..."
+              className="w-full bg-[#121216] border border-white/[0.08] focus:border-white/25 rounded-md px-3 py-2 text-xs text-white placeholder-neutral-600 outline-none resize-none leading-relaxed transition-colors"
             />
           </div>
 
           {/* Time Configuration */}
-          <div className="bg-[#141417] border border-white/10 rounded-lg p-3 space-y-2.5">
+          <div className="bg-[#121216] border border-white/[0.08] rounded-md p-2.5 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white flex items-center gap-2">
-                <Clock size={15} className="text-[#facc15]" />
-                <span>Horário(s) Aplicados</span>
+              <span className="text-[11px] font-semibold text-neutral-200 flex items-center gap-1.5">
+                <Clock size={13} className="text-neutral-400" />
+                <span>Horários</span>
               </span>
               <button
                 type="button"
                 onClick={() => setTimePickerTarget('extra')}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#0A0A0C] border border-[#facc15]/35 text-[#facc15] text-[10px] font-bold hover:bg-[#facc15]/10"
+                className="flex items-center gap-1 px-2 py-1 rounded-[4px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-neutral-300 hover:text-white text-[10px] font-medium transition-colors"
               >
-                <Plus size={12} className="text-[#facc15]" />
-                <span>+ Horário</span>
+                <Plus size={11} />
+                <span>Horário</span>
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <span className="text-[10px] text-[#8E8E93] font-bold block mb-1">Início</span>
+                <span className="text-[10px] text-neutral-500 font-medium block mb-1">Início</span>
                 <button
                   type="button"
                   onClick={() => setTimePickerTarget('start')}
-                  className="w-full bg-[#0A0A0C] border border-[#facc15]/45 hover:bg-[#facc15]/10 rounded-xl px-3 py-2 text-xs font-mono font-black text-[#facc15] flex items-center justify-between"
+                  className="w-full bg-[#0B0B0E] border border-white/10 hover:border-white/25 rounded-md px-2.5 py-1.5 text-xs font-mono font-semibold text-white flex items-center justify-between transition-colors"
                 >
                   <span>{startTime}</span>
-                  <Clock size={13} className="text-[#facc15]" />
+                  <Clock size={12} className="text-neutral-500" />
                 </button>
               </div>
               <div>
-                <span className="text-[10px] text-[#8E8E93] font-bold block mb-1">Término (opcional)</span>
+                <span className="text-[10px] text-neutral-500 font-medium block mb-1">Término (opcional)</span>
                 <div className="flex items-center gap-1">
                   <button
                     type="button"
                     onClick={() => setTimePickerTarget('end')}
-                    className="flex-1 bg-[#0A0A0C] border border-white/10 hover:border-[#facc15]/40 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white flex items-center justify-between"
+                    className="flex-1 bg-[#0B0B0E] border border-white/10 hover:border-white/25 rounded-md px-2.5 py-1.5 text-xs font-mono font-medium text-neutral-200 flex items-center justify-between transition-colors"
                   >
                     <span>{endTime || '--:--'}</span>
-                    <Clock size={13} className="text-[#facc15]" />
+                    <Clock size={12} className="text-neutral-500" />
                   </button>
                   {endTime && (
                     <button
                       type="button"
                       onClick={() => setEndTime('')}
-                      className="p-2 rounded-xl bg-[#0A0A0C] border border-white/10 text-[#facc15] hover:bg-white/5"
+                      className="p-1.5 rounded-md bg-[#0B0B0E] border border-white/10 text-neutral-400 hover:text-white transition-colors"
                       title="Limpar horário de término"
                     >
                       <X size={13} />
@@ -370,15 +369,15 @@ export default function TimeSlotModal({
                 {extraTimes.map((tm) => (
                   <span
                     key={tm}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 text-[#facc15] text-[11px] font-mono font-bold"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-[#facc15]/10 border border-[#facc15]/30 text-[#facc15] text-[11px] font-mono font-semibold"
                   >
                     {tm}
                     <button
                       type="button"
                       onClick={() => setExtraTimes((prev) => prev.filter((x) => x !== tm))}
-                      className="text-[#facc15] hover:text-white"
+                      className="text-neutral-400 hover:text-white"
                     >
-                      <X size={12} />
+                      <X size={11} />
                     </button>
                   </span>
                 ))}
@@ -386,20 +385,20 @@ export default function TimeSlotModal({
             )}
           </div>
 
-          {/* Direct Inline Repeat & Day Customization (Dia | Semanal | Mensal | Anual) */}
-          <div className="bg-[#141417] border border-white/10 rounded-lg p-3 space-y-3">
+          {/* Direct Inline Repeat & Day Customization (Dia | Diário | Semanal | Mensal | Anual) */}
+          <div className="bg-[#121216] border border-white/[0.08] rounded-md p-2.5 space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white flex items-center gap-2">
-                <CalendarIcon size={15} className="text-[#facc15]" />
-                <span>Dia e Repetição dos Horários</span>
+              <span className="text-[11px] font-semibold text-neutral-200 flex items-center gap-1.5">
+                <CalendarIcon size={13} className="text-neutral-400" />
+                <span>Dia e Repetição</span>
               </span>
-              <span className="text-[10px] font-mono font-black text-[#facc15] bg-[#facc15]/15 px-2 py-0.5 rounded-full border border-[#facc15]/30">
+              <span className="text-[10px] font-mono text-neutral-400 bg-white/[0.04] px-2 py-0.5 rounded-[4px] border border-white/[0.08]">
                 {resolvedDates.length} {resolvedDates.length === 1 ? 'dia' : 'dias'}
               </span>
             </div>
 
-            {/* Direct Mode Switcher Pills - zero hidden "Repita" button */}
-            <div className="grid grid-cols-5 gap-1 bg-[#0A0A0C] p-1 rounded-md border border-white/10">
+            {/* Direct Mode Switcher Pills */}
+            <div className="grid grid-cols-5 gap-0.5 bg-[#0B0B0E] p-0.5 rounded-md border border-white/[0.08]">
               {repeatTabs.map((tab) => {
                 const active = repeatMode === tab.id;
                 return (
@@ -407,10 +406,10 @@ export default function TimeSlotModal({
                     key={tab.id}
                     type="button"
                     onClick={() => setRepeatMode(tab.id)}
-                    className={`py-1.5 rounded-lg text-[11px] font-extrabold transition-all ${
+                    className={`py-1.5 rounded-[4px] text-[11px] font-semibold transition-colors ${
                       active
-                        ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/50'
-                        : 'text-[#A1A1AA] hover:text-white border border-transparent'
+                        ? 'bg-[#facc15]/12 text-[#facc15] border border-[#facc15]/40'
+                        : 'text-neutral-500 hover:text-neutral-200 border border-transparent'
                     }`}
                   >
                     {tab.label}
@@ -421,8 +420,8 @@ export default function TimeSlotModal({
 
             {/* MODE: DIA */}
             {repeatMode === 'single' && (
-              <div className="space-y-2">
-                <label className="text-[10px] text-[#8E8E93] font-bold block">
+              <div className="space-y-1.5">
+                <label className="text-[10px] text-neutral-500 font-medium block">
                   Selecionar Dia do Compromisso
                 </label>
                 <ObsidianDateButton
@@ -443,21 +442,21 @@ export default function TimeSlotModal({
             {repeatMode === 'daily' && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] text-[#8E8E93] font-bold">Início</span>
+                  <span className="text-[10px] text-neutral-500 font-medium">Início</span>
                   <ObsidianDateButton compact value={singleDate} onChange={setSingleDate} />
                 </div>
                 <div>
-                  <span className="text-[10px] text-[#8E8E93] font-bold block mb-1">Duração (dias consecutivos)</span>
+                  <span className="text-[10px] text-neutral-500 font-medium block mb-1">Duração (dias consecutivos)</span>
                   <div className="grid grid-cols-4 gap-1">
                     {[7, 15, 30, 90].map((dCount) => (
                       <button
                         key={dCount}
                         type="button"
                         onClick={() => setDailyDurationDays(dCount)}
-                        className={`py-1.5 rounded-md text-[10px] font-bold border ${
+                        className={`py-1.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                           dailyDurationDays === dCount
-                            ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50'
-                            : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10'
+                            ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/40'
+                            : 'bg-[#0B0B0E] text-neutral-400 border-white/[0.08] hover:text-white'
                         }`}
                       >
                         {dCount}d
@@ -468,12 +467,12 @@ export default function TimeSlotModal({
               </div>
             )}
 
-            {/* MODE: SEMANAL (shown immediately!) */}
+            {/* MODE: SEMANAL */}
             {repeatMode === 'weekly' && (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div>
-                  <span className="text-[10px] text-[#8E8E93] font-bold block mb-1.5">
-                    Quais dias da semana repetir os mesmos horários?
+                  <span className="text-[10px] text-neutral-500 font-medium block mb-1.5">
+                    Dias da semana
                   </span>
                   <div className="grid grid-cols-7 gap-1">
                     {WEEKDAY_LABELS.map((lbl, idx) => {
@@ -483,10 +482,10 @@ export default function TimeSlotModal({
                           key={lbl}
                           type="button"
                           onClick={() => toggleItem(setWeeklyDays, idx)}
-                          className={`py-2 rounded-lg text-[10px] font-black border transition-all ${
+                          className={`py-1.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                             active
-                              ? 'bg-[#facc15] text-black border-[#facc15]'
-                              : 'bg-[#0A0A0C] text-[#8E8E93] border-white/10 hover:text-white'
+                              ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50'
+                              : 'bg-transparent text-neutral-400 border-white/[0.08] hover:text-white hover:bg-white/[0.04]'
                           }`}
                         >
                           {lbl}
@@ -498,21 +497,21 @@ export default function TimeSlotModal({
 
                 <div className="grid grid-cols-2 gap-2 items-end">
                   <div>
-                    <span className="text-[10px] text-[#8E8E93] font-bold block mb-1">A partir de</span>
+                    <span className="text-[10px] text-neutral-500 font-medium block mb-1">A partir de</span>
                     <ObsidianDateButton compact value={weeklyStartDate} onChange={setWeeklyStartDate} />
                   </div>
                   <div>
-                    <span className="text-[10px] text-[#8E8E93] font-bold block mb-1">Por quantas semanas?</span>
+                    <span className="text-[10px] text-neutral-500 font-medium block mb-1">Semanas</span>
                     <div className="grid grid-cols-4 gap-1">
                       {[4, 8, 12, 26].map((w) => (
                         <button
                           key={w}
                           type="button"
                           onClick={() => setWeeklyWeeksCount(w)}
-                          className={`py-1.5 rounded-lg text-[10px] font-bold border ${
+                          className={`py-1.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                             weeklyWeeksCount === w
-                              ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
-                              : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10'
+                              ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/40'
+                              : 'bg-[#0B0B0E] text-neutral-400 border-white/[0.08] hover:text-white'
                           }`}
                         >
                           {w}s
@@ -524,31 +523,31 @@ export default function TimeSlotModal({
               </div>
             )}
 
-            {/* MODE: MENSAL (shown immediately!) */}
+            {/* MODE: MENSAL */}
             {repeatMode === 'monthly' && (
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-0.5">
                   <button
                     type="button"
                     onClick={() => setMonthCursor(new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1))}
-                    className="p-1.5 rounded-lg bg-[#0A0A0C] border border-white/10 text-[#facc15]"
+                    className="p-1 rounded-[4px] text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
                   >
                     <ChevronLeft size={14} />
                   </button>
-                  <span className="text-xs font-black text-white">
+                  <span className="text-xs font-semibold text-neutral-200">
                     {MONTH_NAMES[monthCursor.getMonth()]} {monthCursor.getFullYear()}
                   </span>
                   <button
                     type="button"
                     onClick={() => setMonthCursor(new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1))}
-                    className="p-1.5 rounded-lg bg-[#0A0A0C] border border-white/10 text-[#facc15]"
+                    className="p-1 rounded-[4px] text-neutral-400 hover:text-white hover:bg-white/[0.06] transition-colors"
                   >
                     <ChevronRight size={14} />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-7 gap-1 text-center text-[9px] text-[#8E8E93] font-bold">
-                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <span key={i}>{d}</span>)}
+                <div className="grid grid-cols-7 gap-y-0.5 text-center text-[9px] text-neutral-500 font-medium">
+                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <span key={i} className="py-1">{d}</span>)}
                   {monthCalendarCells.map((dStr, idx) => {
                     if (!dStr) return <div key={`m-e-${idx}`} />;
                     const dayNum = parseInt(dStr.split('-')[2], 10);
@@ -558,10 +557,10 @@ export default function TimeSlotModal({
                         key={dStr}
                         type="button"
                         onClick={() => toggleItem(setMonthlyPickedDates, dStr)}
-                        className={`h-7 rounded-lg text-[10px] font-bold transition-all ${
+                        className={`w-7 h-7 mx-auto rounded-[4px] text-[11px] flex items-center justify-center transition-colors ${
                           picked
-                            ? 'bg-[#facc15] text-black font-black shadow-sm shadow-[#facc15]/25'
-                            : 'bg-[#0A0A0C] text-neutral-300 border border-white/5 hover:border-white/20'
+                            ? 'bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] font-bold'
+                            : 'text-neutral-300 hover:bg-white/[0.06] font-normal'
                         }`}
                       >
                         {dayNum}
@@ -571,8 +570,8 @@ export default function TimeSlotModal({
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-[#8E8E93] font-bold block mb-1">
-                    Repetir estes dias marcados por quantos meses?
+                  <span className="text-[10px] text-neutral-500 font-medium block mb-1">
+                    Repetir por quantos meses?
                   </span>
                   <div className="grid grid-cols-4 gap-1">
                     {[1, 3, 6, 12].map((h) => (
@@ -580,10 +579,10 @@ export default function TimeSlotModal({
                         key={h}
                         type="button"
                         onClick={() => setMonthlyHorizon(h)}
-                        className={`py-1.5 rounded-lg text-[10px] font-bold border ${
+                        className={`py-1.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                           monthlyHorizon === h
-                            ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
-                            : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10'
+                            ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/40'
+                            : 'bg-[#0B0B0E] text-neutral-400 border-white/[0.08] hover:text-white'
                         }`}
                       >
                         {h === 1 ? 'Este mês' : `${h} meses`}
@@ -594,24 +593,24 @@ export default function TimeSlotModal({
               </div>
             )}
 
-            {/* MODE: ANUAL (shown immediately!) */}
+            {/* MODE: ANUAL */}
             {repeatMode === 'annual' && (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-[#8E8E93] font-bold">Ano Alvo:</span>
-                  <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-neutral-500 font-medium">Ano Alvo:</span>
+                  <div className="flex items-center gap-1">
                     <button
                       type="button"
                       onClick={() => setAnnualYear((y) => y - 1)}
-                      className="p-1 rounded-lg bg-[#0A0A0C] border border-white/10 text-[#facc15]"
+                      className="p-1 rounded-[4px] text-neutral-400 hover:text-white hover:bg-white/[0.06]"
                     >
                       <ChevronLeft size={14} />
                     </button>
-                    <span className="text-xs font-black font-mono text-[#facc15] px-2">{annualYear}</span>
+                    <span className="text-xs font-semibold font-mono text-white px-2">{annualYear}</span>
                     <button
                       type="button"
                       onClick={() => setAnnualYear((y) => y + 1)}
-                      className="p-1 rounded-lg bg-[#0A0A0C] border border-white/10 text-[#facc15]"
+                      className="p-1 rounded-[4px] text-neutral-400 hover:text-white hover:bg-white/[0.06]"
                     >
                       <ChevronRight size={14} />
                     </button>
@@ -619,8 +618,8 @@ export default function TimeSlotModal({
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-[#8E8E93] font-bold block mb-1">
-                    Meses para repetir os mesmos horários:
+                  <span className="text-[10px] text-neutral-500 font-medium block mb-1">
+                    Meses:
                   </span>
                   <div className="grid grid-cols-4 gap-1">
                     {MONTH_SHORT.map((mLbl, idx) => {
@@ -630,10 +629,10 @@ export default function TimeSlotModal({
                           key={mLbl}
                           type="button"
                           onClick={() => toggleItem(setAnnualMonths, idx)}
-                          className={`py-1.5 rounded-lg text-[10px] font-black border ${
+                          className={`py-1.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                             active
-                              ? 'bg-[#facc15] text-black border-[#facc15]'
-                              : 'bg-[#0A0A0C] text-[#8E8E93] border-white/10'
+                              ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50'
+                              : 'bg-[#0B0B0E] text-neutral-400 border-white/[0.08] hover:text-white'
                           }`}
                         >
                           {mLbl}
@@ -644,10 +643,10 @@ export default function TimeSlotModal({
                 </div>
 
                 <div>
-                  <span className="text-[10px] text-[#8E8E93] font-bold block mb-1">
+                  <span className="text-[10px] text-neutral-500 font-medium block mb-1">
                     Dia(s) do mês:
                   </span>
-                  <div className="grid grid-cols-7 gap-1">
+                  <div className="grid grid-cols-7 gap-0.5">
                     {Array.from({ length: 31 }, (_, i) => i + 1).map((dayNum) => {
                       const active = annualDays.includes(dayNum);
                       return (
@@ -655,10 +654,10 @@ export default function TimeSlotModal({
                           key={dayNum}
                           type="button"
                           onClick={() => toggleItem(setAnnualDays, dayNum)}
-                          className={`h-7 rounded-lg text-[10px] font-bold border ${
+                          className={`w-7 h-7 mx-auto rounded-[4px] text-[10px] transition-colors ${
                             active
-                              ? 'bg-[#facc15] text-black border-[#facc15] font-black'
-                              : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/5'
+                              ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/50 font-bold'
+                              : 'text-neutral-300 hover:bg-white/[0.06] font-normal'
                           }`}
                         >
                           {dayNum}
@@ -675,7 +674,7 @@ export default function TimeSlotModal({
           <div className="grid grid-cols-1 gap-2.5">
             {projects && projects.length > 0 && (
               <div>
-                <label className="text-[11px] font-bold text-[#A1A1AA] uppercase tracking-wider block mb-1.5">
+                <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
                   Lista / Categoria
                 </label>
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
@@ -684,10 +683,10 @@ export default function TimeSlotModal({
                       key={p.id}
                       type="button"
                       onClick={() => setProjectId(p.id)}
-                      className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold shrink-0 border transition-all ${
+                      className={`px-2.5 py-1 rounded-[4px] text-[11px] font-medium shrink-0 border transition-colors ${
                         projectId === p.id
-                          ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
-                          : 'bg-[#141417] text-[#8E8E93] border-white/10 hover:text-white'
+                          ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/40'
+                          : 'bg-[#121216] text-neutral-400 border-white/[0.08] hover:text-white'
                       }`}
                     >
                       {p.name}
@@ -698,19 +697,19 @@ export default function TimeSlotModal({
             )}
 
             {/* Alarm & Reminder Controls */}
-            <div className="bg-[#141417] border border-white/10 rounded-md p-2.5 space-y-2">
+            <div className="bg-[#121216] border border-white/[0.08] rounded-md p-2.5 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-neutral-200 flex items-center gap-1.5">
-                  <Bell size={13} className="text-[#facc15]" />
+                <span className="text-[11px] font-medium text-neutral-300 flex items-center gap-1.5">
+                  <Bell size={13} className="text-neutral-400" />
                   <span>Alarme despertador</span>
                 </span>
                 <button
                   type="button"
                   onClick={() => setAlarmEnabled((p) => !p)}
-                  className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                  className={`px-2 py-0.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                     alarmEnabled
-                      ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15]'
-                      : 'bg-[#0A0A0C] border-white/10 text-neutral-500'
+                      ? 'bg-[#facc15]/12 border-[#facc15]/40 text-[#facc15]'
+                      : 'bg-[#0B0B0E] border-white/[0.08] text-neutral-500'
                   }`}
                 >
                   {alarmEnabled ? 'Ativo' : 'Silencioso'}
@@ -729,10 +728,10 @@ export default function TimeSlotModal({
                       key={opt.value}
                       type="button"
                       onClick={() => setReminderOffset(opt.value)}
-                      className={`px-2 py-0.5 rounded text-[10px] shrink-0 border ${
+                      className={`px-2 py-0.5 rounded-[4px] text-[10px] shrink-0 border transition-colors ${
                         reminderOffset === opt.value
-                          ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15] font-semibold'
-                          : 'bg-[#0A0A0C] border-white/10 text-neutral-400'
+                          ? 'bg-[#facc15]/12 border-[#facc15]/40 text-[#facc15] font-semibold'
+                          : 'bg-[#0B0B0E] border-white/[0.08] text-neutral-400 hover:text-white'
                       }`}
                     >
                       {opt.label}
@@ -743,25 +742,28 @@ export default function TimeSlotModal({
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-[#A1A1AA] uppercase tracking-wider block mb-1.5">
+              <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
                 Prioridade
               </label>
               <div className="grid grid-cols-4 gap-1.5">
-                {priorityOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setPriority(opt.value)}
-                    className={`py-1.5 px-2 rounded-xl text-[11px] font-bold border flex items-center justify-center gap-1 transition-all ${
-                      priority === opt.value
-                        ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
-                        : 'bg-[#141417] text-[#8E8E93] border-white/10 hover:text-white'
-                    }`}
-                  >
-                    <Flag size={11} className="text-[#facc15]" />
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
+                {priorityOptions.map((opt) => {
+                  const selected = priority === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setPriority(opt.value)}
+                      className={`py-1.5 px-2 rounded-[4px] text-[11px] font-medium border flex items-center justify-center gap-1 transition-colors ${
+                        selected
+                          ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/40'
+                          : 'bg-[#121216] text-neutral-400 border-white/[0.08] hover:text-white'
+                      }`}
+                    >
+                      <Flag size={10} className={selected ? 'text-[#facc15]' : 'text-neutral-500'} />
+                      <span>{opt.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -771,15 +773,15 @@ export default function TimeSlotModal({
             <button
               type="submit"
               disabled={!title.trim()}
-              className={`w-full py-3 rounded-lg text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
+              className={`w-full py-2.5 rounded-md text-xs font-semibold tracking-wide border flex items-center justify-center gap-2 transition-colors active:scale-[0.99] ${
                 title.trim()
-                  ? 'bg-[#facc15] hover:bg-[#eab308] text-black font-bold'
-                  : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+                  ? 'bg-[#facc15]/15 hover:bg-[#facc15]/25 border-[#facc15]/50 text-[#facc15]'
+                  : 'bg-white/[0.04] border-white/[0.08] text-neutral-500 cursor-not-allowed'
               }`}
             >
-              <Check size={15} className="stroke-[3]" />
+              <Check size={14} className="stroke-[2.5]" />
               <span>
-                Confirmar Reserva ({resolvedDates.length} {resolvedDates.length === 1 ? 'dia' : 'dias'} · {allTimes.length} {allTimes.length === 1 ? 'horário' : 'horários'})
+                Confirmar ({resolvedDates.length} {resolvedDates.length === 1 ? 'dia' : 'dias'} · {allTimes.length} {allTimes.length === 1 ? 'horário' : 'horários'})
               </span>
             </button>
           </div>
@@ -811,6 +813,7 @@ export default function TimeSlotModal({
           setTimePickerTarget(null);
         }}
       />
-    </div>
+    </div>,
+    document.body
   );
 }
