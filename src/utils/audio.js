@@ -38,6 +38,7 @@ class SoundManager {
 
   // Play short notification tone by name
   playSound(name = 'chime', vol = 0.5) {
+    if (name === 'none') return;
     try {
       this.init();
       const now = this.ctx.currentTime;
@@ -135,8 +136,10 @@ class SoundManager {
       }
     }
 
-    // CASE 1: Custom audio file uploaded from phone
-    if (sound === 'custom' && customAudioUrl) {
+    // CASE 0: Vibration-only / Silent sound profile
+    if (sound === 'none') {
+      // Only vibration runs (no synthesized noise)
+    } else if (sound === 'custom' && customAudioUrl) {
       try {
         const audio = new Audio(customAudioUrl);
         audio.loop = true;
@@ -161,6 +164,7 @@ class SoundManager {
   }
 
   startSynthAlarmLoop(type = 'radar', volume = 0.8) {
+    if (type === 'none') return;
     this.init();
 
     const triggerCycle = () => {

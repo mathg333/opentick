@@ -19,7 +19,10 @@ import {
   Edit2,
   Tag as TagIcon,
   Repeat,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Bell,
+  BellOff,
+  RotateCcw
 } from 'lucide-react';
 import CustomDatePickerModal from './CustomDatePickerModal';
 import { getTaskTimes, getTaskDates, getTodayYMD } from '../utils/taskSchedule';
@@ -27,6 +30,7 @@ import EditListModal from './EditListModal';
 import TimePickerModal from './TimePickerModal';
 import SegmentedProgressCard from './SegmentedProgressCard';
 import HomeHabitCard from './HomeHabitCard';
+import { ObsidianSelect } from './ObsidianControls';
 
 export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMenu }) {
   const { 
@@ -37,8 +41,11 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     addTask, 
     addTasksForMultipleDates,
     updateTask, 
-    toggleTaskCompleted, 
+    toggleTaskCompleted,
     deleteTask,
+    moveTaskToTrash,
+    restoreTask,
+    emptyTrash,
     addSubtask,
     toggleSubtask,
     deleteSubtask,
@@ -57,9 +64,15 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
   const [editingTimeSlot, setEditingTimeSlot] = useState(null);
   const [detailCalMonth, setDetailCalMonth] = useState(() => new Date());
   const [newTagInput, setNewTagInput] = useState('');
+  const [isCreatingListInline, setIsCreatingListInline] = useState(false);
+  const [inlineListName, setInlineListName] = useState('');
+  const [isAddingSubtaskInline, setIsAddingSubtaskInline] = useState(false);
+  const [inlineSubtaskTitle, setInlineSubtaskTitle] = useState('');
   const [quickTitle, setQuickTitle] = useState('');
   const [quickDueDate, setQuickDueDate] = useState('');
   const [quickPriority, setQuickPriority] = useState(0);
+  const [confirmEmptyTrash, setConfirmEmptyTrash] = useState(false);
+  const [confirmPermanentDeleteId, setConfirmPermanentDeleteId] = useState(null);
 
   const [collapsedSections, setCollapsedSections] = useState({
     noDate: false,
@@ -73,14 +86,16 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
   // Current view title and active project
   let viewTitle = 'Caixa de Entrada';
   let currentProject = null;
-  let filteredTasks = state.tasks;
+  const activeTasks = (state.tasks || []).filter(t => !t.deleted);
+  const trashedTasks = (state.tasks || []).filter(t => t.deleted);
+  let filteredTasks = activeTasks;
 
   if (activeView === 'tasks-inbox') {
     viewTitle = 'Caixa de Entrada';
-    filteredTasks = state.tasks.filter(t => t.projectId === 'inbox');
+    filteredTasks = activeTasks.filter(t => t.projectId === 'inbox');
   } else if (activeView === 'tasks-today') {
     viewTitle = 'Hoje';
-    filteredTasks = state.tasks.filter(t => {
+    filteredTasks = activeTasks.filter(t => {
       const matchDue = t.dueDate === todayStr;
       const matchRecur = t.recurringDates && t.recurringDates.includes(todayStr);
       const overdue = !t.completed && t.dueDate && t.dueDate < todayStr;
@@ -88,12 +103,15 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     });
   } else if (activeView === 'tasks-completed') {
     viewTitle = 'Concluído';
-    filteredTasks = state.tasks.filter(t => t.completed);
+    filteredTasks = activeTasks.filter(t => t.completed);
+  } else if (activeView === 'tasks-trash') {
+    viewTitle = 'Lixeira';
+    filteredTasks = trashedTasks;
   } else if (activeView.startsWith('project-')) {
     const projId = activeView.replace('project-', '');
     currentProject = state.projects.find(p => p.id === projId);
     viewTitle = currentProject ? currentProject.name : 'Lista';
-    filteredTasks = state.tasks.filter(t => t.projectId === projId);
+    filteredTasks = activeTasks.filter(t => t.projectId === projId);
   }
 
   const pendingTasks = filteredTasks.filter(t => !t.completed);
@@ -114,13 +132,13 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     setCollapsedSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const selectedTask = state.tasks.find(t => t.id === selectedTaskId);
+  const selectedTask = activeTasks.find(t => t.id === selectedTaskId);
 
   const priorityColors = {
-    0: 'text-neutral-500',
-    1: 'text-[#facc15]/60',
-    2: 'text-[#facc15]',
-    3: 'text-[#facc15] fill-[#facc15]'
+    0: 'text-neutral-600',
+    1: 'text-neutral-400',
+    2: 'text-amber-400',
+    3: 'text-rose-400 fill-rose-400'
   };
 
   const handleQuickAdd = (e) => {
@@ -148,48 +166,60 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
   // Multiple Dates & Multiple Times Confirmation Handler
   const handleMultipleDatesSelected = (datesArg, firstTimeArg = '', metaArg = {}) => {
     const dates = Array.isArray(datesArg) ? datesArg : (datesArg?.dates || []);
-    const times = Array.isArray(metaArg?.times)
+    const hasExplicitTimes = Array.isArray(metaArg?.times);
+    const times = hasExplicitTimes
       ? metaArg.times
       : (firstTimeArg ? [firstTimeArg] : (datesArg?.time ? [datesArg.time] : []));
     const pattern = metaArg?.pattern || null;
-
-    if (!dates || dates.length === 0) return;
-    let targetProj = 'inbox';
-    if (activeView.startsWith('project-')) {
-      targetProj = activeView.replace('project-', '');
-    }
+    const alarmPatch = metaArg?.alarmEnabled !== undefined ? { alarmEnabled: metaArg.alarmEnabled } : {};
+    const offsetPatch = metaArg?.reminderOffset !== undefined ? { reminderOffset: metaArg.reminderOffset } : {};
 
     if (selectedTask) {
-      const nextTimes = times.length > 0 ? times : getTaskTimes(selectedTask);
+      const nextTimes = hasExplicitTimes
+        ? metaArg.times
+        : (times.length > 0 ? times : getTaskTimes(selectedTask));
       updateTask(selectedTask.id, {
-        dueDate: dates[0],
+        dueDate: dates[0] || '',
         recurringDates: dates,
         recurringTimes: nextTimes,
         startTime: nextTimes[0] || '',
-        recurrencePattern: pattern || selectedTask.recurrencePattern || null
+        recurrencePattern: dates.length > 0 ? pattern : null,
+        ...alarmPatch,
+        ...offsetPatch
       });
-    } else {
+    } else if (dates.length > 0) {
+      let targetProj = 'inbox';
+      if (activeView.startsWith('project-')) {
+        targetProj = activeView.replace('project-', '');
+      }
       addTasksForMultipleDates({
         title: quickTitle.trim() || 'Nova Tarefa Programada',
         projectId: targetProj,
         recurringTimes: times,
         startTime: times[0] || '',
         recurrencePattern: pattern,
-        priority: 1
+        priority: 1,
+        ...alarmPatch,
+        ...offsetPatch
       }, dates);
       setQuickTitle('');
     }
   };
 
-  const handleApplyCustomFromTaskView = ({ dates, times, pattern, taskAction, taskId, title, projectId }) => {
+  const handleApplyCustomFromTaskView = ({ dates, times, pattern, taskAction, taskId, title, projectId, alarmEnabled, reminderOffset }) => {
     if (!dates || dates.length === 0) return;
+    const alarmFields = {
+      ...(alarmEnabled !== undefined ? { alarmEnabled } : {}),
+      ...(reminderOffset !== undefined ? { reminderOffset } : {})
+    };
     if (selectedTask) {
       updateTask(selectedTask.id, {
         dueDate: dates[0],
         recurringDates: dates,
         recurringTimes: times,
         startTime: times[0] || '',
-        recurrencePattern: pattern
+        recurrencePattern: pattern,
+        ...alarmFields
       });
       return;
     }
@@ -199,7 +229,8 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
         recurringDates: dates,
         recurringTimes: times,
         startTime: times[0] || '',
-        recurrencePattern: pattern
+        recurrencePattern: pattern,
+        ...alarmFields
       });
       return;
     }
@@ -213,7 +244,8 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
       recurringTimes: times,
       startTime: times[0] || '',
       recurrencePattern: pattern,
-      priority: 1
+      priority: 1,
+      ...alarmFields
     }, dates);
     setQuickTitle('');
   };
@@ -253,164 +285,248 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     <div className="flex-1 flex h-full overflow-hidden bg-[#000000]">
       {/* Main Task List Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Top Bar with Layout Switcher (Lista / Trello) and Edit List */}
-        <div className="px-4 py-3 flex items-center justify-between bg-[#000000] shrink-0 border-b border-[#1c1c1e]">
-          <div className="flex items-center gap-2">
-            <h1 className="hidden md:block text-lg font-bold text-white tracking-tight truncate max-w-[180px] sm:max-w-[260px]">
-              {viewTitle}
-            </h1>
-            {currentProject && (
-              <button
-                onClick={() => setIsEditListModalOpen(true)}
-                className="p-1 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
-                title="Renomear ou Editar Lista"
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
-            )}
-          </div>
+        {/* Top Bar with Layout Switcher LEFT & Personalizado RIGHT */}
+        {activeView !== 'tasks-trash' && (
+          <div className="px-4 py-2 flex items-center justify-between gap-2 bg-[#000000] shrink-0 border-b border-[#1c1c1e]">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center bg-[#111114] p-0.5 rounded-[5px] border border-white/10 shrink-0">
+                <button
+                  onClick={() => setViewLayout('list')}
+                  className={`px-2.5 py-1 rounded-[4px] text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+                    viewLayout === 'list' ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/45' : 'text-neutral-400 hover:text-white border border-transparent'
+                  }`}
+                  title="Visualização em Lista"
+                >
+                  <ListIcon className="w-3.5 h-3.5" />
+                  <span>Lista</span>
+                </button>
+                <button
+                  onClick={() => setViewLayout('kanban')}
+                  className={`px-2.5 py-1 rounded-[4px] text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+                    viewLayout === 'kanban' ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/45' : 'text-neutral-400 hover:text-white border border-transparent'
+                  }`}
+                  title="Visualização em Quadro Trello"
+                >
+                  <Kanban className="w-3.5 h-3.5" />
+                  <span>Trello</span>
+                </button>
+              </div>
 
-          <div className="flex items-center gap-2 ml-auto">
-            {/* View Layout Switcher (Lista vs Trello) */}
-            <div className="flex items-center bg-[#1c1c1e] p-0.5 rounded-xl border border-[#2c2c2e]">
-              <button
-                onClick={() => setViewLayout('list')}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                  viewLayout === 'list' ? 'bg-[#facc15] text-black font-bold shadow-xs' : 'text-neutral-400 hover:text-white'
-                }`}
-                title="Visualização em Lista"
-              >
-                <ListIcon className="w-4 h-4" />
-                <span>Lista</span>
-              </button>
-              <button
-                onClick={() => setViewLayout('kanban')}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                  viewLayout === 'kanban' ? 'bg-[#facc15] text-black font-bold shadow-xs' : 'text-neutral-400 hover:text-white'
-                }`}
-                title="Visualização em Quadro Trello"
-              >
-                <Kanban className="w-4 h-4" />
-                <span>Trello</span>
-              </button>
+              {currentProject && (
+                <button
+                  onClick={() => setIsEditListModalOpen(true)}
+                  className="p-1.5 text-neutral-300 hover:text-[#facc15] bg-[#141417] hover:bg-[#1e1e22] border border-white/10 rounded-[4px] active:scale-95 transition-all"
+                  title="Renomear ou Editar Lista"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            <button 
+            <button
               onClick={() => setIsCustomDateModalOpen(true)}
-              className="px-2.5 py-1.5 text-[#facc15] bg-[#1c1c1e] hover:bg-[#28282e] border border-[#facc15]/35 rounded-xl transition-colors flex items-center gap-1.5 text-[11px] font-bold"
+              className="px-2.5 py-1.5 text-neutral-200 hover:text-[#facc15] bg-[#111114] hover:bg-[#1c1c20] border border-white/15 hover:border-[#facc15]/45 rounded-[4px] transition-all flex items-center gap-1.5 text-[11px] font-bold shrink-0 active:scale-95"
               title="Personalizado: Dias, Datas & Vários Horários"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#facc15]" />
-              <span className="hidden sm:inline">Personalizado</span>
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#facc15]/80" />
+              <span>Personalizado</span>
             </button>
           </div>
-        </div>
+        )}
 
-        {/* LAYOUT 1: LIST VIEW (Clean Mobile First Layout) */}
-        {viewLayout === 'list' && (
-          <div className="flex-1 overflow-y-auto px-3.5 md:px-6 pt-1.5 pb-32 space-y-2.5">
-            {/* Quick Add Bar - Compact & High-Positioned */}
-            <form 
-              onSubmit={handleQuickAdd}
-              className="bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl px-3 py-2 flex items-center gap-2 shadow-md"
-            >
-              <Plus className="w-4 h-4 text-[#facc15] shrink-0 ml-0.5" />
-              <input
-                type="text"
-                placeholder={`Adicionar em "${viewTitle}"...`}
-                value={quickTitle}
-                onChange={e => setQuickTitle(e.target.value)}
-                className="flex-1 bg-transparent text-xs text-white placeholder-neutral-500 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setIsCustomDateModalOpen(true)}
-                className="p-1 text-neutral-400 hover:text-[#facc15]"
-                title="Escolher datas múltiplas / horário"
-              >
-                <CalendarIcon className="w-4 h-4 text-[#facc15]" />
-              </button>
-              <button
-                type="submit"
-                disabled={!quickTitle.trim()}
-                className="px-3 py-1 bg-[#facc15] hover:bg-[#eab308] disabled:opacity-30 text-black text-xs font-bold rounded-lg shrink-0 transition-colors shadow-sm"
-              >
-                Salvar
-              </button>
-            </form>
+        {/* LAYOUT 1: LIST VIEW (Clean Minimalist Compact Layout) */}
+        {(viewLayout === 'list' || activeView === 'tasks-trash') && (
+          <div className="flex-1 overflow-y-auto px-5 md:px-6 pt-2 pb-32">
+            <div className="max-w-lg mx-auto space-y-2.5">
+              {activeView !== 'tasks-trash' && (
+                <form
+                  onSubmit={handleQuickAdd}
+                  className="bg-[#141417] border border-[#26262a] rounded-[4px] px-2.5 py-1.5 flex items-center gap-2"
+                >
+                  <Plus className="w-3.5 h-3.5 text-neutral-400 shrink-0 ml-0.5" />
+                  <input
+                    type="text"
+                    placeholder={`Adicionar em "${viewTitle}"...`}
+                    value={quickTitle}
+                    onChange={e => setQuickTitle(e.target.value)}
+                    className="flex-1 min-w-0 bg-transparent text-xs text-white placeholder-neutral-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomDateModalOpen(true)}
+                    className="p-1 text-neutral-400 hover:text-[#facc15]"
+                    title="Escolher datas múltiplas / horário"
+                  >
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!quickTitle.trim()}
+                    className="px-2.5 py-1 bg-[#facc15]/15 hover:bg-[#facc15]/25 disabled:opacity-30 text-[#facc15] border border-[#facc15]/40 text-[11px] font-bold rounded-[4px] shrink-0 transition-colors"
+                  >
+                    Salvar
+                  </button>
+                </form>
+              )}
 
-            {/* In "Hoje" View: Show Extended Segmented Progress Card, Today's Tasks, and Rich Habit Tracker Card! */}
-            {activeView === 'tasks-today' ? (
-              <div className="space-y-4">
-                {/* 1. Extended Segmented Progress Meter Bar Card (Image 2) */}
+            {activeView === 'tasks-trash' ? (
+              <div className="space-y-2.5">
+                <div className="bg-[#141417] border border-[#26262a] rounded-[4px] px-3 py-2.5 flex items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-xs font-bold text-white">Lixeira</h3>
+                    <p className="text-[10px] text-neutral-400">{trashedTasks.length} item(ns) excluído(s)</p>
+                  </div>
+                  {trashedTasks.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirmEmptyTrash) {
+                          emptyTrash();
+                          setConfirmEmptyTrash(false);
+                        } else {
+                          setConfirmEmptyTrash(true);
+                          setTimeout(() => setConfirmEmptyTrash(false), 3000);
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-[4px] border text-[11px] font-bold transition-colors ${
+                        confirmEmptyTrash
+                          ? 'bg-rose-500/20 border-rose-500/60 text-rose-300'
+                          : 'bg-[#1c1c1e] border-white/10 text-neutral-300 hover:text-rose-400'
+                      }`}
+                    >
+                      {confirmEmptyTrash ? 'Confirmar Esvaziar?' : 'Esvaziar Lixeira'}
+                    </button>
+                  )}
+                </div>
+
+                {trashedTasks.length === 0 ? (
+                  <div className="py-8 bg-[#0f0f12] border border-[#222226] rounded-[4px] text-center text-xs text-neutral-500">
+                    A lixeira está vazia.
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    {trashedTasks.map(task => (
+                      <div
+                        key={task.id}
+                        className="bg-[#141417] border border-[#26262a] rounded-[4px] px-3 py-2 flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <span className="text-xs font-medium text-neutral-300 line-through truncate block">
+                            {task.title}
+                          </span>
+                          {task.dueDate && (
+                            <span className="text-[10px] text-neutral-500">{task.dueDate}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => restoreTask(task.id)}
+                            className="px-2 py-1 rounded-[4px] bg-[#1c1c20] hover:bg-[#facc15]/15 border border-white/10 hover:border-[#facc15]/45 text-neutral-300 hover:text-[#facc15] text-[10px] font-bold flex items-center gap-1"
+                            title="Restaurar tarefa"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Restaurar</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirmPermanentDeleteId === task.id) {
+                                deleteTask(task.id);
+                                setConfirmPermanentDeleteId(null);
+                              } else {
+                                setConfirmPermanentDeleteId(task.id);
+                                setTimeout(() => setConfirmPermanentDeleteId(null), 3000);
+                              }
+                            }}
+                            className={`px-2 py-1 rounded-[4px] border text-[10px] font-bold ${
+                              confirmPermanentDeleteId === task.id
+                                ? 'bg-rose-500/20 border-rose-500/60 text-rose-300'
+                                : 'bg-[#1c1c20] border-white/10 text-neutral-400 hover:text-rose-400'
+                            }`}
+                          >
+                            {confirmPermanentDeleteId === task.id ? 'Confirmar' : 'Apagar'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : activeView === 'tasks-today' ? (
+              <div className="space-y-3">
+                {/* 1. Extended Segmented Progress Meter Bar Card */}
                 <SegmentedProgressCard store={store} />
 
                 {/* 2. Tasks for Today */}
                 {todayTasks.length === 0 ? (
-                  <div className="py-6 bg-[#0f0f12] border border-[#222226] rounded-2xl flex flex-col items-center justify-center text-center px-4 shadow-lg">
-                    <div className="w-11 h-11 rounded-full bg-[#18181c] border border-[#282830] flex items-center justify-center mb-2 text-xl shadow-inner">
+                  <div className="py-5 bg-[#0f0f12] border border-[#222226] rounded-[4px] flex flex-col items-center justify-center text-center px-4">
+                    <div className="w-9 h-9 rounded-[4px] bg-[#18181c] border border-[#282830] flex items-center justify-center mb-2 text-base">
                       ☀️
                     </div>
-                    <h3 className="text-sm font-bold text-white mb-0.5">Nenhuma tarefa pendente para hoje!</h3>
-                    <p className="text-[11px] text-neutral-400 max-w-xs mb-3">
-                      Adicione uma nova tarefa no campo acima ou selecione datas específicas no calendário.
+                    <h3 className="text-xs font-bold text-white mb-0.5">Nenhuma tarefa pendente para hoje</h3>
+                    <p className="text-[11px] text-neutral-400 max-w-xs mb-2.5">
+                      Adicione uma tarefa acima ou escolha datas no calendário.
                     </p>
                     <button
                       type="button"
                       onClick={() => setIsCustomDateModalOpen(true)}
-                      className="px-3.5 py-1.5 bg-[#facc15] hover:bg-[#eab308] text-black font-bold text-xs font-bold rounded-xl shadow-md flex items-center gap-2"
+                      className="px-3 py-1.5 bg-[#18181c] hover:bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] font-bold text-[11px] rounded-[4px] flex items-center gap-1.5"
                     >
                       <CalendarIcon className="w-3.5 h-3.5" />
                       <span>Agendar no Calendário</span>
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-2.5">
+                  <div className="space-y-1.5">
                     {todayTasks.map(task => {
                       const recurCount = task.recurringDates ? task.recurringDates.length : 0;
+                      const timesList = getTaskTimes(task);
                       return (
                         <div
                           key={task.id}
                           onClick={() => setSelectedTaskId(task.id)}
-                          className="bg-[#1c1c1e] hover:bg-[#222226] border border-[#262629] rounded-2xl p-4 flex items-center justify-between gap-3 cursor-pointer shadow-lg active:scale-99 transition-all"
+                          className="bg-[#141417] hover:bg-[#1a1a1e] border border-[#26262a] rounded-[4px] px-3 py-2 flex items-center justify-between gap-2.5 cursor-pointer transition-colors"
                         >
-                          <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                          <div className="flex items-center gap-2.5 flex-1 min-w-0">
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleTaskCompleted(task.id);
                               }}
-                              className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors shrink-0 ${
-                                task.completed ? 'bg-[#facc15] border-[#facc15]' : 'border-neutral-500 hover:border-neutral-300'
+                              className={`w-4 h-4 rounded-[3px] border flex items-center justify-center transition-colors shrink-0 ${
+                                task.completed ? 'bg-[#facc15]/20 border-[#facc15] text-[#facc15]' : 'border-neutral-500 hover:border-neutral-300'
                               }`}
                             >
-                              {task.completed && <Check className="w-3.5 h-3.5 text-black stroke-[3]" />}
+                              {task.completed && <Check className="w-3 h-3 stroke-[3]" />}
                             </button>
                             <div className="flex-1 min-w-0">
-                              <span className="text-sm font-semibold text-neutral-100 truncate block">
+                              <span className="text-[13px] font-medium text-neutral-100 truncate block">
                                 {task.title}
                               </span>
-                              <div className="flex items-center flex-wrap gap-2 mt-1">
-                                {getTaskTimes(task).length > 0 && (
-                                  <span className="text-xs text-[#facc15] flex items-center gap-1 font-bold">
-                                    <Clock className="w-3.5 h-3.5 text-[#facc15]" />
-                                    {getTaskTimes(task).join(', ')}
-                                  </span>
-                                )}
-                                {recurCount > 1 && (
-                                  <span className="text-[10px] bg-[#facc15]/20 text-[#facc15] font-bold px-2 py-0.5 rounded-full border border-[#facc15]/30 flex items-center gap-1">
-                                    <Repeat className="w-3 h-3 text-[#facc15]" />
-                                    {recurCount} datas agendadas
-                                  </span>
-                                )}
-                              </div>
+                              {(timesList.length > 0 || recurCount > 1) && (
+                                <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
+                                  {timesList.length > 0 && (
+                                    <span className="text-[11px] text-neutral-300 flex items-center gap-1 font-medium">
+                                      <Clock className="w-3 h-3 text-[#facc15]/80" />
+                                      {timesList.join(', ')}
+                                    </span>
+                                  )}
+                                  {recurCount > 1 && (
+                                    <span className="text-[10px] bg-white/5 text-neutral-400 font-medium px-1.5 py-0.5 rounded-[3px] border border-white/10 flex items-center gap-1">
+                                      <Repeat className="w-2.5 h-2.5 text-neutral-400" />
+                                      {recurCount} datas
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             {task.priority > 0 && (
-                              <Flag className={`w-4 h-4 ${priorityColors[task.priority]} shrink-0`} />
+                              <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
                             )}
                             <button
                               type="button"
@@ -418,10 +534,10 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                 e.stopPropagation();
                                 onStartPomodoroForTask(task);
                               }}
-                              className="p-1.5 text-neutral-400 hover:text-[#facc15] rounded-lg transition-colors"
+                              className="p-1 text-neutral-500 hover:text-[#facc15] rounded-[3px] transition-colors"
                               title="Iniciar Foco"
                             >
-                              <Play className="w-4 h-4 text-[#facc15]" />
+                              <Play className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
@@ -448,7 +564,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                           <div
                             key={task.id}
                             onClick={() => setSelectedTaskId(task.id)}
-                            className="bg-[#141416] border border-[#222226] rounded-xl p-3 flex items-center justify-between gap-3 cursor-pointer"
+                            className="bg-[#131316] border border-[#242429] rounded-[4px] px-3 py-2 flex items-center justify-between gap-3 cursor-pointer"
                           >
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                               <button
@@ -457,9 +573,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                   e.stopPropagation();
                                   toggleTaskCompleted(task.id);
                                 }}
-                                className="w-5 h-5 rounded-md bg-[#facc15] border border-[#facc15] flex items-center justify-center shrink-0"
+                                className="w-4 h-4 rounded-[3px] bg-[#facc15]/20 border border-[#facc15] flex items-center justify-center shrink-0"
                               >
-                                <Check className="w-3 h-3 text-black stroke-[3]" />
+                                <Check className="w-2.5 h-2.5 text-[#facc15] stroke-[3]" />
                               </button>
                               <span className="text-xs text-neutral-400 line-through truncate">
                                 {task.title}
@@ -469,7 +585,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteTask(task.id);
+                                moveTaskToTrash(task.id);
                               }}
                               className="text-neutral-500 hover:text-rose-400 p-1"
                             >
@@ -490,7 +606,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               <>
                 {/* Section: Sem Data */}
                 {noDateTasks.length > 0 && (
-                  <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
+                  <div className="bg-[#141417] rounded-[6px] p-3 border border-[#26262a]">
                     <div 
                       onClick={() => toggleSection('noDate')}
                       className="flex items-center justify-between cursor-pointer select-none pb-2"
@@ -517,9 +633,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                   e.stopPropagation();
                                   toggleTaskCompleted(task.id);
                                 }}
-                                className="w-5 h-5 rounded-md border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                                className="w-4 h-4 rounded-[3px] border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
                               >
-                                {task.completed && <Check className="w-3.5 h-3.5 text-black stroke-[3]" />}
+                                {task.completed && <Check className="w-3 h-3 text-[#facc15] stroke-[3]" />}
                               </button>
                               <span className="text-sm font-medium text-neutral-100 truncate block">
                                 {task.title}
@@ -536,8 +652,76 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 )}
 
                 {/* Section: Próximas */}
+                {/* Section: Hoje & Atrasadas (Inbox & Listas Personalizadas) */}
+                {todayTasks.length > 0 && (
+                  <div className="bg-[#141417] rounded-[6px] p-3 border border-[#26262a]">
+                    <div
+                      onClick={() => toggleSection('today')}
+                      className="flex items-center justify-between cursor-pointer select-none pb-1.5"
+                    >
+                      <span className="text-xs font-bold text-white uppercase tracking-wider">Hoje & Atrasadas</span>
+                      <div className="flex items-center gap-1 text-xs text-neutral-400">
+                        <span className="font-mono">{todayTasks.length}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${collapsedSections.today ? '-rotate-90' : ''}`} />
+                      </div>
+                    </div>
+
+                    {!collapsedSections.today && (
+                      <div className="space-y-1.5 pt-1.5">
+                        {todayTasks.map(task => {
+                          const recurCount = task.recurringDates ? task.recurringDates.length : 0;
+                          const timesList = getTaskTimes(task);
+                          return (
+                            <div
+                              key={task.id}
+                              onClick={() => setSelectedTaskId(task.id)}
+                              className="bg-[#101013] hover:bg-[#19191d] border border-[#242429] rounded-[4px] px-2.5 py-2 flex items-center justify-between gap-2 cursor-pointer"
+                            >
+                              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleTaskCompleted(task.id);
+                                  }}
+                                  className="w-4 h-4 rounded-[3px] border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                                >
+                                  {task.completed && <Check className="w-3 h-3 text-[#facc15] stroke-[3]" />}
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-xs font-medium text-neutral-100 truncate block">
+                                    {task.title}
+                                  </span>
+                                  {(task.dueDate || timesList.length > 0 || recurCount > 1) && (
+                                    <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
+                                      {(task.dueDate || timesList.length > 0) && (
+                                        <span className={`text-[10px] ${task.dueDate && task.dueDate < todayStr ? 'text-rose-400' : 'text-neutral-400'}`}>
+                                          {task.dueDate || 'Hoje'}{timesList.length > 0 ? ` às ${timesList.join(', ')}` : ''}
+                                        </span>
+                                      )}
+                                      {recurCount > 1 && (
+                                        <span className="text-[10px] bg-white/5 text-neutral-400 px-1.5 py-0.5 rounded-[3px] border border-white/10 flex items-center gap-1">
+                                          <Repeat className="w-2.5 h-2.5" />
+                                          {recurCount} datas
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              {task.priority > 0 && (
+                                <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {upcomingTasks.length > 0 && (
-                  <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
+                  <div className="bg-[#141417] rounded-[6px] p-3 border border-[#26262a]">
                     <div 
                       onClick={() => toggleSection('upcoming')}
                       className="flex items-center justify-between cursor-pointer select-none pb-2"
@@ -566,9 +750,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                     e.stopPropagation();
                                     toggleTaskCompleted(task.id);
                                   }}
-                                  className="w-5 h-5 rounded-md border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                                  className="w-4 h-4 rounded-[3px] border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
                                 >
-                                  {task.completed && <Check className="w-3.5 h-3.5 text-black stroke-[3]" />}
+                                  {task.completed && <Check className="w-3 h-3 text-[#facc15] stroke-[3]" />}
                                 </button>
                                 <div className="flex-1 min-w-0">
                                   <span className="text-sm font-medium text-neutral-100 truncate block">
@@ -601,7 +785,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
                 {/* Section: Concluído */}
                 {completedTasks.length > 0 && (
-                  <div className="bg-[#1c1c1e] rounded-2xl p-4 shadow-xl border border-[#262629]">
+                  <div className="bg-[#141417] rounded-[6px] p-3 border border-[#26262a]">
                     <div 
                       onClick={() => toggleSection('completed')}
                       className="flex items-center justify-between cursor-pointer select-none pb-2"
@@ -628,9 +812,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                   e.stopPropagation();
                                   toggleTaskCompleted(task.id);
                                 }}
-                                className="mt-0.5 w-5 h-5 rounded-md bg-[#facc15] border border-[#facc15] flex items-center justify-center transition-colors shrink-0"
+                                className="mt-0.5 w-4 h-4 rounded-[3px] bg-[#facc15]/20 border border-[#facc15] flex items-center justify-center transition-colors shrink-0"
                               >
-                                <Check className="w-3 h-3 text-black stroke-[3]" />
+                                <Check className="w-2.5 h-2.5 text-[#facc15] stroke-[3]" />
                               </button>
                               <div className="flex-1 min-w-0">
                                 <span className="text-xs font-medium text-neutral-300 uppercase tracking-wide block truncate line-through">
@@ -644,7 +828,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteTask(task.id);
+                                moveTaskToTrash(task.id);
                               }}
                               className="text-neutral-500 hover:text-rose-400 p-1"
                             >
@@ -658,11 +842,12 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 )}
               </>
             )}
+            </div>
           </div>
         )}
 
         {/* LAYOUT 2: KANBAN / TRELLO VIEW */}
-        {viewLayout === 'kanban' && (
+        {viewLayout === 'kanban' && activeView !== 'tasks-trash' && (
           <div className="flex-1 overflow-x-auto p-4 flex gap-4 pb-32">
             {[
               { id: 'todo', label: 'A Fazer', color: 'border-[#facc15]/30', badge: 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30', tasks: kanbanTodo },
@@ -671,7 +856,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             ].map(col => (
               <div 
                 key={col.id} 
-                className="w-72 shrink-0 bg-[#1c1c1e] rounded-2xl border border-[#2c2c2e] flex flex-col overflow-hidden shadow-xl"
+                className="w-72 shrink-0 bg-[#1c1c1e] rounded-[6px] border border-[#2c2c2e] flex flex-col overflow-hidden "
               >
                 <div className="p-3 border-b border-[#28282b] flex items-center justify-between bg-[#141416]">
                   <h3 className="text-xs font-bold text-white">{col.label}</h3>
@@ -685,7 +870,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                     <div
                       key={task.id}
                       onClick={() => setSelectedTaskId(task.id)}
-                      className="bg-[#141416] hover:bg-[#202024] border border-[#28282b] rounded-xl p-3 cursor-pointer space-y-2 shadow-sm transition-all"
+                      className="bg-[#141416] hover:bg-[#202024] border border-[#28282b] rounded-[4px] p-3 cursor-pointer space-y-2 shadow-sm transition-all"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <span className={`text-xs font-semibold text-white ${task.completed ? 'line-through text-neutral-500' : ''}`}>
@@ -713,19 +898,19 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                         >
                           {task.completed ? 'Reabrir' : 'Concluir'}
                         </button>
-                        <select
-                          onClick={e => e.stopPropagation()}
-                          value={task.kanbanStatus || 'todo'}
-                          onChange={e => {
-                            e.stopPropagation();
-                            updateTask(task.id, { kanbanStatus: e.target.value });
-                          }}
-                          className="bg-[#1c1c1e] text-neutral-300 rounded px-1.5 py-0.5 border border-[#2c2c2e] text-[10px] focus:outline-none"
-                        >
-                          <option value="todo">A Fazer</option>
-                          <option value="in_progress">Em Andamento</option>
-                          <option value="done">Concluído</option>
-                        </select>
+                        <div className="min-w-[112px]">
+                          <ObsidianSelect
+                            compact
+                            title="Status no Quadro"
+                            value={task.kanbanStatus || 'todo'}
+                            onChange={(val) => updateTask(task.id, { kanbanStatus: val })}
+                            options={[
+                              { value: 'todo', label: 'A Fazer' },
+                              { value: 'in_progress', label: 'Em Andamento' },
+                              { value: 'done', label: 'Concluído' }
+                            ]}
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -748,7 +933,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
           <div className="p-4 border-b border-[#1c1c1e] flex items-center justify-between bg-[#141416]">
             <button
               onClick={() => setSelectedTaskId(null)}
-              className="flex items-center gap-1.5 text-xs text-neutral-300 hover:text-white px-2.5 py-1.5 rounded-xl bg-[#1c1c1e] border border-[#2c2c2e]"
+              className="flex items-center gap-1.5 text-xs text-neutral-300 hover:text-white px-2.5 py-1.5 rounded-[4px] bg-[#1c1c1e] border border-[#2c2c2e]"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Voltar</span>
@@ -757,7 +942,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               Detalhes da Tarefa
             </span>
             <button
-              onClick={() => deleteTask(selectedTask.id)}
+              onClick={() => moveTaskToTrash(selectedTask.id)}
               className="text-neutral-400 hover:text-rose-400 p-1.5 rounded-lg"
               title="Excluir"
             >
@@ -767,12 +952,12 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
           <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 pb-28 md:pb-8">
             {/* Title & Checkbox */}
-            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] flex items-start gap-3">
+            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] flex items-start gap-3">
               <button
                 type="button"
                 onClick={() => toggleTaskCompleted(selectedTask.id)}
                 className={`mt-1 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                  selectedTask.completed ? 'bg-[#facc15] border-[#facc15] text-black' : 'border-neutral-500'
+                  selectedTask.completed ? 'bg-[#facc15]/20 border-[#facc15] text-[#facc15]' : 'border-neutral-500'
                 }`}
               >
                 {selectedTask.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -785,49 +970,71 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               />
             </div>
 
-            {/* List / Category Selector - 100% Contained in Card */}
-            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2.5">
+            {/* List / Category Selector - Custom Obsidian Select + Inline List Creation */}
+            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs text-neutral-400 font-medium">Lista / Categoria</label>
                 <button
                   type="button"
                   onClick={() => {
-                    const customCategory = prompt('Nome da nova categoria / lista:');
-                    if (customCategory && customCategory.trim()) {
-                      const newProj = addProject({ name: customCategory.trim(), color: '#facc15' });
-                      updateTask(selectedTask.id, { projectId: newProj.id });
-                    }
+                    setInlineListName('');
+                    setIsCreatingListInline((p) => !p);
                   }}
                   className="text-xs text-[#facc15] hover:text-[#eab308] font-bold flex items-center gap-1 active:scale-95 transition-transform"
                 >
                   + Nova Lista
                 </button>
               </div>
-              <select
+
+              {isCreatingListInline && (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Nome da nova lista..."
+                    value={inlineListName}
+                    onChange={(e) => setInlineListName(e.target.value)}
+                    className="flex-1 bg-[#0A0A0C] border border-[#facc15]/40 rounded-[4px] px-3 py-2 text-xs text-white placeholder-neutral-500 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (inlineListName.trim()) {
+                        const newProj = addProject({ name: inlineListName.trim(), color: '#facc15' });
+                        updateTask(selectedTask.id, { projectId: newProj.id });
+                      }
+                      setInlineListName('');
+                      setIsCreatingListInline(false);
+                    }}
+                    className="px-3 py-2 rounded-[4px] bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] text-xs font-bold shrink-0"
+                  >
+                    Criar
+                  </button>
+                </div>
+              )}
+
+              <ObsidianSelect
+                title="Escolher Lista / Categoria"
                 value={selectedTask.projectId || 'inbox'}
-                onChange={e => updateTask(selectedTask.id, { projectId: e.target.value })}
-                className="w-full bg-[#141416] border border-[#2c2c2e] text-xs text-white rounded-xl px-3 py-2.5 focus:outline-none truncate"
-              >
-                {state.projects.map(p => (
-                  <option key={p.id} value={p.id}>{p.icon || '📁'} {p.name}</option>
-                ))}
-              </select>
+                onChange={(val) => updateTask(selectedTask.id, { projectId: val })}
+                options={state.projects.map(p => ({ value: p.id, label: p.name }))}
+              />
             </div>
 
             {/* Description Notes */}
-            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-1.5">
+            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-1.5">
               <label className="text-xs text-neutral-400 font-medium">Notas / Descrição</label>
               <textarea
                 rows={3}
                 placeholder="Adicione anotações, links ou detalhes..."
                 value={selectedTask.description || ''}
                 onChange={(e) => updateTask(selectedTask.id, { description: e.target.value })}
-                className="w-full bg-[#141416] border border-[#2c2c2e] rounded-xl p-3 text-xs text-white placeholder-neutral-500 focus:outline-none"
+                className="w-full bg-[#141416] border border-[#2c2c2e] rounded-[4px] p-3 text-xs text-white placeholder-neutral-500 focus:outline-none"
               />
             </div>
 
             {/* Date & Multiple Times Picker + Personalizado Button */}
-            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-3">
+            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-[#facc15]" />
@@ -840,7 +1047,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                   <button
                     type="button"
                     onClick={() => setIsCustomDateModalOpen(true)}
-                    className="px-2.5 py-1 rounded-lg bg-[#facc15] hover:bg-[#eab308] text-black text-[11px] font-black flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1 rounded-[4px] bg-[#18181c] hover:bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] text-[11px] font-bold flex items-center gap-1 shadow-sm"
                   >
                     <SlidersHorizontal className="w-3 h-3 text-black" />
                     <span>Personalizado</span>
@@ -861,7 +1068,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       setEditingTimeSlot(null);
                       setIsTimePickerOpen(true);
                     }}
-                    className="bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/40 rounded-xl px-2.5 py-1 text-[11px] text-[#facc15] font-bold flex items-center gap-1"
+                    className="bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/40 rounded-[4px] px-2.5 py-1 text-[11px] text-[#facc15] font-bold flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5 text-[#facc15]" />
                     <span>Adicionar Horário</span>
@@ -910,7 +1117,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             </div>
 
             {/* FULL MONTH CALENDAR VIEW OF RECURRING DATES WITH MONTH NAVIGATION */}
-            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
+            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-white font-bold flex items-center gap-1.5">
                   <CalendarIcon className="w-4 h-4 text-[#facc15]" />
@@ -966,7 +1173,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                         onClick={() => handleToggleDateInTask(dStr)}
                         className={`h-7 w-7 mx-auto rounded-full text-[11px] font-bold flex items-center justify-center transition-all ${
                           isMarked
-                            ? 'bg-[#facc15] text-black font-bold shadow-md scale-105'
+                            ? 'bg-[#facc15] text-black font-bold  scale-105'
                             : 'text-neutral-300 hover:bg-[#28282e]'
                         }`}
                       >
@@ -979,7 +1186,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             </div>
 
             {/* Custom Tags */}
-            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
+            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2">
               <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
                 <TagIcon className="w-4 h-4 text-neutral-400" />
                 Etiquetas Personalizadas
@@ -1012,7 +1219,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       setNewTagInput('');
                     }
                   }}
-                  className="flex-1 bg-[#141416] border border-[#2c2c2e] rounded-xl px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none"
+                  className="flex-1 bg-[#141416] border border-[#2c2c2e] rounded-[4px] px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none"
                 />
                 <button
                   type="button"
@@ -1023,15 +1230,67 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       setNewTagInput('');
                     }
                   }}
-                  className="px-3 py-1.5 bg-[#facc15] hover:bg-[#eab308] text-black font-bold rounded-xl text-xs font-bold"
+                  className="px-3 py-1.5 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/45 text-[#facc15] rounded-[4px] text-xs font-bold"
                 >
                   +
                 </button>
               </div>
             </div>
 
+            {/* Alarme & Lembrete por Tarefa */}
+            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
+                  {selectedTask.alarmEnabled !== false ? (
+                    <Bell className="w-3.5 h-3.5 text-[#facc15]" />
+                  ) : (
+                    <BellOff className="w-3.5 h-3.5 text-neutral-500" />
+                  )}
+                  Alarme &amp; Lembrete
+                </label>
+                <button
+                  type="button"
+                  onClick={() => updateTask(selectedTask.id, { alarmEnabled: selectedTask.alarmEnabled === false })}
+                  className={`px-2.5 py-1 rounded-[4px] border text-[11px] font-bold transition-colors ${
+                    selectedTask.alarmEnabled !== false
+                      ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15]'
+                      : 'bg-[#111114] border-white/10 text-neutral-400'
+                  }`}
+                >
+                  {selectedTask.alarmEnabled !== false ? 'Ativado' : 'Desativado'}
+                </button>
+              </div>
+              {selectedTask.alarmEnabled !== false && (
+                <div className="flex items-center gap-1 flex-wrap pt-1">
+                  {[
+                    { val: 0, label: 'Na hora' },
+                    { val: 5, label: '5m antes' },
+                    { val: 10, label: '10m antes' },
+                    { val: 15, label: '15m antes' },
+                    { val: 30, label: '30m antes' }
+                  ].map(opt => {
+                    const isActive = (selectedTask.reminderOffset ?? 0) === opt.val;
+                    return (
+                      <button
+                        key={opt.val}
+                        type="button"
+                        onClick={() => updateTask(selectedTask.id, { reminderOffset: opt.val })}
+                        className={`px-2 py-1 rounded-[4px] border text-[10px] font-bold transition-colors ${
+                          isActive
+                            ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15]'
+                            : 'bg-[#111114] border-white/10 text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Priority */}
-            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
+            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2">
               <label className="text-xs text-neutral-400 font-medium">Prioridade</label>
               <div className="grid grid-cols-4 gap-1.5">
                 {[0, 1, 2, 3].map((p) => (
@@ -1039,7 +1298,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                     key={p}
                     type="button"
                     onClick={() => updateTask(selectedTask.id, { priority: p })}
-                    className={`py-2 text-xs rounded-xl border flex items-center justify-center gap-1 transition-colors min-w-0 ${
+                    className={`py-2 text-xs rounded-[4px] border flex items-center justify-center gap-1 transition-colors min-w-0 ${
                       selectedTask.priority === p
                         ? 'bg-[#28282e] border-[#facc15] text-white font-bold shadow-sm'
                         : 'border-[#262629] bg-[#141416] text-neutral-400'
@@ -1053,7 +1312,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             </div>
 
             {/* Subtasks */}
-            <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
+            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2">
               <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
                 <ListTree className="w-4 h-4 text-neutral-400" />
                 Subtarefas
@@ -1061,12 +1320,12 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
               <div className="space-y-2">
                 {(selectedTask.subtasks || []).map((sub) => (
-                  <div key={sub.id} className="flex items-center justify-between gap-2 p-2 bg-[#141416] rounded-xl border border-[#262629]">
+                  <div key={sub.id} className="flex items-center justify-between gap-2 p-2 bg-[#141416] rounded-[4px] border border-[#262629]">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <button
                         onClick={() => toggleSubtask(selectedTask.id, sub.id)}
                         className={`w-4 h-4 rounded border flex items-center justify-center ${
-                          sub.completed ? 'bg-[#facc15] border-[#facc15] text-black' : 'border-neutral-500'
+                          sub.completed ? 'bg-[#facc15]/20 border-[#facc15] text-[#facc15]' : 'border-neutral-500'
                         }`}
                       >
                         {sub.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -1084,16 +1343,50 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                   </div>
                 ))}
 
-                <button
-                  onClick={() => {
-                    const title = prompt('Título da subtarefa:');
-                    if (title && title.trim()) addSubtask(selectedTask.id, title.trim());
-                  }}
-                  className="w-full py-2 bg-[#141416] hover:bg-[#222226] text-neutral-300 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-[#262629]"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Adicionar subtarefa</span>
-                </button>
+                {isAddingSubtaskInline ? (
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder="Título da subtarefa..."
+                      value={inlineSubtaskTitle}
+                      onChange={(e) => setInlineSubtaskTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && inlineSubtaskTitle.trim()) {
+                          e.preventDefault();
+                          addSubtask(selectedTask.id, inlineSubtaskTitle.trim());
+                          setInlineSubtaskTitle('');
+                          setIsAddingSubtaskInline(false);
+                        }
+                      }}
+                      className="flex-1 bg-[#0A0A0C] border border-[#facc15]/45 rounded-[4px] px-3 py-2 text-xs text-white placeholder-neutral-500 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (inlineSubtaskTitle.trim()) {
+                          addSubtask(selectedTask.id, inlineSubtaskTitle.trim());
+                        }
+                        setInlineSubtaskTitle('');
+                        setIsAddingSubtaskInline(false);
+                      }}
+                      className="px-3 py-2 rounded-[4px] bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] text-xs font-bold shrink-0"
+                    >
+                      Salvar
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setInlineSubtaskTitle('');
+                      setIsAddingSubtaskInline(true);
+                    }}
+                    className="w-full py-2 bg-[#141416] hover:bg-[#222226] text-neutral-300 rounded-[4px] text-xs flex items-center justify-center gap-1.5 border border-[#262629]"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-[#facc15]" />
+                    <span>Adicionar subtarefa</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1104,7 +1397,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 setSelectedTaskId(null);
                 onStartPomodoroForTask(selectedTask);
               }}
-              className="w-full py-3 bg-[#facc15] hover:bg-[#eab308] text-black font-bold rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-xl active:scale-98 transition-colors"
+              className="w-full py-2.5 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/50 text-[#facc15] font-bold rounded-[4px] text-xs font-bold flex items-center justify-center gap-2  active:scale-98 transition-colors"
             >
               <Play className="w-4 h-4 fill-current" />
               Iniciar Pomodoro Nesta Tarefa
@@ -1121,6 +1414,8 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
         initialDate={selectedTask?.dueDate || quickDueDate || todayStr}
         initialTimes={selectedTask ? getTaskTimes(selectedTask) : []}
         initialTime={selectedTask?.startTime || ''}
+        initialAlarmEnabled={selectedTask?.alarmEnabled !== false}
+        initialReminderOffset={selectedTask?.reminderOffset ?? 0}
         initialMode={selectedTask?.recurrencePattern?.mode || 'monthly'}
         allowTaskSelection={!selectedTask && !quickTitle.trim()}
         initialTitle={quickTitle.trim()}

@@ -4,16 +4,18 @@ import { X, Trash2, Check } from 'lucide-react';
 export default function EditListModal({ isOpen, onClose, project, store }) {
   const { updateProject, deleteProject } = store;
   const [name, setName] = useState('');
-  const [color, setColor] = useState('#3b82f6');
+  const [color, setColor] = useState('#facc15');
   const [icon, setIcon] = useState('📁');
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
+    setConfirmDelete(false);
     if (project) {
       setName(project.name);
-      setColor(project.color || '#3b82f6');
+      setColor(project.color || '#facc15');
       setIcon(project.icon || '📁');
     }
-  }, [project]);
+  }, [project, isOpen]);
 
   if (!isOpen || !project) return null;
 
@@ -36,10 +38,13 @@ export default function EditListModal({ isOpen, onClose, project, store }) {
   };
 
   const handleDelete = () => {
-    if (confirm(`Deseja excluir a lista "${project.name}"? As tarefas voltarão para a Caixa de Entrada.`)) {
-      deleteProject(project.id);
-      onClose();
+    if (project.id === 'inbox') return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
     }
+    deleteProject(project.id);
+    onClose();
   };
 
   return (
@@ -113,7 +118,7 @@ export default function EditListModal({ isOpen, onClose, project, store }) {
                 className="px-3 py-2 rounded-xl text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-1.5 border border-rose-500/20"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Excluir</span>
+                <span>{confirmDelete ? 'Confirmar Exclusão?' : 'Excluir'}</span>
               </button>
             ) : <div />}
 
@@ -127,7 +132,7 @@ export default function EditListModal({ isOpen, onClose, project, store }) {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#4c82f7] hover:bg-[#3b72e7] text-white shadow-md"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/55 text-[#facc15]"
               >
                 Salvar
               </button>

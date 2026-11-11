@@ -1,153 +1,192 @@
-// Shared utilities for task dates, multiple times, and recurrence expansion
+/**
+ * Shared OpenTick Task Scheduling Utilities
+ * Handles local YYYY-MM-DD dates, multiple dates/times, and recurring date generators.
+ */
 
-export function formatDateYMD(date) {
-  if (!date) return '';
-  const d = date instanceof Date ? date : new Date(date);
-  const yr = d.getFullYear();
-  const mo = String(d.getMonth() + 1).padStart(2, '0');
-  const dy = String(d.getDate()).padStart(2, '0');
-  return `${yr}-${mo}-${dy}`;
+export function formatDateYMD(dateObj) {
+  if (!dateObj || isNaN(dateObj.getTime())) return '';
+  const y = dateObj.getFullYear();
+  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const d = String(dateObj.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 export function getTodayYMD() {
   return formatDateYMD(new Date());
 }
 
-export function parseYMD(dStr) {
-  if (!dStr) return new Date();
-  const [y, m, d] = dStr.split('-').map(Number);
-  return new Date(y, (m || 1) - 1, d || 1);
+export function addDaysYMD(ymdStr, daysToAdd = 0) {
+  const base = parseYMD(ymdStr) || new Date();
+  const next = new Date(base.getFullYear(), base.getMonth(), base.getDate() + Number(daysToAdd || 0));
+  return formatDateYMD(next);
 }
 
-/**
- * Returns sorted unique HH:MM times for a task.
- * Backwards-compatible with single `task.startTime`.
- */
-export function getTaskTimes(task) {
-  if (!task) return [];
-  const set = new Set();
-  if (Array.isArray(task.recurringTimes)) {
-    for (const t of task.recurringTimes) {
-      if (typeof t === 'string' && /^\d{2}:\d{2}$/.test(t.trim())) {
-        set.add(t.trim());
-      }
-    }
-  }
-  if (typeof task.startTime === 'string' && /^\d{2}:\d{2}$/.test(task.startTime.trim())) {
-    set.add(task.startTime.trim());
-  }
-  return Array.from(set).sort();
+export function parseYMD(ymdStr) {
+  if (!ymdStr || typeof ymdStr !== 'string') return null;
+  const clean = ymdStr.split('T')[0];
+  const parts = clean.split('-');
+  if (parts.length !== 3) return null;
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  const d = parseInt(parts[2], 10);
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return null;
+  return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 
-/**
- * Returns sorted unique YYYY-MM-DD dates for a task.
- * Backwards-compatible with single `task.dueDate`.
- */
 export function getTaskDates(task) {
   if (!task) return [];
-  const set = new Set();
-  if (Array.isArray(task.recurringDates)) {
-    for (const d of task.recurringDates) {
-      if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.trim())) {
-        set.add(d.trim());
-      }
-    }
+  if (Array.isArray(task.recurringDates) && task.recurringDates.length > 0) {
+    return [...new Set(task.recurringDates.map(d => String(d || '').split('T')[0]).filter(Boolean))].sort();
   }
-  if (typeof task.dueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(task.dueDate.trim())) {
-    set.add(task.dueDate.trim());
+  if (task.dueDate) {
+    return [String(task.dueDate).split('T')[0]];
   }
-  return Array.from(set).sort();
+  return [];
+}
+
+export function getTaskTimes(task) {
+  if (!task) return [];
+  if (Array.isArray(task.recurringTimes) && task.recurringTimes.length > 0) {
+    return [...new Set(task.recurringTimes.filter(Boolean))].sort();
+  }
+  if (task.startTime) {
+    return [task.startTime];
+  }
+  return [];
 }
 
 export function isTaskOnDate(task, dateStr) {
   if (!task || !dateStr) return false;
-  if (task.dueDate === dateStr) return true;
-  if (Array.isArray(task.recurringDates) && task.recurringDates.includes(dateStr)) return true;
-  return false;
+  const dates = getTaskDates(task);
+  return dates.includes(dateStr);
 }
 
-/**
- * Generate daily dates every `intervalDays` for `durationDays` starting at `startDateStr`.
- */
-export function generateDailyDates(startDateStr, intervalDays = 1, durationDays = 30) {
-  const start = parseYMD(startDateStr || getTodayYMD());
-  const step = Math.max(1, Number(intervalDays) || 1);
-  const count = Math.max(1, Number(durationDays) || 1);
-  const dates = [];
-  for (let offset = 0; offset < count; offset += step) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + offset);
-    dates.push(formatDateYMD(d));
+export function generateDailyDates(startDateStrOrOpts, intervalDays = 1, durationDays = 30) {
+  let startDateStr = startDateStrOrOpts;
+  if (startDateStrOrOpts && typeof startDateStrOrOpts === 'object' && !Array.isArray(startDateStrOrOpts)) {
+    startDateStr = startDateStrOrOpts.startDateStr || getTodayYMD();
+    intervalDays = startDateStrOrOpts.intervalDays ?? 1;
+    durationDays = startDateStrOrOpts.durationDays ?? 30;
   }
-  return dates;
+  const base = parseYMD(startDateStr) || parseYMD(getTodayYMD());
+  const step = Math.max(1, parseInt(intervalDays, 10) || 1);
+  const total = Math.max(1, Math.min(366, parseInt(durationDays, 10) || 30));
+  const out = [];
+  for (let i = 0; i < total; i += step) {
+    const dt = new Date(base.getFullYear(), base.getMonth(), base.getDate() + i);
+    out.push(formatDateYMD(dt));
+  }
+  return out;
 }
 
-/**
- * Generate dates matching selected weekdays [0..6] every `intervalWeeks` for `totalWeeks`.
- */
-export function generateWeeklyDates(startDateStr, weekdays = [], intervalWeeks = 1, totalWeeks = 4) {
-  if (!weekdays || weekdays.length === 0) return [];
-  const start = parseYMD(startDateStr || getTodayYMD());
-  start.setHours(0, 0, 0, 0);
-  const startSunday = new Date(start);
-  startSunday.setDate(start.getDate() - start.getDay());
+export function generateWeeklyDates(startDateStrOrOpts, weekdays = [1, 3, 5], intervalWeeks = 1, durationWeeks = 12) {
+  let startDateStr = startDateStrOrOpts;
+  if (startDateStrOrOpts && typeof startDateStrOrOpts === 'object' && !Array.isArray(startDateStrOrOpts)) {
+    startDateStr = startDateStrOrOpts.startDateStr || getTodayYMD();
+    weekdays = startDateStrOrOpts.weekdays || [new Date().getDay()];
+    intervalWeeks = startDateStrOrOpts.intervalWeeks ?? 1;
+    durationWeeks = startDateStrOrOpts.durationWeeks ?? 12;
+  }
+  const base = parseYMD(startDateStr) || parseYMD(getTodayYMD());
+  const cleanDays = Array.isArray(weekdays) && weekdays.length > 0
+    ? [...new Set(weekdays.map(Number).filter(n => !Number.isNaN(n) && n >= 0 && n <= 6))]
+    : [base.getDay()];
+  const stepW = Math.max(1, parseInt(intervalWeeks, 10) || 1);
+  const totalWeeks = Math.max(1, Math.min(104, parseInt(durationWeeks, 10) || 12));
 
-  const stepWeeks = Math.max(1, Number(intervalWeeks) || 1);
-  const weeks = Math.max(1, Number(totalWeeks) || 1);
-  const dates = [];
+  // Anchor to start of base's week (Sunday) so week index arithmetic stays exact
+  const weekStart = new Date(base.getFullYear(), base.getMonth(), base.getDate() - base.getDay());
+  const baseStr = formatDateYMD(base);
+  const out = new Set();
 
-  for (let w = 0; w < weeks; w += stepWeeks) {
-    for (let dow = 0; dow < 7; dow++) {
-      if (!weekdays.includes(dow)) continue;
-      const d = new Date(startSunday);
-      d.setDate(startSunday.getDate() + w * 7 + dow);
-      if (d >= start) {
-        dates.push(formatDateYMD(d));
+  for (let w = 0; w < totalWeeks; w += stepW) {
+    for (const wd of cleanDays) {
+      const dt = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + (w * 7) + wd);
+      const ymd = formatDateYMD(dt);
+      if (ymd >= baseStr) {
+        out.add(ymd);
       }
     }
   }
-  return Array.from(new Set(dates)).sort();
+
+  return [...out].sort();
 }
 
-/**
- * Repeat specified day-of-month numbers (or days extracted from baseDates)
- * across `monthsCount` consecutive months starting at (startYear, startMonth).
- */
-export function generateMonthlyRepeatedDates(dayNumbers = [], startYear, startMonth, monthsCount = 3) {
-  if (!dayNumbers || dayNumbers.length === 0) return [];
-  const count = Math.max(1, Number(monthsCount) || 1);
-  const dates = [];
+export function generateMonthlyRepeatedDates(dayNumbersOrOpts, baseYear, baseMonth, repeatMonthsCount = 3) {
+  let dayNumbers = [];
+  let year = baseYear;
+  let month = baseMonth;
+  let horizon = repeatMonthsCount;
 
-  for (let offset = 0; offset < count; offset++) {
-    const targetMonthDate = new Date(startYear, startMonth + offset, 1);
-    const y = targetMonthDate.getFullYear();
-    const m = targetMonthDate.getMonth();
-    const daysInTargetMonth = new Date(y, m + 1, 0).getDate();
+  if (dayNumbersOrOpts && typeof dayNumbersOrOpts === 'object' && !Array.isArray(dayNumbersOrOpts)) {
+    const seeds = Array.isArray(dayNumbersOrOpts.seedDates) ? dayNumbersOrOpts.seedDates : [];
+    horizon = dayNumbersOrOpts.repeatMonthsCount ?? 3;
+    const parsedSeeds = seeds.map(parseYMD).filter(Boolean);
+    if (parsedSeeds.length > 0) {
+      parsedSeeds.sort((a, b) => a - b);
+      year = parsedSeeds[0].getFullYear();
+      month = parsedSeeds[0].getMonth();
+      dayNumbers = [...new Set(parsedSeeds.map(d => d.getDate()))];
+    } else {
+      const now = new Date();
+      year = now.getFullYear();
+      month = now.getMonth();
+      dayNumbers = [now.getDate()];
+    }
+  } else {
+    dayNumbers = Array.isArray(dayNumbersOrOpts) ? dayNumbersOrOpts : [Number(dayNumbersOrOpts) || new Date().getDate()];
+    const now = new Date();
+    if (year === undefined || year === null) year = now.getFullYear();
+    if (month === undefined || month === null) month = now.getMonth();
+  }
 
-    for (const dayNum of dayNumbers) {
-      if (dayNum >= 1 && dayNum <= daysInTargetMonth) {
-        dates.push(`${y}-${String(m + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`);
-      }
+  const totalMonths = Math.max(1, Math.min(24, parseInt(horizon, 10) || 1));
+  const cleanDays = [...new Set(dayNumbers.map(Number).filter(n => !Number.isNaN(n) && n >= 1 && n <= 31))];
+  if (cleanDays.length === 0) return [];
+
+  const out = new Set();
+  for (let offset = 0; offset < totalMonths; offset++) {
+    const targetMonthDate = new Date(year, month + offset, 1);
+    const ty = targetMonthDate.getFullYear();
+    const tm = targetMonthDate.getMonth();
+    const daysInTargetMonth = new Date(ty, tm + 1, 0).getDate();
+
+    for (const dNum of cleanDays) {
+      const clampedDay = Math.min(dNum, daysInTargetMonth);
+      out.add(formatDateYMD(new Date(ty, tm, clampedDay)));
     }
   }
-  return Array.from(new Set(dates)).sort();
+
+  return [...out].sort();
 }
 
-/**
- * Generate dates for selected months [0..11] and selected day-of-month numbers [1..31] in `year`.
- */
-export function generateAnnualDates(year, monthsZeroBased = [], dayNumbers = []) {
-  if (!monthsZeroBased || monthsZeroBased.length === 0 || !dayNumbers || dayNumbers.length === 0) {
-    return [];
+export function generateAnnualDates(yearOrOpts, months = [], daysOfMonth = []) {
+  let year = yearOrOpts;
+  let targetMonths = months;
+  let targetDays = daysOfMonth;
+
+  if (yearOrOpts && typeof yearOrOpts === 'object' && !Array.isArray(yearOrOpts)) {
+    year = yearOrOpts.year ?? new Date().getFullYear();
+    targetMonths = yearOrOpts.months || [];
+    targetDays = yearOrOpts.daysOfMonth || [];
   }
-  const dates = [];
-  for (const m of monthsZeroBased) {
-    const daysInM = new Date(year, m + 1, 0).getDate();
-    for (const dayNum of dayNumbers) {
-      if (dayNum >= 1 && dayNum <= daysInM) {
-        dates.push(`${year}-${String(m + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`);
-      }
+
+  const y = parseInt(year, 10) || new Date().getFullYear();
+  const cleanMonths = Array.isArray(targetMonths) && targetMonths.length > 0
+    ? [...new Set(targetMonths.map(Number).filter(m => !Number.isNaN(m) && m >= 0 && m <= 11))]
+    : [];
+  const cleanDays = Array.isArray(targetDays) && targetDays.length > 0
+    ? [...new Set(targetDays.map(Number).filter(d => !Number.isNaN(d) && d >= 1 && d <= 31))]
+    : [];
+
+  const out = new Set();
+  for (const m of cleanMonths) {
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    for (const d of cleanDays) {
+      const clampedDay = Math.min(d, daysInMonth);
+      out.add(formatDateYMD(new Date(y, m, clampedDay)));
     }
   }
-  return Array.from(new Set(dates)).sort();
+
+  return [...out].sort();
 }

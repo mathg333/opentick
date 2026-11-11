@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { soundManager } from '../utils/audio';
 import { saveCustomAudioFile, getCustomAudioFile, removeCustomAudioFile } from '../utils/audioStorage';
-import { requestOverlayPermission, requestExactAlarmPermission, requestFullScreenIntentPermission } from '../utils/nativeAlarm';
+import { requestOverlayPermission, requestExactAlarmPermission, requestFullScreenIntentPermission, syncNativeAlarmSettings, syncCustomAudioToNative } from '../utils/nativeAlarm';
 import RankShield2D from './RankShield2D';
 import { calculateGamification } from '../utils/gamification';
 
@@ -39,7 +39,11 @@ export default function SettingsModal({
   onTriggerTestAlarm,
   onOpenStats
 }) {
-  const { state, updateSettings, exportData, importData } = store;
+  const { state, updateSettings: rawUpdateSettings, exportData, importData } = store;
+  const updateSettings = (patch) => {
+    rawUpdateSettings(patch);
+    syncNativeAlarmSettings({ ...(state.settings || {}), ...patch });
+  };
   const settings = state.settings || {};
   const profile = state.userProfile || {
     name: 'Mathx',
@@ -51,7 +55,9 @@ export default function SettingsModal({
   };
   const stats = calculateGamification(state);
 
-  const [activeScreen, setActiveScreen] = useState('main'); // 'main', 'appearance', 'datetime', 'sound', 'tabs', 'ai', 'general', 'sync'
+  const [activeScreen, setActiveScreen] = useState('main'); // 'main', 'appearance', 'datetime', 'sound', 'ai', 'general', 'sync'
+  const [feedbackMsg, setFeedbackMsg] = useState(null);
+  const [confirmRemoveAudio, setConfirmRemoveAudio] = useState(false);
   const [testPlaying, setTestPlaying] = useState(false);
   const [customAudio, setCustomAudio] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -67,6 +73,11 @@ export default function SettingsModal({
       });
     }
   }, [isOpen]);
+
+  const showFeedback = (text, type = 'success') => {
+    setFeedbackMsg({ text, type });
+    setTimeout(() => setFeedbackMsg(null), 3500);
+  };
 
   if (!isOpen) return null;
 
@@ -112,26 +123,33 @@ export default function SettingsModal({
       const saved = await saveCustomAudioFile(file);
       setCustomAudio(saved);
       updateSettings({ sound: 'custom' });
-      alert(`Áudio "${file.name}" carregado com sucesso!`);
+      await syncCustomAudioToNative(saved.dataUrl, saved.name);
+      syncNativeAlarmSettings({ ...(state.settings || {}), sound: 'custom' });
+      showFeedback(`Áudio "${file.name}" carregado com sucesso!`, 'success');
     } catch (err) {
-      console.error('Falha ao salvar áudio', err);
-      alert('Erro ao carregar o áudio. Tente outro arquivo (.mp3, .wav, .m4a).');
+      console.error(err);
+      showFeedback('Erro ao carregar o áudio. Tente outro arquivo (.mp3, .wav, .m4a).', 'error');
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleRemoveCustomAudio = async () => {
-    if (confirm('Deseja remover seu áudio personalizado?')) {
-      await removeCustomAudioFile();
-      setCustomAudio(null);
-      if (settings.sound === 'custom') {
-        updateSettings({ sound: 'radar' });
-      }
-      handleStopTest();
+    if (!confirmRemoveAudio) {
+      setConfirmRemoveAudio(true);
+      setTimeout(() => setConfirmRemoveAudio(false), 3000);
+      return;
     }
+    setConfirmRemoveAudio(false);
+    await removeCustomAudioFile();
+    setCustomAudio(null);
+    await syncCustomAudioToNative(null, '');
+    if (settings.sound === 'custom') {
+      updateSettings({ sound: 'radar' });
+      syncNativeAlarmSettings({ ...(state.settings || {}), sound: 'radar' });
+    }
+    showFeedback('Áudio personalizado removido.', 'success');
   };
-
   const formatFileSize = (bytes) => {
     if (!bytes) return '';
     const mb = bytes / (1024 * 1024);
@@ -162,7 +180,6 @@ export default function SettingsModal({
             {activeScreen === 'appearance' && 'Aparência'}
             {activeScreen === 'datetime' && 'Data hora'}
             {activeScreen === 'sound' && 'Sons e Notificações'}
-            {activeScreen === 'tabs' && 'Barra de Abas'}
             {activeScreen === 'ai' && 'Funções de IA'}
             {activeScreen === 'general' && 'Geral'}
             {activeScreen === 'sync' && 'Integrações e Importação'}
@@ -182,6 +199,12 @@ export default function SettingsModal({
 
       {/* Settings Screen Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 max-w-lg mx-auto w-full pb-20">
+        {feedbackMsg && (
+          <div className={`px-3 py-2 rounded-[4px] border text-xs font-bold flex items-center justify-between ${feedbackMsg.type === 'error' ? 'bg-rose-500/15 border-rose-500/45 text-rose-300' : 'bg-[#facc15]/15 border-[#facc15]/45 text-[#facc15]'}`}>
+            <span>{feedbackMsg.text}</span>
+            <button type="button" onClick={() => setFeedbackMsg(null)} className="ml-2 opacity-70 hover:opacity-100"><X className="w-3.5 h-3.5" /></button>
+          </div>
+        )}
         {/* ================= MAIN SCREEN ================= */}
         {activeScreen === 'main' && (
           <>
@@ -190,7 +213,7 @@ export default function SettingsModal({
               onClick={() => {
                 if (onOpenProfileModal) onOpenProfileModal();
               }}
-              className="flex items-center justify-between p-3.5 rounded-2xl bg-[#1c1c1e] border border-[#28282b] hover:bg-[#222226] cursor-pointer transition-colors shadow-lg"
+              className="flex items-center justify-between p-3.5 rounded-[6px] bg-[#1c1c1e] border border-[#28282b] hover:bg-[#222226] cursor-pointer transition-colors shadow-lg"
             >
               <div className="flex items-center gap-3">
                 <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-600 via-amber-600 to-[#facc15] p-0.5 shadow-md">
@@ -236,16 +259,16 @@ export default function SettingsModal({
                 if (onOpenStats) onOpenStats();
                 onClose();
               }}
-              className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-[#20150d] to-[#16161c] border border-[#facc15]/40 hover:border-[#facc15] cursor-pointer transition-all shadow-lg active:scale-98"
+              className="flex items-center justify-between gap-2 p-3.5 rounded-[6px] bg-[#1c1c1e] border border-[#2c2c32] hover:border-[#facc15]/50 cursor-pointer transition-all shadow-lg active:scale-98"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-[#facc15] flex items-center justify-center p-1.5 shadow-md shadow-[#facc15]/30 shrink-0">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-12 h-12 rounded-[6px] bg-[#141416] border border-[#2c2c32] flex items-center justify-center p-1.5 shrink-0">
                   <RankShield2D tier={stats.currentRank.tier} size={32} showGlow={false} />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center flex-wrap gap-1.5">
                     <span className="text-sm font-black text-white">Progresso de Nível & Escudos</span>
-                    <span className="text-[10px] bg-amber-400/20 text-amber-300 font-bold px-1.5 py-0.2 rounded border border-amber-400/30">
+                    <span className="text-[10px] bg-amber-400/15 text-amber-300 font-bold px-1.5 py-0.5 rounded border border-amber-400/30 whitespace-nowrap shrink-0">
                       Elo: {stats.currentRank.shortName}
                     </span>
                   </div>
@@ -254,14 +277,14 @@ export default function SettingsModal({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-xs text-[#facc15] font-bold">
+              <div className="flex items-center gap-1 text-xs text-[#facc15] font-bold whitespace-nowrap shrink-0">
                 <span>Ver</span>
                 <ChevronRight className="w-4 h-4 text-[#facc15]" />
               </div>
             </div>
 
             {/* Premium Status Banner */}
-            <div className="p-4 rounded-2xl bg-[#1c1c1e] border border-[#28282b] flex items-center justify-between">
+            <div className="p-4 rounded-[6px] bg-[#1c1c1e] border border-[#28282b] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-[#facc15]/20 text-[#facc15] flex items-center justify-center font-bold">
                   <Crown className="w-5 h-5" />
@@ -271,25 +294,13 @@ export default function SettingsModal({
                   <p className="text-xs text-neutral-400">100% Gratuito e Ilimitado para Sempre</p>
                 </div>
               </div>
-              <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950 px-2.5 py-1 rounded-xl border border-emerald-800">
+              <span className="text-[11px] font-bold text-emerald-400 bg-emerald-950 px-2.5 py-1 rounded-[4px] border border-emerald-800">
                 Ativo
               </span>
             </div>
 
-            {/* Option: Barra de Abas */}
-            <div 
-              onClick={() => setActiveScreen('tabs')}
-              className="rounded-2xl bg-[#1c1c1e] border border-[#28282b] p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <Layers className="w-5 h-5 text-[#facc15]" />
-                <span className="text-sm font-semibold text-white">Barra de Abas</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-neutral-500" />
-            </div>
-
             {/* Main Options Group Card */}
-            <div className="rounded-2xl bg-[#1c1c1e] border border-[#28282b] overflow-hidden divide-y divide-[#262629]">
+            <div className="rounded-[6px] bg-[#1c1c1e] border border-[#28282b] overflow-hidden divide-y divide-[#262629]">
               <div 
                 onClick={() => setActiveScreen('appearance')}
                 className="p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
@@ -298,7 +309,7 @@ export default function SettingsModal({
                   <Palette className="w-5 h-5 text-[#facc15]" />
                   <div>
                     <span className="text-sm font-semibold text-white">Aparência</span>
-                    <p className="text-[11px] text-neutral-400">Tema AMOLED, Laranja TickTick e Estilo</p>
+                    <p className="text-[11px] text-neutral-400">Tema AMOLED, Amarelo Ouro e Estilo</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-neutral-500" />
@@ -366,7 +377,7 @@ export default function SettingsModal({
             {/* Integration and Sync Card */}
             <div 
               onClick={() => setActiveScreen('sync')}
-              className="rounded-2xl bg-[#1c1c1e] border border-[#28282b] p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
+              className="rounded-[6px] bg-[#1c1c1e] border border-[#28282b] p-3.5 flex items-center justify-between hover:bg-[#222226] cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <RefreshCw className="w-5 h-5 text-emerald-400" />
@@ -384,9 +395,9 @@ export default function SettingsModal({
         {activeScreen === 'sound' && (
           <div className="space-y-4 animate-in fade-in">
             {/* LOCK SCREEN & OVERLAY PERMISSIONS CARD */}
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3 shadow-xl">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3 shadow-xl">
               <div className="flex items-center gap-2.5 text-white">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#facc15] to-[#eab308] flex items-center justify-center text-white shadow-md shadow-[#facc15]/30 shrink-0">
+                <div className="w-8 h-8 rounded-[4px] bg-[#facc15]/15 border border-[#facc15]/45 flex items-center justify-center text-[#facc15] shrink-0">
                   <Smartphone className="w-4 h-4" />
                 </div>
                 <div>
@@ -403,21 +414,21 @@ export default function SettingsModal({
                 <button
                   type="button"
                   onClick={requestOverlayPermission}
-                  className="py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-[#facc15]/50 text-[#facc15] rounded-xl text-xs font-bold text-center active:scale-95 transition-transform"
+                  className="py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-[#facc15]/50 text-[#facc15] rounded-[4px] text-xs font-bold text-center active:scale-95 transition-transform"
                 >
                   Permitir Sobre Apps
                 </button>
                 <button
                   type="button"
                   onClick={requestExactAlarmPermission}
-                  className="py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-emerald-500/50 text-emerald-400 rounded-xl text-xs font-bold text-center active:scale-95 transition-transform"
+                  className="py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-emerald-500/50 text-emerald-400 rounded-[4px] text-xs font-bold text-center active:scale-95 transition-transform"
                 >
                   Permitir Alarme Exato
                 </button>
                 <button
                   type="button"
                   onClick={requestFullScreenIntentPermission}
-                  className="col-span-2 py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-blue-500/50 text-blue-400 rounded-xl text-xs font-bold text-center active:scale-95 transition-transform"
+                  className="col-span-2 py-2.5 px-3 bg-[#141416] hover:bg-[#202024] border border-blue-500/50 text-blue-400 rounded-[4px] text-xs font-bold text-center active:scale-95 transition-transform"
                 >
                   Permitir Avisos em Tela Cheia (Android 14+)
                 </button>
@@ -425,13 +436,13 @@ export default function SettingsModal({
             </div>
 
             {/* Mode: Contínuo vs Curto */}
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <span className="text-sm font-bold text-white block">Estilo do Toque</span>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => updateSettings({ alarmMode: 'continuous' })}
-                  className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                  className={`p-3 rounded-[4px] border text-left flex flex-col justify-between transition-all ${
                     (settings.alarmMode !== 'short')
                       ? 'bg-[#28282e] border-[#facc15] text-white shadow-md'
                       : 'bg-[#141416] border-[#262629] text-neutral-400'
@@ -449,7 +460,7 @@ export default function SettingsModal({
                 <button
                   type="button"
                   onClick={() => updateSettings({ alarmMode: 'short' })}
-                  className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all ${
+                  className={`p-3 rounded-[4px] border text-left flex flex-col justify-between transition-all ${
                     (settings.alarmMode === 'short')
                       ? 'bg-[#28282e] border-[#facc15] text-white shadow-md'
                       : 'bg-[#141416] border-[#262629] text-neutral-400'
@@ -467,7 +478,7 @@ export default function SettingsModal({
             </div>
 
             {/* CUSTOM PHONE AUDIO UPLOAD */}
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
@@ -490,7 +501,7 @@ export default function SettingsModal({
               />
 
               {customAudio ? (
-                <div className={`p-3 rounded-xl border flex flex-col gap-2 transition-all ${
+                <div className={`p-3 rounded-[4px] border flex flex-col gap-2 transition-all ${
                   settings.sound === 'custom' 
                     ? 'bg-[#28282e] border-[#facc15]' 
                     : 'bg-[#141416] border-[#262629]'
@@ -524,7 +535,7 @@ export default function SettingsModal({
                             handleTestSound('custom');
                           }
                         }}
-                        className="px-2.5 py-1.5 bg-[#facc15] hover:bg-[#eab308] text-black text-xs font-bold rounded-lg flex items-center gap-1 shadow-md"
+                        className="px-2.5 py-1.5 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/45 text-[#facc15] text-xs font-bold rounded-lg flex items-center gap-1 shadow-md"
                       >
                         {testPlaying && settings.sound === 'custom' ? (
                           <>
@@ -543,7 +554,7 @@ export default function SettingsModal({
                         type="button"
                         onClick={handleRemoveCustomAudio}
                         className="p-1.5 text-neutral-400 hover:text-rose-400 rounded-lg"
-                        title="Remover"
+                        title={confirmRemoveAudio ? "Toque novamente para remover" : "Remover"}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -566,7 +577,7 @@ export default function SettingsModal({
                   type="button"
                   disabled={isUploading}
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-3.5 px-4 bg-[#141416] hover:bg-[#202024] border border-dashed border-[#facc15]/60 rounded-xl flex items-center justify-center gap-2 text-xs font-bold text-[#facc15] transition-colors"
+                  className="w-full py-3.5 px-4 bg-[#141416] hover:bg-[#202024] border border-dashed border-[#facc15]/60 rounded-[4px] flex items-center justify-center gap-2 text-xs font-bold text-[#facc15] transition-colors"
                 >
                   <Upload className="w-4 h-4" />
                   <span>{isUploading ? 'Carregando áudio...' : 'Selecionar Áudio / MP3 do Celular'}</span>
@@ -575,7 +586,7 @@ export default function SettingsModal({
             </div>
 
             {/* PRE-INSTALLED CONTINUOUS ALARMS & RINGTONES */}
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <h3 className="text-sm font-bold text-white">Toques e Alarmes Pré-instalados</h3>
               <div className="space-y-2">
                 {[
@@ -598,7 +609,7 @@ export default function SettingsModal({
                           handleStopTest();
                         }
                       }}
-                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                      className={`p-3 rounded-[4px] border flex items-center justify-between cursor-pointer transition-all ${
                         isSelected 
                           ? 'bg-[#28282e] border-[#facc15] text-white shadow-md' 
                           : 'bg-[#141416] border-[#262629] text-neutral-300 hover:bg-[#1a1a1e]'
@@ -623,7 +634,7 @@ export default function SettingsModal({
                             }}
                             className={`p-1 rounded-lg text-xs flex items-center gap-1 px-2.5 py-1 border transition-colors ${
                               isThisPlaying
-                                ? 'bg-[#facc15] text-black border-[#facc15]'
+                                ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
                                 : 'bg-[#1e1e22] text-neutral-300 hover:text-white border-[#323236]'
                             }`}
                           >
@@ -649,14 +660,14 @@ export default function SettingsModal({
             </div>
 
             {/* DURATION PRESET (5 MINUTES) */}
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-sm font-semibold text-white block">Duração Máxima do Alarme</span>
                   <span className="text-xs text-neutral-400">Tempo que o som tocará até auto-desligar</span>
                 </div>
                 <span className="text-xs font-mono text-[#facc15] font-bold">
-                  {settings.alarmDuration || 5} Minutos
+                  {settings.durationMinutes ?? settings.alarmDuration ?? 5} Minutos
                 </span>
               </div>
               <div className="grid grid-cols-4 gap-1.5">
@@ -664,10 +675,10 @@ export default function SettingsModal({
                   <button
                     key={mins}
                     type="button"
-                    onClick={() => updateSettings({ alarmDuration: mins })}
-                    className={`py-2 text-xs font-bold rounded-xl border transition-colors ${
-                      (settings.alarmDuration || 5) === mins
-                        ? 'bg-[#facc15] text-black border-[#facc15]'
+                    onClick={() => updateSettings({ durationMinutes: mins, alarmDuration: mins })}
+                    className={`py-2 text-xs font-bold rounded-[4px] border transition-colors ${
+                      (settings.durationMinutes ?? settings.alarmDuration ?? 5) === mins
+                        ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
                         : 'bg-[#141416] text-neutral-400 border-[#262629]'
                     }`}
                   >
@@ -678,7 +689,7 @@ export default function SettingsModal({
             </div>
 
             {/* VOLUME SLIDER */}
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-sm font-semibold text-white block">Volume do Alarme</span>
@@ -700,7 +711,7 @@ export default function SettingsModal({
             </div>
 
             {/* VIBRATION TOGGLE */}
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 flex items-center justify-between">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 flex items-center justify-between">
               <div>
                 <span className="text-sm font-semibold text-white block">Vibração Contínua do Celular</span>
                 <span className="text-xs text-neutral-400">Vibrar vigorosamente junto com o som do alarme</span>
@@ -727,7 +738,7 @@ export default function SettingsModal({
                   onTriggerTestAlarm(settings.sound || (customAudio ? 'custom' : 'radar'));
                 }
               }}
-              className="w-full py-3.5 bg-gradient-to-r from-[#facc15] to-[#eab308] hover:opacity-95 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all"
+              className="w-full py-3 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/50 text-[#facc15] font-bold text-xs uppercase tracking-wider rounded-[4px] flex items-center justify-center gap-2 transition-all"
             >
               <Bell className="w-4 h-4 animate-bounce" />
               <span>Disparar Alarme de Teste em Tela Cheia</span>
@@ -738,7 +749,7 @@ export default function SettingsModal({
         {/* ================= SUB-SCREEN: APARÊNCIA ================= */}
         {activeScreen === 'appearance' && (
           <div className="space-y-4 animate-in fade-in">
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <h3 className="text-sm font-bold text-white">Tema de Fundo</h3>
               {[
                 { id: 'amoled', label: 'Preto AMOLED Puro (#000000)', desc: 'Recomendado para tela OLED / economia máxima de bateria' },
@@ -748,7 +759,7 @@ export default function SettingsModal({
                 <div
                   key={t.id}
                   onClick={() => updateSettings({ theme: t.id })}
-                  className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer ${
+                  className={`p-3 rounded-[4px] border flex items-center justify-between cursor-pointer ${
                     (settings.theme || 'amoled') === t.id 
                       ? 'bg-[#28282e] border-[#facc15] text-white shadow-md' 
                       : 'bg-[#141416] border-[#262629] text-neutral-300'
@@ -763,11 +774,11 @@ export default function SettingsModal({
               ))}
             </div>
 
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <h3 className="text-sm font-bold text-white">Cor de Destaque</h3>
               <div className="flex gap-3">
                 {[
-                  { color: '#facc15', label: 'Laranja TickTick Pop' },
+                  { color: '#facc15', label: 'Amarelo Ouro OpenTick' },
                   { color: '#4c82f7', label: 'Azul Clássico' },
                   { color: '#10b981', label: 'Esmeralda' },
                   { color: '#8b5cf6', label: 'Roxo' },
@@ -781,7 +792,7 @@ export default function SettingsModal({
                     }`}
                     style={{ backgroundColor: c.color }}
                   >
-                    {(settings.accentColor || '#facc15') === c.color && <Check className="w-4 h-4 text-white stroke-[3]" />}
+                    {(settings.accentColor || '#facc15') === c.color && <Check className="w-4 h-4 text-black stroke-[3]" />}
                   </button>
                 ))}
               </div>
@@ -792,16 +803,16 @@ export default function SettingsModal({
         {/* ================= SUB-SCREEN: DATA HORA ================= */}
         {activeScreen === 'datetime' && (
           <div className="space-y-4 animate-in fade-in">
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <h3 className="text-sm font-bold text-white">Formato de Horário</h3>
               <div className="grid grid-cols-2 gap-2">
                 {['24h', '12h'].map(fmt => (
                   <button
                     key={fmt}
                     onClick={() => updateSettings({ timeFormat: fmt })}
-                    className={`p-3 rounded-xl border text-xs font-bold transition-colors ${
+                    className={`p-3 rounded-[4px] border text-xs font-bold transition-colors ${
                       (settings.timeFormat || '24h') === fmt
-                        ? 'bg-[#facc15] text-black border-[#facc15]'
+                        ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
                         : 'bg-[#141416] text-neutral-300 border-[#262629]'
                     }`}
                   >
@@ -811,7 +822,7 @@ export default function SettingsModal({
               </div>
             </div>
 
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <h3 className="text-sm font-bold text-white">Dia de Início da Semana</h3>
               <div className="grid grid-cols-2 gap-2">
                 {[
@@ -821,9 +832,9 @@ export default function SettingsModal({
                   <button
                     key={d.id}
                     onClick={() => updateSettings({ startOfWeek: d.id })}
-                    className={`p-3 rounded-xl border text-xs font-bold transition-colors ${
+                    className={`p-3 rounded-[4px] border text-xs font-bold transition-colors ${
                       (settings.startOfWeek || 'domingo') === d.id
-                        ? 'bg-[#facc15] text-black border-[#facc15]'
+                        ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
                         : 'bg-[#141416] text-neutral-300 border-[#262629]'
                     }`}
                   >
@@ -833,7 +844,7 @@ export default function SettingsModal({
               </div>
             </div>
 
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 flex items-center justify-between">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 flex items-center justify-between">
               <div>
                 <span className="text-sm font-semibold text-white block">Mostrar números da semana (W)</span>
                 <span className="text-xs text-neutral-400">Exibir indicador de semana do ano no calendário</span>
@@ -856,7 +867,7 @@ export default function SettingsModal({
         {/* ================= SUB-SCREEN: GERAL ================= */}
         {activeScreen === 'general' && (
           <div className="space-y-4 animate-in fade-in">
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 flex items-center justify-between">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 flex items-center justify-between">
               <div>
                 <span className="text-sm font-semibold text-white block">Avisar antes de sair</span>
                 <span className="text-xs text-neutral-400">Clique duas vezes no botão voltar para sair</span>
@@ -874,7 +885,7 @@ export default function SettingsModal({
               </button>
             </div>
 
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-2">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-2">
               <span className="text-sm font-semibold text-white block">Posição da Seção Atrasada</span>
               <div className="grid grid-cols-2 gap-2">
                 {[
@@ -884,9 +895,9 @@ export default function SettingsModal({
                   <button
                     key={pos.id}
                     onClick={() => updateSettings({ delayedSection: pos.id })}
-                    className={`p-2.5 rounded-xl border text-xs font-semibold ${
+                    className={`p-2.5 rounded-[4px] border text-xs font-semibold ${
                       (settings.delayedSection || 'top') === pos.id 
-                        ? 'bg-[#facc15] text-black border-[#facc15]' 
+                        ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55' 
                         : 'bg-[#141416] text-neutral-400 border-[#262629]'
                     }`}
                   >
@@ -901,7 +912,7 @@ export default function SettingsModal({
         {/* ================= SUB-SCREEN: INTEGRAÇÕES & IMPORTAÇÃO ================= */}
         {activeScreen === 'sync' && (
           <div className="space-y-4 animate-in fade-in">
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-emerald-400" />
                 Sincronização TickTick Open API
@@ -914,13 +925,13 @@ export default function SettingsModal({
                   onClose();
                   if (onOpenSyncModal) onOpenSyncModal();
                 }}
-                className="w-full py-2.5 bg-[#facc15] hover:bg-[#eab308] text-black text-xs font-bold rounded-xl shadow-md"
+                className="w-full py-2.5 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/45 text-[#facc15] text-xs font-bold rounded-[4px] shadow-md"
               >
                 Abrir Assistente de Sincronização API
               </button>
             </div>
 
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Download className="w-4 h-4 text-[#facc15]" />
                 Backup Completo (Exportar / Importar)
@@ -937,7 +948,7 @@ export default function SettingsModal({
                     dlAnchor.setAttribute("download", `opentick-backup-${new Date().toISOString().split('T')[0]}.json`);
                     dlAnchor.click();
                   }}
-                  className="py-2.5 bg-[#2c2c2e] hover:bg-[#38383c] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 border border-[#3a3a3e]"
+                  className="py-2.5 bg-[#2c2c2e] hover:bg-[#38383c] text-white text-xs font-bold rounded-[4px] flex items-center justify-center gap-2 border border-[#3a3a3e]"
                 >
                   <Download className="w-4 h-4" />
                   <span>Baixar Backup</span>
@@ -954,14 +965,14 @@ export default function SettingsModal({
                       const reader = new FileReader();
                       reader.onload = (event) => {
                         const success = importData(event.target.result);
-                        if (success) alert('Dados restaurados com sucesso!');
-                        else alert('Arquivo JSON inválido.');
+                        if (success) showFeedback('Dados restaurados com sucesso!', 'success');
+                        else showFeedback('Arquivo JSON inválido.', 'error');
                       };
                       reader.readAsText(file);
                     };
                     input.click();
                   }}
-                  className="py-2.5 bg-[#2c2c2e] hover:bg-[#38383c] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 border border-[#3a3a3e]"
+                  className="py-2.5 bg-[#2c2c2e] hover:bg-[#38383c] text-white text-xs font-bold rounded-[4px] flex items-center justify-center gap-2 border border-[#3a3a3e]"
                 >
                   <Upload className="w-4 h-4" />
                   <span>Restaurar Backup</span>
@@ -974,7 +985,7 @@ export default function SettingsModal({
         {/* ================= SUB-SCREEN: FUNÇÕES DE IA ================= */}
         {activeScreen === 'ai' && (
           <div className="space-y-4 animate-in fade-in">
-            <div className="bg-[#1c1c1e] rounded-2xl border border-[#28282b] p-4 space-y-3">
+            <div className="bg-[#1c1c1e] rounded-[6px] border border-[#28282b] p-4 space-y-3">
               <div className="flex items-center gap-2 text-[#facc15]">
                 <Sparkles className="w-5 h-5" />
                 <h3 className="text-sm font-bold text-white">Assistente de Produtividade Gemini</h3>
@@ -982,7 +993,7 @@ export default function SettingsModal({
               <p className="text-xs text-neutral-400">
                 O OpenTick integra inteligência local-first para decomposição automática de tarefas e sugestão de blocos de tempo livres.
               </p>
-              <div className="p-3 bg-[#141416] rounded-xl border border-[#262629] text-xs text-neutral-300">
+              <div className="p-3 bg-[#141416] rounded-[4px] border border-[#262629] text-xs text-neutral-300">
                 Status: <span className="text-emerald-400 font-bold">Pronto e Ativo (Local First)</span>
               </div>
             </div>

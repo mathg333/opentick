@@ -18,6 +18,7 @@ import {
   Crown
 } from 'lucide-react';
 import RankShield2D from './RankShield2D';
+import AchievementBadge from './AchievementBadge';
 import { calculateGamification, RANKS_CONFIG } from '../utils/gamification';
 import ProfileCustomizeModal from './ProfileCustomizeModal';
 
@@ -157,17 +158,17 @@ export default function ProductivityStats({ store }) {
             </div>
           </div>
 
-          {/* 🌟 HERO CENTERPIECE: ESCUDO DO RANKING DINÂMICO BEM GRANDE, CENTRALIZADO NO MEIO, COM EFEITO BLUR, SEM CAIXA */}
-          <div className="py-6 px-4 flex flex-col items-center justify-center text-center relative overflow-hidden">
+          {/* HERO CENTERPIECE: ESCUDO EM DESTAQUE MÁXIMO CENTRALIZADO */}
+          <div className="py-8 sm:py-10 px-4 flex flex-col items-center justify-center text-center relative overflow-hidden">
             {/* Luminous Ambient Glow (Blur Effect) matching the displayed tier color */}
             <div 
-              className="absolute w-56 h-56 rounded-full blur-3xl opacity-40 pointer-events-none transition-all duration-700"
+              className="absolute w-72 h-72 sm:w-80 sm:h-80 rounded-full blur-3xl opacity-45 pointer-events-none transition-all duration-700"
               style={{ backgroundColor: displayedRank.color }}
             />
 
-            {/* Escudo 3D PNG BEM GRANDE (150px) em destaque absoluto */}
-            <div className="relative z-10 flex items-center justify-center my-1 hover:scale-105 active:scale-95 transition-transform duration-300">
-              <RankShield2D tier={displayedRank.tier} size={150} showGlow={true} />
+            {/* Escudo 3D PNG em Destaque Absoluto */}
+            <div className="relative z-10 flex items-center justify-center my-2 hover:scale-105 active:scale-95 transition-transform duration-300">
+              <RankShield2D tier={displayedRank.tier} size={228} showGlow={true} />
             </div>
 
             {/* Informações centralizadas logo abaixo do escudo */}
@@ -232,7 +233,10 @@ export default function ProductivityStats({ store }) {
                   Faltam apenas {stats.xpToNextTier} XP para {stats.nextRank.shortName}
                 </span>
               ) : (
-                <span className="text-emerald-400 font-bold">Soberano de Rubi Supremo 💎</span>
+                <span className="text-[#facc15] font-bold inline-flex items-center gap-1">
+                  <Crown className="w-3.5 h-3.5 text-[#facc15]" />
+                  Soberano de Rubi Supremo
+                </span>
               )}
             </div>
           </div>
@@ -377,34 +381,44 @@ export default function ProductivityStats({ store }) {
             {stats.achievements.map((ach) => (
               <div
                 key={ach.id}
-                className={`p-3.5 rounded-2xl border flex items-center gap-3 transition-all ${
+                className={`p-3.5 rounded-2xl border flex items-center gap-3.5 transition-all relative overflow-hidden ${
                   ach.unlocked
-                    ? 'bg-[#141418] border-[#2c2c34] shadow-lg'
-                    : 'bg-[#0a0a0c] border-[#1c1c20] opacity-45'
+                    ? 'bg-gradient-to-br from-[#18171b] via-[#131317] to-[#0e0e11] border-[#facc15]/35 shadow-lg shadow-[#facc15]/5'
+                    : 'bg-[#0a0a0c] border-[#1c1c20] opacity-55'
                 }`}
               >
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-2xl shrink-0 ${
-                  ach.unlocked ? 'bg-white/5 border border-white/10' : 'bg-neutral-900 border border-neutral-800'
-                }`}>
-                  {ach.icon}
+                {ach.unlocked && (
+                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#facc15]/55 to-transparent pointer-events-none" />
+                )}
+
+                <div
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                    ach.unlocked
+                      ? 'bg-gradient-to-br from-[#facc15]/20 via-[#eab308]/10 to-[#0a0a0c] border border-[#facc15]/45 shadow-[0_0_16px_rgba(250,204,21,0.16)]'
+                      : 'bg-[#121216] border border-[#24242b]'
+                  }`}
+                >
+                  <AchievementBadge id={ach.id} unlocked={ach.unlocked} size={26} />
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-white truncate">{ach.title}</h4>
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className={`text-xs font-extrabold truncate ${ach.unlocked ? 'text-white' : 'text-neutral-300'}`}>
+                      {ach.title}
+                    </h4>
                     {ach.unlocked ? (
-                      <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-0.5">
-                        <Check className="w-2.5 h-2.5" />
+                      <span className="text-[10px] text-[#facc15] bg-[#facc15]/12 border border-[#facc15]/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
                         Conquistado
                       </span>
                     ) : (
-                      <span className="text-[10px] text-neutral-400 flex items-center gap-0.5">
+                      <span className="text-[10px] text-neutral-500 bg-white/[0.03] border border-white/5 px-2 py-0.5 rounded-full font-medium flex items-center gap-1 shrink-0">
                         <Lock className="w-2.5 h-2.5" />
                         Bloqueado
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5">{ach.desc}</p>
+                  <p className="text-[11px] text-neutral-400 line-clamp-1 mt-1">{ach.desc}</p>
                 </div>
               </div>
             ))}

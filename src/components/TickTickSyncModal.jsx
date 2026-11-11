@@ -10,17 +10,18 @@ import {
 } from 'lucide-react';
 
 export default function TickTickSyncModal({ store, isOpen, onClose }) {
-  if (!isOpen) return null;
 
   const { state, setTickTickConfig, importFromTickTick, exportData, importData } = store;
 
-  const [accessToken, setAccessToken] = useState(state.ticktickConfig.accessToken || '');
+  const [accessToken, setAccessToken] = useState(state?.ticktickConfig?.accessToken || '');
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
   const [activeTab, setActiveTab] = useState('ticktick');
   const [importJsonText, setImportJsonText] = useState('');
 
-  const clientId = state.ticktickConfig.clientId || '1VnPwbqL2WaCGV713q';
+  if (!isOpen) return null;
+
+  const clientId = state?.ticktickConfig?.clientId || '1VnPwbqL2WaCGV713q';
 
   const handleImportTickTick = async () => {
     if (!accessToken.trim()) {

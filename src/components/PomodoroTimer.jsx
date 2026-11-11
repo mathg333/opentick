@@ -13,6 +13,7 @@ import {
   Radio 
 } from 'lucide-react';
 import { soundManager } from '../utils/audio';
+import { getTodayYMD } from '../utils/taskSchedule';
 
 export default function PomodoroTimer({ store, activeTask }) {
   const { state, addPomodoroSession } = store;
@@ -55,7 +56,7 @@ export default function PomodoroTimer({ store, activeTask }) {
       }
 
       if (mode === 'pomodoro') {
-        const linkedTask = state.tasks.find(t => t.id === selectedTaskId);
+        const linkedTask = (state.tasks || []).filter(t => !t.deleted).find(t => t.id === selectedTaskId);
         addPomodoroSession({
           taskId: selectedTaskId || null,
           taskTitle: linkedTask ? linkedTask.title : 'Sessão Livre de Foco',
@@ -100,7 +101,7 @@ export default function PomodoroTimer({ store, activeTask }) {
   const totalDuration = durations[mode];
   const progressPercent = ((totalDuration - timeLeft) / totalDuration) * 100;
 
-  const todayStart = new Date().toISOString().split('T')[0];
+  const todayStart = getTodayYMD();
   const todaySessions = state.pomodoroSessions.filter(s => s.completedAt.startsWith(todayStart));
   const totalMinutesToday = todaySessions.reduce((acc, curr) => acc + (curr.durationMinutes || 25), 0);
 
@@ -140,7 +141,7 @@ export default function PomodoroTimer({ store, activeTask }) {
           <button
             onClick={() => switchMode('pomodoro')}
             className={`px-3 md:px-5 py-2 rounded-xl text-xs font-bold transition-all flex-1 sm:flex-none text-center ${
-              mode === 'pomodoro' ? 'bg-neutral-200 text-black shadow-md' : 'text-neutral-400 hover:text-white'
+              mode === 'pomodoro' ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/45' : 'text-neutral-400 hover:text-white border border-transparent'
             }`}
           >
             Foco (25m)
@@ -206,7 +207,7 @@ export default function PomodoroTimer({ store, activeTask }) {
             className={`px-6 md:px-8 py-3 rounded-2xl font-bold text-sm flex items-center gap-2.5 shadow-xl transition-all active:scale-95 ${
               isRunning
                 ? 'bg-[#27272a] text-white border border-[#3f3f46]'
-                : 'bg-white text-black hover:bg-neutral-200'
+                : 'bg-[#141418] hover:bg-[#1c1c22] text-neutral-100 border border-[#facc15]/45'
             }`}
           >
             {isRunning ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
@@ -254,7 +255,7 @@ export default function PomodoroTimer({ store, activeTask }) {
               step="0.05"
               value={volume}
               onChange={handleVolumeChange}
-              className="w-20 accent-white"
+              className="w-20 accent-[#facc15]"
             />
           </div>
 
@@ -273,7 +274,7 @@ export default function PomodoroTimer({ store, activeTask }) {
                   onClick={() => handleToggleNoise(snd.id === 'none' ? noiseType : snd.id)}
                   className={`p-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
                     isActive
-                      ? 'bg-neutral-200 text-black border-white shadow-sm'
+                      ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50 font-semibold'
                       : 'bg-[#151518] text-neutral-400 border-[#222226] hover:text-white'
                   }`}
                 >

@@ -52,13 +52,14 @@
             android:showForAllUsers="true"
             android:exported="false" />
 
-        <!-- Broadcast Receiver for Android AlarmManager -->
+        <!-- Broadcast Receiver for Android AlarmManager & Boot Recovery -->
         <receiver
             android:name=".AlarmReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 

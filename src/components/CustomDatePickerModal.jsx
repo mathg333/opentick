@@ -6,11 +6,17 @@ import {
   Clock,
   Check,
   X,
+  Bell,
+  BellOff,
   Plus,
   Repeat,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Layers,
+  Maximize2
 } from 'lucide-react';
 import TimePickerModal from './TimePickerModal';
+import { ObsidianDateButton } from './ObsidianControls';
+import ScheduledTasksOverviewModal, { inferTaskFrequency } from './ScheduledTasksOverviewModal';
 import {
   formatDateYMD,
   getTodayYMD,
@@ -39,6 +45,8 @@ export default function CustomDatePickerModal({
   initialDates = [],
   initialDate = '',
   initialTimes = [],
+  initialAlarmEnabled = true,
+  initialReminderOffset = 0,
   initialTime = '',
   initialMode = 'monthly',
   allowTaskSelection = false,
@@ -50,15 +58,20 @@ export default function CustomDatePickerModal({
   const [selectedDates, setSelectedDates] = useState([]);
   const [selectedTimes, setSelectedTimes] = useState([]);
 
-  // Multi-time picker modal state
+  // Multi-time picker modal & Scheduled Super Overview states
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [editingTimeTarget, setEditingTimeTarget] = useState(null); // string HH:MM if editing existing, null if adding
+  const [editingTimeTarget, setEditingTimeTarget] = useState(null);
+  const [isOverviewOpen, setIsOverviewOpen] = useState(false);
+  const [existingFreqFilter, setExistingFreqFilter] = useState('all'); // string HH:MM if editing existing, null if adding
 
   // Task create / select state (when allowTaskSelection = true)
   const [taskAction, setTaskAction] = useState('new'); // 'new' | 'existing'
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskProjectId, setNewTaskProjectId] = useState('inbox');
   const [selectedTaskId, setSelectedTaskId] = useState('');
+  const [alarmEnabled, setAlarmEnabled] = useState(true);
+  const [reminderOffset, setReminderOffset] = useState(0);
+  const activeTasks = useMemo(() => (tasks || []).filter(t => !t.deleted), [tasks]);
 
   // Monthly calendar navigation & multi-month repeat
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
@@ -119,26 +132,41 @@ export default function CustomDatePickerModal({
     setWeeklyDays([anchor.getDay()]);
     setMonthlyHorizon(1);
     setAdditiveMode(false);
+    setAlarmEnabled(initialAlarmEnabled !== false);
+    setReminderOffset(initialReminderOffset ?? 0);
 
     setTaskAction('new');
     setNewTaskTitle(initialTitle || '');
     setNewTaskProjectId(projects?.[0]?.id || 'inbox');
-    const availableTasks = (tasks || []).filter(t => !t.completed);
-    setSelectedTaskId(availableTasks[0]?.id || tasks?.[0]?.id || '');
+    const nonDeleted = (tasks || []).filter(t => !t.deleted);
+    const availableTasks = nonDeleted.filter(t => !t.completed);
+    setSelectedTaskId(availableTasks[0]?.id || nonDeleted[0]?.id || '');
   }, [isOpen]);
 
   const handleSelectExistingTask = (taskId) => {
     setSelectedTaskId(taskId);
-    const found = (tasks || []).find(t => t.id === taskId);
+    const found = activeTasks.find(t => t.id === taskId);
     if (!found) return;
     const d = getTaskDates(found);
     const tm = getTaskTimes(found);
-    if (d.length > 0) setSelectedDates(d);
-    if (tm.length > 0) setSelectedTimes(tm);
-    else setSelectedTimes([]);
-    if (found.recurrencePattern?.mode) {
-      setMode(found.recurrencePattern.mode);
+    setSelectedDates(d);
+    setSelectedTimes(tm);
+    const rp = found.recurrencePattern;
+    if (rp) {
+      if (rp.mode) setMode(rp.mode);
+      if (rp.dailyInterval != null) setDailyInterval(rp.dailyInterval);
+      if (rp.dailyDuration != null) setDailyDuration(rp.dailyDuration);
+      setDailyStartDate(d[0] || getTodayYMD());
+      if (Array.isArray(rp.weeklyDays) && rp.weeklyDays.length > 0) setWeeklyDays(rp.weeklyDays);
+      if (rp.weeklyInterval != null) setWeeklyInterval(rp.weeklyInterval);
+      if (rp.weeklyDurationWeeks != null) setWeeklyDurationWeeks(rp.weeklyDurationWeeks);
+      if (rp.monthlyHorizon != null) setMonthlyHorizon(rp.monthlyHorizon);
+      if (rp.annualYear != null) setAnnualYear(rp.annualYear);
+      if (Array.isArray(rp.annualMonths) && rp.annualMonths.length > 0) setAnnualMonths(rp.annualMonths);
+      if (Array.isArray(rp.annualDaysOfMonth) && rp.annualDaysOfMonth.length > 0) setAnnualDaysOfMonth(rp.annualDaysOfMonth);
     }
+    setAlarmEnabled(found.alarmEnabled !== false);
+    setReminderOffset(found.reminderOffset ?? 0);
   };
 
   const applyGeneratedDates = (generated) => {
@@ -280,7 +308,7 @@ export default function CustomDatePickerModal({
   };
 
   const handleConfirm = () => {
-    const datesToApply = selectedDates.length > 0 ? [...selectedDates].sort() : [todayStr];
+    const datesToApply = [...selectedDates].sort();
     const timesToApply = [...new Set(selectedTimes)].filter(Boolean).sort();
     const pattern = {
       mode,
@@ -299,20 +327,26 @@ export default function CustomDatePickerModal({
       if (taskAction === 'new' && !newTaskTitle.trim()) return;
       if (taskAction === 'existing' && !selectedTaskId) return;
       onApplyCustomSchedule({
-        dates: datesToApply,
+        dates: datesToApply.length > 0 ? datesToApply : [todayStr],
         times: timesToApply,
         pattern,
         taskAction,
         taskId: selectedTaskId,
         title: newTaskTitle.trim(),
-        projectId: newTaskProjectId
+        projectId: newTaskProjectId,
+        alarmEnabled,
+        reminderOffset
       });
+      onClose();
+      return;
     }
 
     if (onSelectDates) {
       onSelectDates(datesToApply, timesToApply[0] || '', {
         times: timesToApply,
-        pattern
+        pattern,
+        alarmEnabled,
+        reminderOffset
       });
     }
     onClose();
@@ -330,7 +364,7 @@ export default function CustomDatePickerModal({
         {/* Header */}
         <div className="px-4 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#111114] shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#facc15]/15 border border-[#facc15]/30 flex items-center justify-center text-[#facc15] shrink-0">
+            <div className="w-9 h-9 rounded-md bg-[#facc15]/15 border border-[#facc15]/30 flex items-center justify-center text-[#facc15] shrink-0">
               <SlidersHorizontal size={18} />
             </div>
             <div className="min-w-0">
@@ -343,7 +377,7 @@ export default function CustomDatePickerModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-[#facc15] hover:bg-white/10 rounded-xl transition-colors shrink-0"
+            className="p-2 text-[#facc15] hover:bg-white/10 rounded-md transition-colors shrink-0"
             aria-label="Fechar"
           >
             <X size={18} />
@@ -355,18 +389,18 @@ export default function CustomDatePickerModal({
 
           {/* Optional Task Selection / Creation when invoked from Calendar or Visualizations */}
           {allowTaskSelection && (
-            <div className="bg-[#141417] border border-white/10 rounded-2xl p-3 space-y-2.5">
-              <div className="grid grid-cols-2 gap-1.5 bg-[#0A0A0C] p-1 rounded-xl border border-white/5">
+            <div className="bg-[#141417] border border-white/10 rounded-lg p-3 space-y-2.5">
+              <div className="grid grid-cols-2 gap-1.5 bg-[#0A0A0C] p-1 rounded-md border border-white/5">
                 <button
                   type="button"
                   onClick={() => setTaskAction('new')}
                   className={`py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                     taskAction === 'new'
-                      ? 'bg-[#facc15] text-black shadow'
+                      ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/50'
                       : 'text-[#8E8E93] hover:text-white'
                   }`}
                 >
-                  <Plus size={13} className={taskAction === 'new' ? 'text-black' : 'text-[#facc15]'} />
+                  <Plus size={13} className={taskAction === 'new' ? 'text-[#facc15]' : 'text-[#8E8E93]'} />
                   Nova Tarefa
                 </button>
                 <button
@@ -377,12 +411,12 @@ export default function CustomDatePickerModal({
                   }}
                   className={`py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                     taskAction === 'existing'
-                      ? 'bg-[#facc15] text-black shadow'
+                      ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/50'
                       : 'text-[#8E8E93] hover:text-white'
                   }`}
                 >
-                  <Repeat size={13} className={taskAction === 'existing' ? 'text-black' : 'text-[#facc15]'} />
-                  Tarefa Existente
+                  <Layers size={13} className={taskAction === 'existing' ? 'text-[#facc15]' : 'text-[#8E8E93]'} />
+                  Agendadas ({activeTasks.length})
                 </button>
               </div>
 
@@ -393,7 +427,7 @@ export default function CustomDatePickerModal({
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                     placeholder="Nome da tarefa ou rotina (ex: Tomar água, Treinar)..."
-                    className="w-full bg-[#0A0A0C] border border-white/10 focus:border-[#facc15]/60 rounded-xl px-3 py-2 text-xs text-white placeholder-[#555558] outline-none font-medium"
+                    className="w-full bg-[#0A0A0C] border border-white/10 focus:border-[#facc15]/60 rounded-md px-3 py-2 text-xs text-white placeholder-[#555558] outline-none font-medium"
                   />
                   {projects && projects.length > 0 && (
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
@@ -416,21 +450,91 @@ export default function CustomDatePickerModal({
                   )}
                 </div>
               ) : (
-                <div className="space-y-1.5">
-                  <select
-                    value={selectedTaskId}
-                    onChange={(e) => handleSelectExistingTask(e.target.value)}
-                    className="w-full bg-[#0A0A0C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none font-semibold"
-                  >
-                    {(tasks || []).length === 0 && (
-                      <option value="">Nenhuma tarefa cadastrada ainda</option>
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar flex-1 min-w-0">
+                      {[
+                        { id: 'all', label: 'Todas' },
+                        { id: 'daily', label: 'Diárias' },
+                        { id: 'weekly', label: 'Semanais' },
+                        { id: 'monthly', label: 'Mensais' },
+                        { id: 'annual', label: 'Anuais' }
+                      ].map(f => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => setExistingFreqFilter(f.id)}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-bold shrink-0 border transition-all ${
+                            existingFreqFilter === f.id
+                              ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
+                              : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsOverviewOpen(true)}
+                      className="px-2.5 py-1 rounded-lg bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] text-[10px] font-black flex items-center gap-1 shrink-0"
+                      title="Abrir Super Janela com todas as tarefas e detalhes"
+                    >
+                      <Maximize2 size={11} />
+                      <span>Super Painel</span>
+                    </button>
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto space-y-1.5 pr-0.5 custom-scrollbar">
+                    {activeTasks
+                      .filter(t => existingFreqFilter === 'all' || inferTaskFrequency(t) === existingFreqFilter)
+                      .map(t => {
+                        const isSel = selectedTaskId === t.id;
+                        const tDates = getTaskDates(t);
+                        const tTimes = getTaskTimes(t);
+                        const freq = inferTaskFrequency(t);
+                        const freqName = freq === 'daily' ? 'Diária' : freq === 'weekly' ? 'Semanal' : freq === 'monthly' ? 'Mensal' : freq === 'annual' ? 'Anual' : 'Única';
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => handleSelectExistingTask(t.id)}
+                            className={`w-full px-2.5 py-1.5 rounded-[4px] border text-left transition-all flex items-center justify-between gap-2 ${
+                              isSel
+                                ? 'bg-[#facc15]/12 border-[#facc15]/55'
+                                : 'bg-[#0A0A0C] border-white/10 hover:border-white/25'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className="px-1.5 py-0.5 rounded bg-[#facc15]/15 text-[#facc15] text-[9px] font-black uppercase">
+                                  {freqName}
+                                </span>
+                                <span className="text-[10px] font-mono text-[#A1A1AA]">
+                                  {tDates.length}d · {tTimes.length}h
+                                </span>
+                              </div>
+                              <div className={`text-xs font-bold truncate ${isSel ? 'text-[#facc15]' : 'text-white'}`}>
+                                {t.title}
+                              </div>
+                              {t.description && (
+                                <div className="text-[10px] text-[#8E8E93] truncate">{t.description}</div>
+                              )}
+                            </div>
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                              isSel ? 'bg-[#facc15]/20 border-[#facc15]/70 text-[#facc15]' : 'border-[#3f3f46]'
+                            }`}>
+                              {isSel && <Check size={10} strokeWidth={3} />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    {activeTasks.filter(t => existingFreqFilter === 'all' || inferTaskFrequency(t) === existingFreqFilter).length === 0 && (
+                      <div className="py-5 text-center text-[11px] text-[#8E8E93]">
+                        Nenhuma tarefa encontrada nesse filtro.
+                      </div>
                     )}
-                    {(tasks || []).map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.completed ? '✓ ' : ''}{t.title} ({getTaskDates(t).length}d · {getTaskTimes(t).length}h)
-                      </option>
-                    ))}
-                  </select>
+                  </div>
                 </div>
               )}
             </div>
@@ -454,7 +558,7 @@ export default function CustomDatePickerModal({
                 {additiveMode ? '+ Somando às datas' : 'Substituir ao gerar'}
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-1 bg-[#141417] p-1 rounded-xl border border-white/10">
+            <div className="grid grid-cols-4 gap-1 bg-[#141417] p-1 rounded-md border border-white/10">
               {[
                 { id: 'daily', label: 'Diário' },
                 { id: 'weekly', label: 'Semanal' },
@@ -467,7 +571,7 @@ export default function CustomDatePickerModal({
                   onClick={() => setMode(tab.id)}
                   className={`py-2 rounded-lg text-[11px] font-black transition-all ${
                     mode === tab.id
-                      ? 'bg-[#facc15] text-black shadow-md shadow-[#facc15]/25'
+                      ? 'bg-[#facc15] text-black'
                       : 'text-[#A1A1AA] hover:text-white'
                   }`}
                 >
@@ -479,7 +583,7 @@ export default function CustomDatePickerModal({
 
           {/* MODE 1: DIÁRIO */}
           {mode === 'daily' && (
-            <div className="bg-[#141417] border border-white/10 rounded-2xl p-3 space-y-3">
+            <div className="bg-[#141417] border border-white/10 rounded-lg p-3 space-y-3">
               <div>
                 <div className="text-[11px] font-bold text-white mb-1.5">Repetir a cada quantos dias?</div>
                 <div className="grid grid-cols-5 gap-1.5">
@@ -499,7 +603,7 @@ export default function CustomDatePickerModal({
                       }}
                       className={`py-1.5 px-1 rounded-lg text-[10px] font-bold border transition-all ${
                         dailyInterval === opt.v
-                          ? 'bg-[#facc15] text-black border-[#facc15]'
+                          ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
                           : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
                       }`}
                     >
@@ -535,15 +639,14 @@ export default function CustomDatePickerModal({
               <div className="flex items-center justify-between gap-2 pt-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] text-[#8E8E93] font-bold">Início:</span>
-                  <input
-                    type="date"
+                  <ObsidianDateButton
+                    compact
                     value={dailyStartDate}
-                    onChange={(e) => {
-                      const val = e.target.value || todayStr;
-                      setDailyStartDate(val);
-                      triggerDailyApply(dailyInterval, dailyDuration, val);
+                    onChange={(val) => {
+                      const clean = val || todayStr;
+                      setDailyStartDate(clean);
+                      triggerDailyApply(dailyInterval, dailyDuration, clean);
                     }}
-                    className="bg-[#0A0A0C] border border-white/10 rounded-lg px-2 py-1 text-[11px] text-white outline-none"
                   />
                 </div>
                 <button
@@ -559,7 +662,7 @@ export default function CustomDatePickerModal({
 
           {/* MODE 2: SEMANAL */}
           {mode === 'weekly' && (
-            <div className="bg-[#141417] border border-white/10 rounded-2xl p-3 space-y-3">
+            <div className="bg-[#141417] border border-white/10 rounded-lg p-3 space-y-3">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] font-bold text-white">Marque os dias da semana:</span>
@@ -596,9 +699,9 @@ export default function CustomDatePickerModal({
                         key={idx}
                         type="button"
                         onClick={() => toggleWeeklyDay(idx)}
-                        className={`py-2 rounded-xl text-[11px] font-black border transition-all ${
+                        className={`py-2 rounded-md text-[11px] font-black border transition-all ${
                           active
-                            ? 'bg-[#facc15] text-black border-[#facc15] shadow-md shadow-[#facc15]/20'
+                            ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
                             : 'bg-[#0A0A0C] text-[#8E8E93] border-white/10 hover:text-white'
                         }`}
                       >
@@ -668,7 +771,7 @@ export default function CustomDatePickerModal({
 
           {/* MODE 4: ANUAL */}
           {mode === 'annual' && (
-            <div className="bg-[#141417] border border-white/10 rounded-2xl p-3 space-y-3">
+            <div className="bg-[#141417] border border-white/10 rounded-lg p-3 space-y-3">
               {/* Year Nav */}
               <div className="flex items-center justify-between">
                 <button
@@ -728,7 +831,7 @@ export default function CustomDatePickerModal({
                         onClick={() => toggleAnnualMonth(idx)}
                         className={`py-1.5 rounded-lg text-[10px] font-black border transition-all ${
                           active
-                            ? 'bg-[#facc15] text-black border-[#facc15]'
+                            ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
                             : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
                         }`}
                       >
@@ -774,7 +877,7 @@ export default function CustomDatePickerModal({
                         onClick={() => toggleAnnualDay(dayNum)}
                         className={`h-7 rounded-lg text-[10px] font-bold border transition-all ${
                           active
-                            ? 'bg-[#facc15] text-black border-[#facc15]'
+                            ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
                             : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
                         }`}
                       >
@@ -789,7 +892,7 @@ export default function CustomDatePickerModal({
 
           {/* MODE 3 (MENSAL) OR INTERACTIVE CALENDAR FINE-TUNER (always visible in Mensal, or helpful quick view in Daily/Weekly) */}
           {(mode === 'monthly' || mode === 'daily' || mode === 'weekly') && (
-            <div className="bg-[#141417] border border-white/10 rounded-2xl p-3">
+            <div className="bg-[#141417] border border-white/10 rounded-lg p-3">
               {/* Month Navigation Header */}
               <div className="flex items-center justify-between mb-2">
                 <button
@@ -833,7 +936,7 @@ export default function CustomDatePickerModal({
                       onClick={() => toggleDate(cell.dateStr)}
                       className={`h-8 rounded-lg flex flex-col items-center justify-center relative text-[11px] transition-all ${
                         isSelected
-                          ? 'bg-[#facc15] text-black font-black shadow-md shadow-[#facc15]/20'
+                          ? 'bg-[#facc15] text-black font-black'
                           : isToday
                           ? 'bg-[#facc15]/15 text-[#facc15] font-bold border border-[#facc15]/40'
                           : cell.isCurrentMonth
@@ -882,7 +985,7 @@ export default function CustomDatePickerModal({
           )}
 
           {/* SHARED ACROSS ALL MODES: MULTIPLE TIMES PER DAY */}
-          <div className="bg-[#141417] border border-[#facc15]/25 rounded-2xl p-3 space-y-2.5">
+          <div className="bg-[#141417] border border-[#facc15]/25 rounded-lg p-3 space-y-2.5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Clock size={15} className="text-[#facc15]" />
@@ -896,7 +999,7 @@ export default function CustomDatePickerModal({
                   setEditingTimeTarget(null);
                   setShowTimePicker(true);
                 }}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#facc15] hover:bg-[#eab308] text-black text-[11px] font-black transition-all shadow-sm"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#18181c] hover:bg-[#facc15]/15 border border-[#facc15]/40 text-[#facc15] text-[11px] font-bold transition-all"
               >
                 <Plus size={13} strokeWidth={3} />
                 Adicionar Horário
@@ -909,7 +1012,7 @@ export default function CustomDatePickerModal({
                 {selectedTimes.map(timeStr => (
                   <div
                     key={timeStr}
-                    className="flex items-center gap-1 bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] rounded-xl px-2.5 py-1 text-xs font-black"
+                    className="flex items-center gap-1 bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] rounded-md px-2.5 py-1 text-xs font-black"
                   >
                     <button
                       type="button"
@@ -950,7 +1053,7 @@ export default function CustomDatePickerModal({
                     onClick={() => toggleTimePreset(preset)}
                     className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all ${
                       active
-                        ? 'bg-[#facc15] text-black border-[#facc15]'
+                        ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
                         : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
                     }`}
                   >
@@ -962,7 +1065,46 @@ export default function CustomDatePickerModal({
           </div>
 
           {/* Selected Summary Bar */}
-          <div className="bg-[#111114] border border-white/10 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+          <div className="bg-[#141417] border border-white/10 rounded-md px-2.5 py-2 flex flex-wrap items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => setAlarmEnabled(prev => !prev)}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] border text-[11px] font-bold transition-all ${
+                alarmEnabled
+                  ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15]'
+                  : 'bg-[#0A0A0C] border-white/10 text-[#8e8e93]'
+              }`}
+            >
+              {alarmEnabled ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
+              {alarmEnabled ? 'Alarme Ativo' : 'Sem Alarme'}
+            </button>
+            {alarmEnabled && (
+              <div className="flex items-center gap-1 flex-wrap">
+                {[
+                  { val: 0, label: 'Na hora' },
+                  { val: 5, label: '-5m' },
+                  { val: 10, label: '-10m' },
+                  { val: 15, label: '-15m' },
+                  { val: 30, label: '-30m' }
+                ].map(opt => (
+                  <button
+                    key={opt.val}
+                    type="button"
+                    onClick={() => setReminderOffset(opt.val)}
+                    className={`px-2 py-0.5 rounded-[4px] border text-[10px] font-bold transition-all ${
+                      reminderOffset === opt.val
+                        ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15]'
+                        : 'bg-[#0A0A0C] border-white/10 text-[#8e8e93] hover:text-white'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-[#111114] border border-white/10 rounded-md px-3 py-2 flex items-center justify-between gap-2">
             <div className="text-[11px] text-[#E4E4E7] font-semibold truncate">
               <span className="text-[#facc15] font-black">{selectedDates.length}</span>{' '}
               {selectedDates.length === 1 ? 'dia marcado' : 'dias marcados'}
@@ -975,13 +1117,24 @@ export default function CustomDatePickerModal({
               )}
             </div>
             {selectedDates.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setSelectedDates([todayStr])}
-                className="text-[10px] font-bold text-[#8E8E93] hover:text-[#facc15] shrink-0"
-              >
-                Resetar p/ Hoje
-              </button>
+              <div className="flex items-center gap-1.5">
+                {selectedDates.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDates([])}
+                    className="text-[10px] font-bold text-[#8e8e93] hover:text-red-400 px-2 py-1 rounded-[4px] bg-white/5 border border-white/5"
+                  >
+                    Limpar
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedDates([todayStr])}
+                  className="text-[10px] font-bold text-[#8e8e93] hover:text-[#facc15] px-2 py-1 rounded-[4px] bg-white/5 border border-white/5"
+                >
+                  Resetar p/ Hoje
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -992,7 +1145,7 @@ export default function CustomDatePickerModal({
             type="button"
             disabled={isConfirmDisabled}
             onClick={handleConfirm}
-            className="w-full py-3 rounded-2xl bg-[#facc15] hover:bg-[#eab308] disabled:opacity-40 disabled:cursor-not-allowed text-black font-black text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#facc15]/25"
+            className="w-full py-2.5 rounded-md bg-[#facc15]/90 hover:bg-[#facc15] disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-2"
           >
             <Check size={16} strokeWidth={3} />
             Confirmar ({selectedDates.length} {selectedDates.length === 1 ? 'dia' : 'dias'} · {selectedTimes.length || 0} {selectedTimes.length === 1 ? 'horário' : 'horários'})
@@ -1009,6 +1162,19 @@ export default function CustomDatePickerModal({
         }}
         initialTime={editingTimeTarget || selectedTimes[selectedTimes.length - 1] || '09:00'}
         onSelectTime={handleTimePicked}
+      />
+
+      {/* Super Panel Overview for ALL Scheduled Tasks */}
+      <ScheduledTasksOverviewModal
+        isOpen={isOverviewOpen}
+        onClose={() => setIsOverviewOpen(false)}
+        tasks={activeTasks}
+        projects={projects}
+        initialFilter={existingFreqFilter}
+        onSelectTask={(taskObj) => {
+          setTaskAction('existing');
+          handleSelectExistingTask(taskObj.id);
+        }}
       />
     </div>
   );

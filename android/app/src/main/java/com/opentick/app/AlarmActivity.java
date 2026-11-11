@@ -38,13 +38,15 @@ public class AlarmActivity extends AppCompatActivity {
     private View mMidRipple;
 
     private String mTaskId = "";
+    private String mOccurrenceId = "";
     private String mTaskTitle = "Lembrete OpenTick";
+    private String mTimeLabel = "";
 
     private final BroadcastReceiver mCloseReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String targetId = intent != null ? intent.getStringExtra(AlarmService.EXTRA_TASK_ID) : null;
-            if (targetId != null && !targetId.isEmpty() && targetId.equals(mTaskId)) {
+            if (targetId == null || targetId.isEmpty() || targetId.equals(mTaskId) || targetId.equals(mOccurrenceId)) {
                 finish();
             }
         }
@@ -57,13 +59,8 @@ public class AlarmActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_alarm);
 
-        // Read intent data
         readIntentData(getIntent());
-
-        TextView titleView = findViewById(R.id.alarm_task_title);
-        if (titleView != null) {
-            titleView.setText(mTaskTitle);
-        }
+        bindTaskTexts();
 
         mClockTimeView = findViewById(R.id.alarm_clock_time);
         mClockDateView = findViewById(R.id.alarm_clock_date);
@@ -71,35 +68,33 @@ public class AlarmActivity extends AppCompatActivity {
         mOuterRipple = findViewById(R.id.alarm_outer_ripple);
         mMidRipple = findViewById(R.id.alarm_mid_ripple);
 
-        // Start Clock & Multi-stage Soundwave Pulse Animation
         setupLiveClock();
         setupGlassRipplesAnimation();
 
-        // Button: Stop Alarm
         Button btnStop = findViewById(R.id.btn_stop_alarm);
         if (btnStop != null) {
             btnStop.setOnClickListener(v -> {
-                AlarmStateManager.markDismissed(this, mTaskId);
+                String dismissKey = (mOccurrenceId != null && !mOccurrenceId.isEmpty()) ? mOccurrenceId : mTaskId;
+                AlarmStateManager.markDismissed(this, dismissKey);
                 AlarmService.stop(this, mTaskId);
                 finish();
             });
         }
 
-        // Button: Snooze 5 Minutes
         Button btnSnooze = findViewById(R.id.btn_snooze_alarm);
         if (btnSnooze != null) {
             btnSnooze.setOnClickListener(v -> {
-                AlarmService.snooze(this, mTaskId, mTaskTitle, 5);
-                Toast.makeText(this, "⏰ Alarme adiado por 5 minutos", Toast.LENGTH_SHORT).show();
+                AlarmService.snooze(this, mTaskId, mOccurrenceId, mTaskTitle, 5);
+                Toast.makeText(this, "Alarme adiado por 5 minutos", Toast.LENGTH_SHORT).show();
                 finish();
             });
         }
 
-        // Button: Open Task in App
         Button btnOpenApp = findViewById(R.id.btn_open_app);
         if (btnOpenApp != null) {
             btnOpenApp.setOnClickListener(v -> {
-                AlarmStateManager.markDismissed(this, mTaskId);
+                String dismissKey = (mOccurrenceId != null && !mOccurrenceId.isEmpty()) ? mOccurrenceId : mTaskId;
+                AlarmStateManager.markDismissed(this, dismissKey);
                 AlarmService.stop(this, mTaskId);
 
                 KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
@@ -111,14 +106,15 @@ public class AlarmActivity extends AppCompatActivity {
                 launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                 launchIntent.putExtra("TRIGGERED_BY_ALARM", true);
                 launchIntent.putExtra("ALARM_TASK_ID", mTaskId);
+                launchIntent.putExtra("ALARM_OCCURRENCE_ID", mOccurrenceId);
                 launchIntent.putExtra("ALARM_TASK_TITLE", mTaskTitle);
+                launchIntent.putExtra("ALARM_TIME_LABEL", mTimeLabel);
                 startActivity(launchIntent);
 
                 finish();
             });
         }
 
-        // Register receiver for when alarm is stopped via notification action
         IntentFilter filter = new IntentFilter();
         filter.addAction(ACTION_CLOSE_ALARM_ACTIVITY);
         filter.addAction(AlarmService.ACTION_STOP_ALARM);
@@ -135,11 +131,7 @@ public class AlarmActivity extends AppCompatActivity {
         setIntent(intent);
         configureWindowAndLockScreen();
         readIntentData(intent);
-
-        TextView titleView = findViewById(R.id.alarm_task_title);
-        if (titleView != null) {
-            titleView.setText(mTaskTitle);
-        }
+        bindTaskTexts();
     }
 
     @Override
@@ -157,14 +149,32 @@ public class AlarmActivity extends AppCompatActivity {
     private void readIntentData(Intent intent) {
         if (intent != null) {
             String id = intent.getStringExtra(AlarmService.EXTRA_TASK_ID);
+            String occ = intent.getStringExtra(AlarmService.EXTRA_OCCURRENCE_ID);
             String title = intent.getStringExtra(AlarmService.EXTRA_TASK_TITLE);
+            String label = intent.getStringExtra(AlarmService.EXTRA_TIME_LABEL);
             if (id != null) mTaskId = id;
+            mOccurrenceId = occ != null ? occ : mTaskId;
             if (title != null && !title.trim().isEmpty()) mTaskTitle = title;
+            if (label != null) mTimeLabel = label;
+        }
+    }
+
+    private void bindTaskTexts() {
+        TextView titleView = findViewById(R.id.alarm_task_title);
+        if (titleView != null) {
+            titleView.setText(mTaskTitle);
+        }
+        TextView timeBadge = findViewById(R.id.alarm_task_time_badge);
+        if (timeBadge != null) {
+            if (mTimeLabel != null && !mTimeLabel.trim().isEmpty()) {
+                timeBadge.setText("Programado para as " + mTimeLabel);
+            } else {
+                timeBadge.setText("Alarme Programado OpenTick");
+            }
         }
     }
 
     private void configureWindowAndLockScreen() {
-        // Display directly over lock screen and wake up screen without triggering PIN bouncer
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true);
             setTurnScreenOn(true);
@@ -177,7 +187,6 @@ public class AlarmActivity extends AppCompatActivity {
             WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         );
 
-        // Edge-to-edge system bars
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(Color.TRANSPARENT);
             getWindow().setNavigationBarColor(Color.TRANSPARENT);
@@ -212,7 +221,6 @@ public class AlarmActivity extends AppCompatActivity {
     }
 
     private void setupGlassRipplesAnimation() {
-        // 1. Center Bell Pulse
         if (mBellContainer != null) {
             ScaleAnimation bellPulse = new ScaleAnimation(
                 0.95f, 1.08f,
@@ -226,7 +234,6 @@ public class AlarmActivity extends AppCompatActivity {
             mBellContainer.startAnimation(bellPulse);
         }
 
-        // 2. Mid Soundwave Ripple (scale + alpha)
         if (mMidRipple != null) {
             AnimationSet midSet = new AnimationSet(true);
             ScaleAnimation midScale = new ScaleAnimation(
@@ -249,7 +256,6 @@ public class AlarmActivity extends AppCompatActivity {
             mMidRipple.startAnimation(midSet);
         }
 
-        // 3. Outer Soundwave Ripple
         if (mOuterRipple != null) {
             AnimationSet outerSet = new AnimationSet(true);
             ScaleAnimation outerScale = new ScaleAnimation(

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { INITIAL_PROJECTS, INITIAL_TASKS, INITIAL_HABITS, INITIAL_POMODORO_SESSIONS } from './initialData';
 import { calculateGamification } from '../utils/gamification';
-import { clearAlarmDismissed } from '../utils/nativeAlarm';
+import { clearAlarmDismissed, cancelNativeAlarm } from '../utils/nativeAlarm';
+import { getTodayYMD, formatDateYMD } from '../utils/taskSchedule';
 
 const STORAGE_KEY = 'opentick_app_state_v3';
 
@@ -12,13 +13,13 @@ export function useAppStore() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.projects && parsed.tasks) {
-          // Deduplicate any tasks with identical title and project
+          // Deduplicate strictly by unique task id so distinct recurring/same-named tasks are preserved
           const uniqueTasks = [];
           const seen = new Set();
           for (const t of parsed.tasks) {
-            const key = `${t.title}-${t.projectId}`;
-            if (!seen.has(key)) {
-              seen.add(key);
+            if (!t || !t.id) continue;
+            if (!seen.has(t.id)) {
+              seen.add(t.id);
               uniqueTasks.push(t);
             }
           }
@@ -35,12 +36,15 @@ export function useAppStore() {
               coverImage: null,
               ...(parsed.userProfile || {})
             },
-            bonusXp: parsed.bonusXp || 450,
+            bonusXp: parsed.bonusXp ?? 450,
             settings: {
               theme: 'amoled',
               accentColor: '#facc15',
-              sound: 'chime',
-              volume: 0.8,
+              sound: 'radar',
+              volume: 0.9,
+              durationMinutes: 5,
+              alarmMode: 'continuous',
+              reminderOffset: 0,
               vibration: true,
               timeFormat: '24h',
               startOfWeek: 'domingo',
@@ -48,8 +52,7 @@ export function useAppStore() {
               confirmExit: true,
               defaultDueDate: 'today',
               delayedSection: 'top',
-              ...parsed.settings,
-              accentColor: '#facc15' // Force yellow (#facc15)
+              ...(parsed.settings || {})
             }
           };
         }
@@ -73,9 +76,12 @@ export function useAppStore() {
       bonusXp: 450,
       settings: {
         theme: 'amoled',
-        accentColor: '#facc15', // Vibrant Yellow (#facc15)
-        sound: 'chime',
-        volume: 0.8,
+        accentColor: '#facc15',
+        sound: 'radar',
+        volume: 0.9,
+        durationMinutes: 5,
+        alarmMode: 'continuous',
+        reminderOffset: 0,
         vibration: true,
         timeFormat: '24h',
         startOfWeek: 'domingo',
@@ -91,7 +97,7 @@ export function useAppStore() {
     };
   });
 
-  const [activeView, setActiveView] = useState('tasks-today'); // 'tasks-inbox', 'tasks-today', 'tasks-completed', 'calendar', 'eisenhower', 'habits', 'pomodoro', 'stats', 'project-[id]'
+  const [activeView, setActiveView] = useState('tasks-today'); // 'tasks-inbox', 'tasks-today', 'tasks-completed', 'tasks-trash', 'calendar', 'eisenhower', 'habits', 'pomodoro', 'stats', 'project-[id]'
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [calendarViewMode, setCalendarViewMode] = useState('month'); // 'day', '3days', 'week', 'month', 'year', 'list'
   const [taskViewLayout, setTaskViewLayout] = useState('list'); // 'list' or 'kanban'
@@ -116,6 +122,7 @@ export function useAppStore() {
         ? taskData.recurringTimes
         : (taskData.startTime ? [taskData.startTime] : [])
     )].filter(Boolean).sort();
+
     const newTask = {
       id: 'task-' + Date.now(),
       title: taskData.title,
@@ -130,7 +137,13 @@ export function useAppStore() {
       recurringTimes,
       recurrencePattern: taskData.recurrencePattern || null,
       endTime: taskData.endTime || '',
+      alarmEnabled: taskData.alarmEnabled !== false,
+      reminderOffset: taskData.reminderOffset ?? 0,
+      alarmMode: taskData.alarmMode || '',
+      alarmSound: taskData.alarmSound || '',
       completed: false,
+      deleted: false,
+      deletedAt: null,
       kanbanStatus: taskData.kanbanStatus || 'todo', // 'todo', 'in_progress', 'done'
       tags: taskData.tags || [],
       subtasks: taskData.subtasks || [],
@@ -144,7 +157,7 @@ export function useAppStore() {
     return newTask;
   };
 
-  // Create ONE single task with multiple scheduled dates (User request: Single clean title in task list!)
+  // Create ONE single task with multiple scheduled dates
   const addTasksForMultipleDates = (taskData, datesList) => {
     const dates = [...new Set(
       datesList && datesList.length > 0 ? datesList : (taskData.dueDate ? [taskData.dueDate] : [])
@@ -154,6 +167,7 @@ export function useAppStore() {
         ? taskData.recurringTimes
         : (taskData.startTime ? [taskData.startTime] : [])
     )].filter(Boolean).sort();
+
     const newTask = {
       id: 'task-' + Date.now(),
       title: taskData.title,
@@ -168,7 +182,13 @@ export function useAppStore() {
       recurringTimes: times,
       recurrencePattern: taskData.recurrencePattern || null,
       endTime: taskData.endTime || '',
+      alarmEnabled: taskData.alarmEnabled !== false,
+      reminderOffset: taskData.reminderOffset ?? 0,
+      alarmMode: taskData.alarmMode || '',
+      alarmSound: taskData.alarmSound || '',
       completed: false,
+      deleted: false,
+      deletedAt: null,
       kanbanStatus: 'todo',
       tags: taskData.tags || [],
       subtasks: taskData.subtasks ? JSON.parse(JSON.stringify(taskData.subtasks)) : [],
@@ -187,92 +207,121 @@ export function useAppStore() {
       updates.startTime !== undefined ||
       updates.dueDate !== undefined ||
       updates.recurringDates !== undefined ||
-      updates.recurringTimes !== undefined
+      updates.recurringTimes !== undefined ||
+      updates.reminderOffset !== undefined ||
+      updates.alarmEnabled === true
     ) {
       clearAlarmDismissed(id);
     }
+    if (updates.alarmEnabled === false || updates.completed === true || updates.deleted === true) {
+      cancelNativeAlarm(id);
+    }
+
     setState(prev => ({
       ...prev,
       tasks: prev.tasks.map(t => {
-        if (t.id === id) {
-          const updated = { ...t, ...updates };
-          if (updates.completed !== undefined) {
-            updated.kanbanStatus = updates.completed ? 'done' : 'todo';
-          } else if (updates.kanbanStatus !== undefined) {
-            updated.completed = updates.kanbanStatus === 'done';
-          }
-          // Sync recurringDates <-> dueDate
-          if (updates.recurringDates !== undefined) {
-            const cleanDates = [...new Set(updates.recurringDates)].filter(Boolean).sort();
-            updated.recurringDates = cleanDates;
-            if (updates.dueDate === undefined) {
-              updated.dueDate = cleanDates[0] || '';
-            }
-          } else if (updates.dueDate !== undefined) {
-            if (!updated.recurringDates || updated.recurringDates.length <= 1) {
-              updated.recurringDates = updates.dueDate ? [updates.dueDate] : [];
-            }
-          }
-          // Sync recurringTimes <-> startTime
-          if (updates.recurringTimes !== undefined) {
-            const cleanTimes = [...new Set(updates.recurringTimes)].filter(Boolean).sort();
-            updated.recurringTimes = cleanTimes;
-            if (updates.startTime === undefined) {
-              updated.startTime = cleanTimes[0] || '';
-            }
-          } else if (updates.startTime !== undefined) {
-            const prevTimes = Array.isArray(t.recurringTimes) ? t.recurringTimes.filter(Boolean) : [];
-            if (prevTimes.length <= 1) {
-              updated.recurringTimes = updates.startTime ? [updates.startTime] : [];
-            } else if (updates.startTime) {
-              updated.recurringTimes = [...new Set([updates.startTime, ...prevTimes.slice(1)])].filter(Boolean).sort();
-            } else {
-              updated.recurringTimes = prevTimes.slice(1);
-              updated.startTime = updated.recurringTimes[0] || '';
-            }
-          }
-          return updated;
+        if (t.id !== id) return t;
+        const updated = { ...t, ...updates };
+        if (updates.completed !== undefined) {
+          updated.kanbanStatus = updates.completed ? 'done' : 'todo';
+        } else if (updates.kanbanStatus !== undefined) {
+          updated.completed = updates.kanbanStatus === 'done';
         }
-        return t;
+
+        // Sync recurringDates <-> dueDate
+        if (updates.recurringDates !== undefined) {
+          const cleanDates = [...new Set(updates.recurringDates)].filter(Boolean).sort();
+          updated.recurringDates = cleanDates;
+          if (updates.dueDate === undefined) {
+            updated.dueDate = cleanDates[0] || '';
+          }
+        } else if (updates.dueDate !== undefined) {
+          if (!updated.recurringDates || updated.recurringDates.length <= 1) {
+            updated.recurringDates = updates.dueDate ? [updates.dueDate] : [];
+          }
+        }
+
+        // Sync recurringTimes <-> startTime
+        if (updates.recurringTimes !== undefined) {
+          const cleanTimes = [...new Set(updates.recurringTimes)].filter(Boolean).sort();
+          updated.recurringTimes = cleanTimes;
+          if (updates.startTime === undefined) {
+            updated.startTime = cleanTimes[0] || '';
+          }
+        } else if (updates.startTime !== undefined) {
+          const prevTimes = Array.isArray(t.recurringTimes) ? t.recurringTimes.filter(Boolean) : [];
+          if (prevTimes.length <= 1) {
+            updated.recurringTimes = updates.startTime ? [updates.startTime] : [];
+          } else if (updates.startTime) {
+            updated.recurringTimes = [...new Set([updates.startTime, ...prevTimes.slice(1)])].filter(Boolean).sort();
+          } else {
+            updated.recurringTimes = prevTimes.slice(1);
+            updated.startTime = updated.recurringTimes[0] || '';
+          }
+        }
+
+        return updated;
       })
     }));
   };
 
   const toggleTaskCompleted = (id) => {
-    setState(prev => {
-      const prevGamification = calculateGamification(prev);
-      const prevTier = prevGamification.currentRank.tier;
-      let gainedXp = 0;
-      let isCompleting = false;
-      let completedTaskTitle = '';
+    const targetTask = state.tasks.find(t => t.id === id);
+    if (!targetTask) return;
 
-      const nextTasks = prev.tasks.map(t => {
-        if (t.id === id) {
-          const nextCompleted = !t.completed;
-          isCompleting = nextCompleted;
-          completedTaskTitle = t.title || 'Tarefa Concluída';
-          if (nextCompleted) {
-            gainedXp = (t.priority === 3 ? 50 : (t.priority === 2 ? 35 : 25));
-          }
-          return {
-            ...t,
-            completed: nextCompleted,
-            kanbanStatus: nextCompleted ? 'done' : 'todo'
-          };
+    const nextCompleted = !targetTask.completed;
+    const todayStr = getTodayYMD();
+
+    const prevGamification = calculateGamification(state);
+    const prevTier = prevGamification.currentRank.tier;
+
+    const nextTasks = state.tasks.map(t => {
+      if (t.id !== id) return t;
+      return {
+        ...t,
+        completed: nextCompleted,
+        kanbanStatus: nextCompleted ? 'done' : 'todo',
+        checkIns: {
+          ...(t.checkIns || {}),
+          [todayStr]: nextCompleted
         }
-        return t;
-      });
+      };
+    });
 
-      const nextState = { ...prev, tasks: nextTasks };
+    if (nextCompleted) {
+      cancelNativeAlarm(id);
+    } else {
+      clearAlarmDismissed(id);
+    }
+
+    const nextState = { ...state, tasks: nextTasks };
+    setState(prev => ({
+      ...prev,
+      tasks: prev.tasks.map(t => {
+        if (t.id !== id) return t;
+        return {
+          ...t,
+          completed: nextCompleted,
+          kanbanStatus: nextCompleted ? 'done' : 'todo',
+          checkIns: {
+            ...(t.checkIns || {}),
+            [todayStr]: nextCompleted
+          }
+        };
+      })
+    }));
+
+    if (nextCompleted) {
       const nextGamification = calculateGamification(nextState);
       const nextTier = nextGamification.currentRank.tier;
+      const gainedXp = targetTask.priority === 3 ? 100 : 60;
+      const isRankUp = prevTier !== nextTier;
 
-      if (isCompleting) {
-        const isRankUp = prevTier !== nextTier;
+      setTimeout(() => {
         window.dispatchEvent(new CustomEvent('opentickTaskCompleted', {
           detail: {
             taskId: id,
-            taskTitle: completedTaskTitle,
+            taskTitle: targetTask.title || 'Tarefa Concluída',
             xpGained: gainedXp,
             isRankUp,
             oldRank: prevGamification.currentRank,
@@ -281,13 +330,45 @@ export function useAppStore() {
             totalXp: nextGamification.totalXp
           }
         }));
-      }
+      }, 0);
+    }
+  };
 
-      return nextState;
-    });
+  const moveTaskToTrash = (id) => {
+    cancelNativeAlarm(id);
+    setState(prev => ({
+      ...prev,
+      tasks: prev.tasks.map(t =>
+        t.id === id ? { ...t, deleted: true, deletedAt: new Date().toISOString() } : t
+      )
+    }));
+    if (selectedTaskId === id) setSelectedTaskId(null);
+  };
+
+  const restoreTask = (id) => {
+    clearAlarmDismissed(id);
+    setState(prev => ({
+      ...prev,
+      tasks: prev.tasks.map(t =>
+        t.id === id ? { ...t, deleted: false, deletedAt: null } : t
+      )
+    }));
+  };
+
+  const emptyTrash = () => {
+    const trashed = state.tasks.filter(t => t.deleted);
+    trashed.forEach(t => cancelNativeAlarm(t.id));
+    setState(prev => ({
+      ...prev,
+      tasks: prev.tasks.filter(t => !t.deleted)
+    }));
+    if (trashed.some(t => t.id === selectedTaskId)) {
+      setSelectedTaskId(null);
+    }
   };
 
   const deleteTask = (id) => {
+    cancelNativeAlarm(id);
     setState(prev => ({
       ...prev,
       tasks: prev.tasks.filter(t => t.id !== id)
@@ -358,32 +439,58 @@ export function useAppStore() {
     setState(prev => ({
       ...prev,
       habits: prev.habits.map(h => {
-        if (h.id === habitId) {
-          const current = !!h.checkIns[dateStr];
-          const updatedCheckIns = { ...h.checkIns, [dateStr]: !current };
-          
-          let streak = 0;
-          const today = new Date();
-          for (let i = 0; i < 365; i++) {
-            const d = new Date(today.getTime() - i * 86400000);
-            const str = d.toISOString().split('T')[0];
-            if (updatedCheckIns[str]) {
-              streak++;
-            } else if (i > 0) {
-              break;
-            }
-          }
+        if (h.id !== habitId) return h;
+        const current = !!h.checkIns?.[dateStr];
+        const updatedCheckIns = { ...(h.checkIns || {}), [dateStr]: !current };
 
-          const best = Math.max(h.bestStreak, streak);
-          return {
-            ...h,
-            checkIns: updatedCheckIns,
-            currentStreak: streak,
-            bestStreak: best
-          };
+        let streak = 0;
+        const today = new Date();
+        for (let i = 0; i < 365; i++) {
+          const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+          const str = formatDateYMD(d);
+          if (updatedCheckIns[str]) {
+            streak++;
+          } else if (i > 0) {
+            break;
+          }
         }
-        return h;
+
+        const best = Math.max(h.bestStreak || 0, streak);
+        return {
+          ...h,
+          checkIns: updatedCheckIns,
+          currentStreak: streak,
+          bestStreak: best
+        };
       })
+    }));
+  };
+
+  const toggleTaskCheckIn = (taskId, dateStr) => {
+    const todayStr = getTodayYMD();
+    setState(prev => ({
+      ...prev,
+      tasks: prev.tasks.map(t => {
+        if (t.id !== taskId) return t;
+        const current = !!t.checkIns?.[dateStr];
+        const nextVal = !current;
+        const nextCheckIns = { ...(t.checkIns || {}), [dateStr]: nextVal };
+        return {
+          ...t,
+          checkIns: nextCheckIns,
+          ...(dateStr === todayStr ? {
+            completed: nextVal,
+            kanbanStatus: nextVal ? 'done' : 'todo'
+          } : {})
+        };
+      })
+    }));
+  };
+
+  const updateHabit = (habitId, updates) => {
+    setState(prev => ({
+      ...prev,
+      habits: prev.habits.map(h => h.id === habitId ? { ...h, ...updates } : h)
     }));
   };
 
@@ -452,7 +559,7 @@ export function useAppStore() {
       });
       if (!res.ok) throw new Error('Falha na autenticação da API do TickTick (Código ' + res.status + ')');
       const projects = await res.json();
-      
+
       const newProjects = projects.map(p => ({
         id: 'tt-proj-' + p.id,
         name: p.name,
@@ -479,7 +586,11 @@ export function useAppStore() {
                 important: t.priority >= 2,
                 dueDate: t.dueDate ? t.dueDate.split('T')[0] : '',
                 recurringDates: t.dueDate ? [t.dueDate.split('T')[0]] : [],
+                alarmEnabled: true,
+                reminderOffset: 0,
                 completed: t.status === 2,
+                deleted: false,
+                deletedAt: null,
                 kanbanStatus: t.status === 2 ? 'done' : 'todo',
                 tags: t.tags || [],
                 subtasks: (t.items || []).map(i => ({ id: 'tt-sub-' + i.id, title: i.title, completed: i.status === 1 })),
@@ -510,6 +621,9 @@ export function useAppStore() {
   const importData = (jsonString) => {
     try {
       const parsed = JSON.parse(jsonString);
+      if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.tasks) || !Array.isArray(parsed.projects)) {
+        return false;
+      }
       setState(parsed);
       return true;
     } catch (e) {
@@ -557,12 +671,17 @@ export function useAppStore() {
     addTasksForMultipleDates,
     updateTask,
     toggleTaskCompleted,
+    toggleTaskCheckIn,
+    moveTaskToTrash,
+    restoreTask,
+    emptyTrash,
     deleteTask,
     addSubtask,
     toggleSubtask,
     deleteSubtask,
     addHabit,
     toggleHabitCheckIn,
+    updateHabit,
     deleteHabit,
     addPomodoroSession,
     addProject,

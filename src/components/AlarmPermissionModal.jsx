@@ -1,208 +1,233 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, CheckCircle2, ChevronRight, Bell, Sparkles, X } from 'lucide-react';
-import { 
-  checkAlarmPermissions, 
-  requestOverlayPermission, 
-  requestExactAlarmPermission, 
+import { ShieldAlert, CheckCircle2, ChevronRight, X, AlarmClock, Layers, BatteryCharging, Bell } from 'lucide-react';
+import {
+  checkNativeAlarmPermissions,
+  requestNotificationPermission,
+  requestExactAlarmPermission,
+  requestOverlayPermission,
   requestFullScreenIntentPermission,
-  requestIgnoreBatteryOptimizations,
+  requestIgnoreBatteryOptimization,
   isNativeAndroid
 } from '../utils/nativeAlarm';
 
-export default function AlarmPermissionModal() {
-  const [isOpen, setIsOpen] = useState(false);
+export default function AlarmPermissionModal({ isOpen, onClose }) {
   const [permissions, setPermissions] = useState({
-    overlayGranted: true,
     exactAlarmGranted: true,
+    overlayGranted: true,
     fullScreenIntentGranted: true,
-    batteryOptimizationIgnored: true
+    notificationsGranted: true,
+    batteryOptimized: false
   });
 
-  const check = async () => {
-    if (!isNativeAndroid()) return;
-    try {
-      const perms = await checkAlarmPermissions();
-      setPermissions(perms);
-      // If overlay is missing, show modal prominently on startup
-      if (!perms.overlayGranted || perms.fullScreenIntentGranted === false) {
-        // Only show if user hasn't explicitly dismissed it in this session
-        const dismissed = sessionStorage.getItem('opentick_perm_modal_dismissed');
-        if (!dismissed) {
-          setIsOpen(true);
-        }
-      }
-    } catch (e) {
-      console.warn('Error checking permissions:', e);
+  const refreshPermissions = async () => {
+    const status = await checkNativeAlarmPermissions();
+    if (status) {
+      setPermissions({
+        exactAlarmGranted: status.exactAlarm ?? status.exactAlarmGranted ?? true,
+        overlayGranted: status.overlay ?? status.overlayGranted ?? true,
+        fullScreenIntentGranted: status.fullScreenIntent ?? status.fullScreenIntentGranted ?? true,
+        notificationsGranted: status.notifications ?? true,
+        batteryOptimized: status.batteryOptimized ?? false
+      });
     }
   };
 
   useEffect(() => {
-    check();
-    // Re-check when app regains focus (e.g. after user returns from Android Settings)
-    window.addEventListener('focus', check);
-    return () => window.removeEventListener('focus', check);
-  }, []);
+    if (!isOpen || !isNativeAndroid()) return;
+    refreshPermissions();
 
-  const handleGrantOverlay = () => {
-    requestOverlayPermission();
+    const handleResume = () => {
+      setTimeout(refreshPermissions, 500);
+    };
+    window.addEventListener('focus', handleResume);
+    document.addEventListener('visibilitychange', handleResume);
+    return () => {
+      window.removeEventListener('focus', handleResume);
+      document.removeEventListener('visibilitychange', handleResume);
+    };
+  }, [isOpen]);
+
+  const handleGrantNotifications = async () => {
+    await requestNotificationPermission();
+    setTimeout(refreshPermissions, 500);
   };
 
-  const handleGrantExact = () => {
-    requestExactAlarmPermission();
+  const handleGrantOverlay = async () => {
+    await requestOverlayPermission();
+    setTimeout(refreshPermissions, 800);
   };
 
-  const handleGrantFullScreen = () => {
-    requestFullScreenIntentPermission();
+  const handleGrantFullScreen = async () => {
+    await requestFullScreenIntentPermission();
+    setTimeout(refreshPermissions, 800);
   };
 
-  const handleClose = () => {
-    sessionStorage.setItem('opentick_perm_modal_dismissed', 'true');
-    setIsOpen(false);
+  const handleGrantExactAlarm = async () => {
+    await requestExactAlarmPermission();
+    setTimeout(refreshPermissions, 800);
+  };
+
+  const handleIgnoreBattery = async () => {
+    await requestIgnoreBatteryOptimization();
+    setTimeout(refreshPermissions, 800);
   };
 
   if (!isOpen) return null;
 
-  const isAllGranted = permissions.overlayGranted && 
-                       permissions.exactAlarmGranted && 
-                       (permissions.fullScreenIntentGranted !== false);
+  const isAllGranted =
+    permissions.notificationsGranted !== false &&
+    permissions.overlayGranted &&
+    permissions.exactAlarmGranted &&
+    permissions.fullScreenIntentGranted !== false;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-      <div className="bg-[#141416] border border-[#facc15]/30 rounded-3xl w-full max-w-md p-6 text-neutral-100 shadow-2xl relative overflow-hidden">
-        {/* Ambient Top Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-[#facc15]/20 blur-3xl pointer-events-none rounded-full" />
-
-        {/* Close Button */}
-        <button
-          onClick={handleClose}
-          className="absolute top-4 right-4 p-2 text-neutral-400 hover:text-white rounded-full bg-neutral-800/60 hover:bg-neutral-800 transition-colors"
-          title="Fechar"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Header Icon & Title */}
-        <div className="flex items-center gap-3.5 mb-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#facc15] to-[#ff9e3b] p-0.5 shadow-lg shadow-[#facc15]/25 flex items-center justify-center">
-            <div className="w-full h-full bg-[#121214] rounded-[14px] flex items-center justify-center text-[#facc15]">
-              <Bell className="w-6 h-6 animate-pulse" />
+    <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-[#121215] border border-white/15 rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-4 border-b border-white/10 flex items-center justify-between bg-[#0e0e11]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-md bg-[#18181c] border border-[#facc15]/40 flex items-center justify-center">
+              <ShieldAlert className="w-4 h-4 text-[#facc15]" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Permissões de Alarme</h3>
+              <p className="text-[11px] text-neutral-400">Para despertar mesmo com o app fechado</p>
             </div>
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              Tela de Alarme & Bloqueio
-            </h2>
-            <p className="text-xs text-neutral-400">Configuração rápida do Android</p>
-          </div>
+          <button
+            onClick={onClose}
+            className="text-neutral-400 hover:text-white p-1.5 rounded-md bg-white/5"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Explanation Message */}
-        <p className="text-sm text-neutral-300 leading-relaxed mb-5">
-          Para que o alarme toque e <strong className="text-white">abra a tela cheia com o relógio e os botões</strong> (mesmo na tela de bloqueio ou enquanto você usa outro app), o Android da Samsung precisa da sua autorização abaixo:
-        </p>
+        <div className="p-4 space-y-2.5 max-h-[65vh] overflow-y-auto">
+          <p className="text-xs text-neutral-300 leading-relaxed">
+            Para o despertador tocar e abrir na tela bloqueada do Android:
+          </p>
 
-        {/* Permission List */}
-        <div className="space-y-3 mb-6">
-          {/* Permission 1: Overlay (Aparecer sobre outros apps) */}
-          <div className="p-3.5 rounded-2xl bg-[#1c1c20] border border-neutral-800 flex items-center justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5">
-                {permissions.overlayGranted ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                ) : (
-                  <ShieldAlert className="w-5 h-5 text-[#facc15]" />
-                )}
+          {permissions.notificationsGranted === false && (
+            <div className="p-3 rounded-md bg-[#18181c] border border-white/10 flex items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5">
+                <Bell className="w-4 h-4 text-[#facc15] mt-0.5 shrink-0" />
+                <div>
+                  <h4 className="text-xs font-bold text-white">Permitir Notificações</h4>
+                  <p className="text-[11px] text-neutral-400 mt-0.5">
+                    Obrigatório no Android 13+ para exibir alertas de alarme.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-sm font-bold text-white">Aparecer sobre outros apps</h4>
-                <p className="text-xs text-neutral-400">Abre a tela do alarme por cima do bloqueio e outros apps</p>
-              </div>
-            </div>
-            {!permissions.overlayGranted ? (
               <button
-                onClick={handleGrantOverlay}
-                className="px-3 py-1.5 bg-[#facc15] hover:bg-[#ff7d1a] text-black font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all shrink-0 flex items-center gap-1"
+                onClick={handleGrantNotifications}
+                className="px-2.5 py-1.5 bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] font-bold text-xs rounded-md shrink-0 flex items-center gap-1"
               >
                 Ativar <ChevronRight className="w-3.5 h-3.5" />
               </button>
-            ) : (
-              <span className="text-[11px] text-emerald-400 font-bold px-2 py-1 bg-emerald-500/10 rounded-lg shrink-0">
-                ✓ Ativo
-              </span>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Permission 2: Full Screen Notifications (Android 14) */}
-          {permissions.fullScreenIntentGranted === false && (
-            <div className="p-3.5 rounded-2xl bg-[#1c1c20] border border-neutral-800 flex items-center justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">
-                  <ShieldAlert className="w-5 h-5 text-blue-400" />
-                </div>
+          {!permissions.overlayGranted && (
+            <div className="p-3 rounded-md bg-[#18181c] border border-white/10 flex items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5">
+                <Layers className="w-4 h-4 text-[#facc15] mt-0.5 shrink-0" />
                 <div>
-                  <h4 className="text-sm font-bold text-white">Avisos em Tela Cheia</h4>
-                  <p className="text-xs text-neutral-400">Permissão do Android 14 para tela de alarme</p>
+                  <h4 className="text-xs font-bold text-white">Sobrepor Outros Apps</h4>
+                  <p className="text-[11px] text-neutral-400 mt-0.5">
+                    Exibe a tela de alarme acima de qualquer aplicativo aberto.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleGrantOverlay}
+                className="px-2.5 py-1.5 bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] font-bold text-xs rounded-md shrink-0 flex items-center gap-1"
+              >
+                Ativar <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {permissions.fullScreenIntentGranted === false && (
+            <div className="p-3 rounded-md bg-[#18181c] border border-white/10 flex items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5">
+                <AlarmClock className="w-4 h-4 text-[#facc15] mt-0.5 shrink-0" />
+                <div>
+                  <h4 className="text-xs font-bold text-white">Alerta em Tela Cheia (Android 14+)</h4>
+                  <p className="text-[11px] text-neutral-400 mt-0.5">
+                    Acende a tela de bloqueio igual ao despertador do sistema.
+                  </p>
                 </div>
               </div>
               <button
                 onClick={handleGrantFullScreen}
-                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all shrink-0 flex items-center gap-1"
+                className="px-2.5 py-1.5 bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] font-bold text-xs rounded-md shrink-0 flex items-center gap-1"
               >
                 Ativar <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
 
-          {/* Permission 3: Exact Alarm */}
           {!permissions.exactAlarmGranted && (
-            <div className="p-3.5 rounded-2xl bg-[#1c1c20] border border-neutral-800 flex items-center justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">
-                  <ShieldAlert className="w-5 h-5 text-yellow-400" />
-                </div>
+            <div className="p-3 rounded-md bg-[#18181c] border border-white/10 flex items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5">
+                <AlarmClock className="w-4 h-4 text-[#facc15] mt-0.5 shrink-0" />
                 <div>
-                  <h4 className="text-sm font-bold text-white">Alarmes e Lembretes</h4>
-                  <p className="text-xs text-neutral-400">Garante o horário exato ao minuto</p>
+                  <h4 className="text-xs font-bold text-white">Alarmes e Lembretes Exatos</h4>
+                  <p className="text-[11px] text-neutral-400 mt-0.5">
+                    Dispara o despertador exatamente no segundo marcado.
+                  </p>
                 </div>
               </div>
               <button
-                onClick={handleGrantExact}
-                className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all shrink-0 flex items-center gap-1"
+                onClick={handleGrantExactAlarm}
+                className="px-2.5 py-1.5 bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] font-bold text-xs rounded-md shrink-0 flex items-center gap-1"
               >
                 Ativar <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
 
-          {/* Permission 4: Battery Optimization Whitelist (Samsung Doze Mode Protection) */}
-          {!permissions.batteryOptimizationIgnored && (
-            <div className="p-3.5 rounded-2xl bg-[#1c1c20] border border-neutral-800 flex items-center justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5">
-                  <ShieldAlert className="w-5 h-5 text-emerald-400" />
-                </div>
+          {permissions.batteryOptimized && (
+            <div className="p-3 rounded-md bg-[#18181c] border border-white/10 flex items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5">
+                <BatteryCharging className="w-4 h-4 text-[#facc15] mt-0.5 shrink-0" />
                 <div>
-                  <h4 className="text-sm font-bold text-white">Bateria Sem Restrição</h4>
-                  <p className="text-xs text-neutral-400">Impede a Samsung de suspender o despertador em segundo plano</p>
+                  <h4 className="text-xs font-bold text-white">Remover Restrição de Bateria</h4>
+                  <p className="text-[11px] text-neutral-400 mt-0.5">
+                    Evita que o Android suspenda alarmes em modo economia.
+                  </p>
                 </div>
               </div>
               <button
-                onClick={requestIgnoreBatteryOptimizations}
-                className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs rounded-xl shadow-md active:scale-95 transition-all shrink-0 flex items-center gap-1"
+                onClick={handleIgnoreBattery}
+                className="px-2.5 py-1.5 bg-[#141417] border border-white/15 text-neutral-200 font-semibold text-xs rounded-md shrink-0 flex items-center gap-1"
               >
-                Ativar <ChevronRight className="w-3.5 h-3.5" />
+                Liberar <ChevronRight className="w-3.5 h-3.5" />
               </button>
+            </div>
+          )}
+
+          {isAllGranted && !permissions.batteryOptimized && (
+            <div className="p-3 rounded-md bg-[#facc15]/10 border border-[#facc15]/35 flex items-center gap-2.5 text-[#facc15]">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span className="text-xs font-semibold">Todas as permissões de alarme estão ativas!</span>
             </div>
           )}
         </div>
 
-        {/* Bottom Done Button */}
-        <button
-          onClick={handleClose}
-          className="w-full py-3.5 bg-gradient-to-r from-neutral-800 to-neutral-700 hover:from-neutral-700 hover:to-neutral-600 text-white font-bold text-sm rounded-2xl transition-all active:scale-[0.98]"
-        >
-          {isAllGranted ? 'Pronto! Tudo Configurado' : 'Entendi, fechar aviso'}
-        </button>
+        <div className="p-3.5 border-t border-white/10 bg-[#0e0e11] flex items-center justify-between gap-2">
+          <button
+            onClick={refreshPermissions}
+            className="text-xs font-semibold text-neutral-400 hover:text-white px-2.5 py-1.5"
+          >
+            Verificar novamente
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/55 text-[#facc15] font-bold text-xs rounded-md"
+          >
+            {isAllGranted ? 'Concluir' : 'Entendi'}
+          </button>
+        </div>
       </div>
     </div>
   );

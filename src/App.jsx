@@ -19,18 +19,24 @@ import GamificationCelebration from './components/GamificationCelebration';
 import RankShield2D from './components/RankShield2D';
 import ViewFormatSelectorModal from './components/ViewFormatSelectorModal';
 import CustomDatePickerModal from './components/CustomDatePickerModal';
-import { getTaskTimes, isTaskOnDate, getTodayYMD } from './utils/taskSchedule';
+import { getTaskTimes, isTaskOnDate, getTodayYMD, addDaysYMD } from './utils/taskSchedule';
 import { calculateGamification } from './utils/gamification';
 import { soundManager } from './utils/audio';
 import { getCustomAudioFile } from './utils/audioStorage';
 import { 
   syncTasksToNativeAlarmManager, 
+  syncNativeAlarmSettings,
+  syncCustomAudioToNative,
+  consumePendingNativeAlarm,
+  scheduleNativeAlarm,
   stopNativeAlarm, 
+  snoozeNativeAlarm,
   cancelNativeAlarm, 
   markAlarmDismissed, 
   isAlarmDismissed, 
   isNativeAndroid,
-  checkAlarmPermissions,
+  checkNativeAlarmPermissions,
+  requestNotificationPermission,
   requestOverlayPermission,
   requestExactAlarmPermission,
   requestFullScreenIntentPermission
@@ -61,11 +67,13 @@ export default function App() {
     state,
     addTasksForMultipleDates,
     updateTask,
+    toggleTaskCompleted,
     calendarViewMode
   } = store;
 
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickAddPrefill, setQuickAddPrefill] = useState(null);
   const [isViewSelectorOpen, setIsViewSelectorOpen] = useState(false);
   const [isGlobalCustomModalOpen, setIsGlobalCustomModalOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -80,232 +88,321 @@ export default function App() {
   const [customAudioInfo, setCustomAudioInfo] = useState(null);
   const [missingPermissions, setMissingPermissions] = useState(false);
   const triggeredAlarmsRef = useRef(new Set());
+  const webSnoozesRef = useRef([]); // { task, occKey, triggerAtMs, timeLabel }
 
-  const today = new Date();
-  const currentDayNumber = today.getDate();
-
-  // Request browser notification permissions on mount & check Android permissions
+  // Load custom audio, sync native settings & consume cold-start pending native alarm
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-    // Pre-load custom audio info
     getCustomAudioFile().then(record => {
-      if (record) setCustomAudioInfo(record);
+      if (record) {
+        setCustomAudioInfo(record);
+        syncCustomAudioToNative(record.dataUrl, record.name);
+      }
     });
 
     if (isNativeAndroid()) {
-      checkAlarmPermissions().then(perms => {
-        if (!perms?.overlayGranted || !perms?.exactAlarmGranted || perms?.fullScreenIntentGranted === false) {
+      checkNativeAlarmPermissions().then(perms => {
+        if (!perms.exactAlarm || !perms.overlay || perms.notifications === false) {
           setMissingPermissions(true);
+        }
+      });
+
+      consumePendingNativeAlarm().then(pending => {
+        if (pending && pending.taskId) {
+          const foundTask = (state.tasks || []).find(task => task.id === pending.taskId) || {
+            id: pending.taskId,
+            title: pending.taskTitle || 'Lembrete OpenTick'
+          };
+          setAlarmActiveTask({
+            ...foundTask,
+            triggeredTime: pending.timeLabel || foundTask.startTime || '',
+            occurrenceId: pending.occurrenceId || pending.taskId
+          });
+          setIsAlarmModalOpen(true);
         }
       });
     }
   }, []);
 
-  // Synchronize scheduled alarms to Android native AlarmManager (Exact, Doze-proof, Lock-screen ready)
+  // Sync tasks & global alarm settings to native Android AlarmManager whenever changed
   useEffect(() => {
-    syncTasksToNativeAlarmManager(state.tasks);
-  }, [state.tasks]);
+    syncNativeAlarmSettings(state.settings || {});
+    syncTasksToNativeAlarmManager(state.tasks, state.settings || {});
+  }, [state.tasks, state.settings]);
 
-  // Listen for native Android alarm wake-up events (triggered on lock screen or over other apps)
+  // Listen to Android Broadcast Events (triggered / stopped / snoozed)
   useEffect(() => {
     const handleNativeAlarm = (e) => {
-      const { taskId, taskTitle } = e.detail || {};
-      const foundTask = state.tasks.find(t => t.id === taskId) || {
-        id: taskId || 'alarm-lockscreen',
+      const { taskId, taskTitle, occurrenceId, timeLabel } = e.detail || {};
+      if (!taskId) return;
+      const foundTask = (state.tasks || []).find(task => task.id === taskId) || {
+        id: taskId,
         title: taskTitle || 'Lembrete OpenTick'
       };
-      setAlarmActiveTask(foundTask);
+      setAlarmActiveTask({
+        ...foundTask,
+        triggeredTime: timeLabel || foundTask.startTime || '',
+        occurrenceId: occurrenceId || taskId
+      });
       setIsAlarmModalOpen(true);
     };
 
-    // Listen for alarm stop event broadcasted from native AlarmActivity or notification
     const handleNativeAlarmStopped = (e) => {
-      const stoppedId = e?.detail?.taskId;
-      if (stoppedId) {
-        const now = new Date();
-        const todayStr = getTodayYMD();
-        const fallbackHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const dismissedTime = alarmActiveTask?.triggeredTime || alarmActiveTask?.startTime || fallbackHHMM;
-        markAlarmDismissed(stoppedId, todayStr, dismissedTime);
-      }
+      const { occurrenceId } = e.detail || {};
       soundManager.stopContinuousAlarm();
-      // Note: Do NOT call stopNativeAlarm here, as native AlarmService has already stopped!
+      if (occurrenceId) markAlarmDismissed(occurrenceId);
       setIsAlarmModalOpen(false);
       setAlarmActiveTask(null);
-      syncTasksToNativeAlarmManager(state.tasks);
+      syncTasksToNativeAlarmManager(state.tasks, state.settings || {});
+    };
+
+    const handleNativeAlarmSnoozed = () => {
+      soundManager.stopContinuousAlarm();
+      setIsAlarmModalOpen(false);
+      setAlarmActiveTask(null);
     };
 
     window.addEventListener('nativeAlarmTriggered', handleNativeAlarm);
     window.addEventListener('nativeAlarmStopped', handleNativeAlarmStopped);
-
+    window.addEventListener('nativeAlarmSnoozed', handleNativeAlarmSnoozed);
     return () => {
       window.removeEventListener('nativeAlarmTriggered', handleNativeAlarm);
       window.removeEventListener('nativeAlarmStopped', handleNativeAlarmStopped);
+      window.removeEventListener('nativeAlarmSnoozed', handleNativeAlarmSnoozed);
     };
-  }, [state.tasks, alarmActiveTask]);
+  }, [state.tasks, state.settings]);
 
-  // Alarm Ticker: Checks every 5 seconds if a scheduled task has reached its time
+  // Background Ticker checking upcoming task alarms & Web Snoozes
   useEffect(() => {
+    const fireWebOrForegroundAlarm = async (taskObj, occKey, timeLabel) => {
+      triggeredAlarmsRef.current.add(occKey);
+      const settings = state.settings || {};
+      const alarmMode = taskObj.alarmMode || settings.alarmMode || 'continuous';
+      const sound = taskObj.alarmSound || settings.sound || 'radar';
+      const durationMinutes = settings.durationMinutes ?? settings.alarmDuration ?? 5;
+
+      if (!isNativeAndroid()) {
+        if (sound !== 'none') {
+          let customUrl = null;
+          if (sound === 'custom') {
+            const record = await getCustomAudioFile();
+            if (record) customUrl = record.dataUrl;
+          }
+          if (alarmMode === 'short') {
+            soundManager.playSound(sound, settings.volume ?? 0.8);
+          } else {
+            soundManager.startContinuousAlarm({
+              sound,
+              customAudioUrl: customUrl,
+              volume: settings.volume ?? 0.8,
+              durationMinutes,
+              vibration: settings.vibration !== false,
+              onStop: () => {
+                setIsAlarmModalOpen(false);
+                setAlarmActiveTask(null);
+              }
+            });
+          }
+        }
+        setAlarmActiveTask({ ...taskObj, triggeredTime: timeLabel, occurrenceId: occKey });
+        setIsAlarmModalOpen(true);
+
+        try {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(taskObj.title || 'Lembrete OpenTick', {
+              body: `OpenTick: Alarme agendado para às ${timeLabel}`,
+              icon: '/vite.svg',
+              requireInteraction: alarmMode !== 'short'
+            });
+          }
+        } catch (err) {
+          console.warn('Web Notification error:', err);
+        }
+      } else {
+        if (alarmMode !== 'short') {
+          setAlarmActiveTask({ ...taskObj, triggeredTime: timeLabel, occurrenceId: occKey });
+          setIsAlarmModalOpen(true);
+        }
+      }
+    };
+
     const checkScheduledAlarms = async () => {
       const now = new Date();
+      const nowMs = now.getTime();
       const todayStr = getTodayYMD();
-
+      const tomorrowStr = addDaysYMD(todayStr, 1);
       const hr = String(now.getHours()).padStart(2, '0');
       const mn = String(now.getMinutes()).padStart(2, '0');
       const currentHHMM = `${hr}:${mn}`;
-
       const settings = state.settings || {};
 
-      for (const t of state.tasks) {
-        const taskTimes = getTaskTimes(t);
-        if (t.completed || taskTimes.length === 0) continue;
-
-        // Verify if this alarm was already stopped/dismissed for this specific date + time
-        if (isAlarmDismissed(t.id, todayStr, currentHHMM)) {
-          continue;
+      // 1. Check ephemeral Web Snoozes first (works across midnight without mutating task templates)
+      if (!isNativeAndroid() && webSnoozesRef.current.length > 0) {
+        const remaining = [];
+        for (const sn of webSnoozesRef.current) {
+          if (nowMs >= sn.triggerAtMs) {
+            await fireWebOrForegroundAlarm(sn.task, sn.occKey, sn.timeLabel);
+          } else {
+            remaining.push(sn);
+          }
         }
+        webSnoozesRef.current = remaining;
+      }
 
-        const isToday = isTaskOnDate(t, todayStr);
-        const isTimeMatch = taskTimes.includes(currentHHMM);
+      // 2. Check scheduled task dates + reminderOffset across today & tomorrow (handles midnight boundary offsets)
+      for (const t of state.tasks || []) {
+        if (!t || t.deleted || t.completed || t.alarmEnabled === false) continue;
+        const taskTimes = getTaskTimes(t);
+        if (taskTimes.length === 0) continue;
 
-        if (isToday && isTimeMatch) {
-          const alarmKey = `${t.id}_${todayStr}_${currentHHMM}`;
-          if (!triggeredAlarmsRef.current.has(alarmKey)) {
-            triggeredAlarmsRef.current.add(alarmKey);
+        const offsetMins = Number(t.reminderOffset !== undefined ? t.reminderOffset : (settings.reminderOffset || 0)) || 0;
 
-            // On Native Android, native AlarmService handles ringtone and AlarmActivity handles the UI.
-            // Do NOT start web soundManager audio on Native Android to prevent audio duplicate looping!
-            if (!isNativeAndroid()) {
-              let customAudioUrl = null;
-              if (settings.sound === 'custom') {
-                const record = await getCustomAudioFile();
-                customAudioUrl = record?.dataUrl || null;
-                if (record) setCustomAudioInfo(record);
-              }
+        for (const dStr of [todayStr, tomorrowStr]) {
+          if (!isTaskOnDate(t, dStr)) continue;
+          const [y, m, d] = dStr.split('-').map(Number);
+          if (!y || !m || !d) continue;
 
-              // Start continuous long alarm (up to 5 min by default)
-              soundManager.startContinuousAlarm({
-                sound: settings.sound || 'radar',
-                customAudioUrl,
-                volume: settings.volume ?? 0.8,
-                durationMinutes: settings.alarmDuration || 5,
-                vibration: settings.vibration !== false,
-                onStop: () => {
-                  setIsAlarmModalOpen(false);
-                  setAlarmActiveTask(null);
-                }
-              });
+          for (const tm of taskTimes) {
+            const [hh, mm] = tm.split(':').map(Number);
+            if (Number.isNaN(hh) || Number.isNaN(mm)) continue;
+
+            const occId = `${t.id}_${dStr}_${tm}`;
+            if (isAlarmDismissed(occId) || triggeredAlarmsRef.current.has(occId)) continue;
+
+            const targetDt = new Date(y, m - 1, d, hh, mm, 0, 0);
+            const effDt = new Date(targetDt.getTime() - offsetMins * 60 * 1000);
+            const effYMD = `${effDt.getFullYear()}-${String(effDt.getMonth() + 1).padStart(2, '0')}-${String(effDt.getDate()).padStart(2, '0')}`;
+            const effHHMM = `${String(effDt.getHours()).padStart(2, '0')}:${String(effDt.getMinutes()).padStart(2, '0')}`;
+
+            if (effYMD === todayStr && effHHMM === currentHHMM) {
+              await fireWebOrForegroundAlarm(t, occId, tm);
             }
-
-            setAlarmActiveTask({ ...t, triggeredTime: currentHHMM });
-            setIsAlarmModalOpen(true);
-
-            // Web notification
-            if (!isNativeAndroid() && 'Notification' in window && Notification.permission === 'granted') {
-              try {
-                new Notification(`⏰ ${t.title}`, {
-                  body: `OpenTick: Alarme agendado para às ${currentHHMM}!`,
-                  icon: '/favicon.ico'
-                });
-              } catch (e) {}
-            }
-            break;
           }
         }
       }
     };
 
+    checkScheduledAlarms();
     const interval = setInterval(checkScheduledAlarms, 5000);
     return () => clearInterval(interval);
   }, [state.tasks, state.settings]);
 
   const handleStopAlarm = () => {
-    if (alarmActiveTask && alarmActiveTask.id) {
-      const now = new Date();
-      const todayStr = getTodayYMD();
-      const fallbackHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const targetTime = alarmActiveTask.triggeredTime || alarmActiveTask.startTime || fallbackHHMM;
-
-      // Persistently record dismissal in LocalStorage and Android SharedPreferences
-      markAlarmDismissed(alarmActiveTask.id, todayStr, targetTime);
-      cancelNativeAlarm(alarmActiveTask.id);
-      stopNativeAlarm(alarmActiveTask.id);
-      syncTasksToNativeAlarmManager(state.tasks);
-    } else {
-      stopNativeAlarm();
+    const settings = state.settings || {};
+    if (alarmActiveTask) {
+      const occId = alarmActiveTask.occurrenceId || '';
+      if (occId) {
+        markAlarmDismissed(occId);
+      } else {
+        const now = new Date();
+        const todayStr = getTodayYMD();
+        const hhmm = alarmActiveTask.triggeredTime || `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        markAlarmDismissed(`${alarmActiveTask.id}_${todayStr}_${hhmm}`);
+      }
+      if (isNativeAndroid()) {
+        stopNativeAlarm(alarmActiveTask.id, occId);
+      }
+      syncTasksToNativeAlarmManager(state.tasks, settings);
     }
     soundManager.stopContinuousAlarm();
     setIsAlarmModalOpen(false);
     setAlarmActiveTask(null);
   };
 
-  const handleSnoozeAlarm = () => {
+  const handleCompleteAlarmTask = () => {
+    if (alarmActiveTask?.id && alarmActiveTask.id !== 'test-alarm' && !alarmActiveTask.completed) {
+      toggleTaskCompleted(alarmActiveTask.id);
+    }
+    handleStopAlarm();
+  };
+
+  const handleSnoozeAlarm = (minutes = 10) => {
     soundManager.stopContinuousAlarm();
-    if (alarmActiveTask && alarmActiveTask.id) {
-      stopNativeAlarm(alarmActiveTask.id);
-    } else {
-      stopNativeAlarm();
+    const snoozeMins = (typeof minutes === 'number' && !Number.isNaN(minutes) && minutes > 0) ? minutes : 10;
+    const settings = state.settings || {};
+
+    if (alarmActiveTask) {
+      const occId = alarmActiveTask.occurrenceId || `${alarmActiveTask.id}_snooze`;
+      const fireAtMs = Date.now() + snoozeMins * 60 * 1000;
+      const fireDt = new Date(fireAtMs);
+      const snoozeTimeStr = `${String(fireDt.getHours()).padStart(2, '0')}:${String(fireDt.getMinutes()).padStart(2, '0')}`;
+
+      markAlarmDismissed(occId);
+
+      if (isNativeAndroid()) {
+        snoozeNativeAlarm(alarmActiveTask.id, alarmActiveTask.title || 'Lembrete OpenTick', snoozeMins, occId);
+      } else {
+        webSnoozesRef.current.push({
+          task: alarmActiveTask,
+          occKey: `${occId}_snz_${fireAtMs}`,
+          triggerAtMs: fireAtMs,
+          timeLabel: snoozeTimeStr
+        });
+      }
+      syncTasksToNativeAlarmManager(state.tasks, settings);
     }
     setIsAlarmModalOpen(false);
-    if (alarmActiveTask && alarmActiveTask.id !== 'test-alarm') {
-      const now = new Date(Date.now() + 5 * 60 * 1000); // +5 minutes
-      const hr = String(now.getHours()).padStart(2, '0');
-      const mn = String(now.getMinutes()).padStart(2, '0');
-      const newTime = `${hr}:${mn}`;
-      store.updateTask(alarmActiveTask.id, { startTime: newTime });
-    }
     setAlarmActiveTask(null);
   };
 
   const handleTriggerTestAlarm = async (soundId) => {
+    const settings = state.settings || {};
+    const targetSound = soundId || settings.sound || 'radar';
+    const durationMinutes = settings.durationMinutes ?? settings.alarmDuration ?? 5;
+
     if (isNativeAndroid()) {
-      // On Native Android, trigger true native system alarm in 2.5 seconds
-      await scheduleNativeAlarm('test-alarm', 'Disparo de Alarme de Teste', Date.now() + 2500);
+      await scheduleNativeAlarm({
+        id: 'test-alarm',
+        occurrenceId: `test-alarm_${Date.now()}`,
+        title: 'Disparo de Alarme de Teste',
+        timeInMillis: Date.now() + 2500,
+        timeLabel: 'TESTE',
+        alarmMode: 'continuous',
+        sound: targetSound
+      });
       return;
     }
 
-    let customAudioUrl = null;
-    let customName = '';
-    if (soundId === 'custom') {
-      const record = await getCustomAudioFile();
-      customAudioUrl = record?.dataUrl || null;
-      customName = record?.name || 'Música do Celular';
-      if (record) setCustomAudioInfo(record);
+    if (targetSound !== 'none') {
+      let customUrl = null;
+      if (targetSound === 'custom') {
+        const record = await getCustomAudioFile();
+        if (record) customUrl = record.dataUrl;
+      }
+      soundManager.startContinuousAlarm({
+        sound: targetSound,
+        customAudioUrl: customUrl,
+        volume: settings.volume ?? 0.8,
+        durationMinutes,
+        vibration: settings.vibration !== false,
+        onStop: () => {
+          setIsAlarmModalOpen(false);
+          setAlarmActiveTask(null);
+        }
+      });
     }
 
-    soundManager.startContinuousAlarm({
-      sound: soundId,
-      customAudioUrl,
-      volume: state.settings?.volume ?? 0.8,
-      durationMinutes: state.settings?.alarmDuration || 5,
-      vibration: state.settings?.vibration !== false,
-      onStop: () => {
-        setIsAlarmModalOpen(false);
-        setAlarmActiveTask(null);
-      }
-    });
-
-    const now = new Date();
     setAlarmActiveTask({
       id: 'test-alarm',
       title: 'Disparo de Alarme de Teste',
-      startTime: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+      triggeredTime: 'AGORA',
+      description: 'Se você está ouvindo isto, seu alarme funciona!'
     });
     setIsAlarmModalOpen(true);
   };
-
-  // Store dynamic states in a Ref to eliminate dependency churn and backButton listener leaks
   const backStateRef = useRef({});
   backStateRef.current = {
-    isSearchOpen, 
-    isSettingsOpen, 
-    isSyncModalOpen, 
-    isQuickAddOpen, 
-    isMobileDrawerOpen, 
-    selectedTaskId, 
-    activeView
+    isAlarmModalOpen,
+    isGlobalCustomModalOpen,
+    isProfileModalOpen,
+    isViewSelectorOpen,
+    isSearchOpen,
+    isSettingsOpen,
+    isSyncModalOpen,
+    isQuickAddOpen,
+    isMobileDrawerOpen,
+    selectedTaskId,
+    activeView,
+    confirmExit: state.settings?.confirmExit !== false
   };
 
   // Native Android Hardware / Virtual Back Button Handler (Fixes app closing instead of navigating back)
@@ -315,6 +412,22 @@ export default function App() {
 
     const handleBackButton = async () => {
       const s = backStateRef.current;
+      if (s.isAlarmModalOpen) {
+        setIsAlarmModalOpen(false);
+        return;
+      }
+      if (s.isGlobalCustomModalOpen) {
+        setIsGlobalCustomModalOpen(false);
+        return;
+      }
+      if (s.isProfileModalOpen) {
+        setIsProfileModalOpen(false);
+        return;
+      }
+      if (s.isViewSelectorOpen) {
+        setIsViewSelectorOpen(false);
+        return;
+      }
       // 1. Close Search Modal
       if (s.isSearchOpen) {
         setIsSearchOpen(false);
@@ -437,6 +550,7 @@ export default function App() {
     if (activeView === 'tasks-today') return 'Hoje';
     if (activeView === 'tasks-inbox') return 'Caixa de Entrada';
     if (activeView === 'tasks-completed') return 'Concluído';
+    if (activeView === 'tasks-trash') return 'Lixeira';
     if (activeView === 'calendar') return 'Calendário';
     if (activeView === 'eisenhower') return 'Matriz';
     if (activeView === 'habits') return 'Hábitos';
@@ -460,7 +574,7 @@ export default function App() {
             className="p-1 -ml-1 text-white hover:text-neutral-300 active:scale-95 transition-transform"
             title="Abrir Menu de Listas"
           >
-            <Menu className="w-6 h-6 stroke-[2] text-[#facc15]" />
+            <Menu className="w-6 h-6 stroke-[2] text-neutral-200 hover:text-[#facc15] transition-colors" />
           </button>
           <h1 className="text-lg font-bold text-white tracking-tight truncate max-w-[270px]">
             {getHeaderTitle()}
@@ -468,27 +582,29 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Rank Shield & Level Shortcut */}
-          <button
-            onClick={() => {
-              setActiveView('stats');
-              setSelectedTaskId(null);
-            }}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#16161c] hover:bg-[#202028] border border-[#2c2c36] active:scale-95 transition-all shadow-sm"
-            title="Ver Seus Rankings, Escudos e XP"
-          >
-            <RankShield2D tier={calculateGamification(state).currentRank.tier} size={20} showGlow={false} />
-            <span className="text-[11px] font-black text-amber-300 font-mono">
-              Nv.{calculateGamification(state).level}
-            </span>
-          </button>
+          {/* Rank Shield & Level Shortcut (oculto na própria tela Escudo/Stats) */}
+          {activeView !== 'stats' && (
+            <button
+              onClick={() => {
+                setActiveView('stats');
+                setSelectedTaskId(null);
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#16161c] hover:bg-[#202028] border border-[#2c2c36] active:scale-95 transition-all shadow-sm"
+              title="Ver Seus Rankings, Escudos e XP"
+            >
+              <RankShield2D tier={calculateGamification(state).currentRank.tier} size={20} showGlow={false} />
+              <span className="text-[11px] font-black text-amber-300 font-mono">
+                Nv.{calculateGamification(state).level}
+              </span>
+            </button>
+          )}
 
           <button
             onClick={() => setIsSearchOpen(true)}
             className="p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
             title="Pesquisar"
           >
-            <Search className="w-5 h-5 text-[#facc15]" />
+            <Search className="w-5 h-5 text-neutral-300 hover:text-[#facc15] transition-colors" />
           </button>
           
         </div>
@@ -540,11 +656,12 @@ export default function App() {
             <button
               onClick={() => {
                 requestOverlayPermission();
-                setTimeout(requestExactAlarmPermission, 800);
-                setTimeout(requestFullScreenIntentPermission, 1600);
+                setTimeout(requestNotificationPermission, 400);
+                setTimeout(requestExactAlarmPermission, 900);
+                setTimeout(requestFullScreenIntentPermission, 1500);
                 setMissingPermissions(false);
               }}
-              className="px-2.5 py-1 bg-[#facc15] hover:bg-[#ff7d1a] text-black font-bold rounded-lg text-[11px] shrink-0 active:scale-95 transition-transform"
+              className="px-2.5 py-1 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/50 text-[#facc15] font-bold rounded-[4px] text-[11px] shrink-0 transition-colors"
             >
               Ativar
             </button>
@@ -560,7 +677,13 @@ export default function App() {
           )}
 
           {activeView === 'calendar' && (
-            <CalendarView store={store} />
+            <CalendarView
+              store={store}
+              onQuickCreateAt={(dateStr, startTime = '') => {
+                setQuickAddPrefill({ date: dateStr, startTime });
+                setIsQuickAddOpen(true);
+              }}
+            />
           )}
 
           {activeView === 'eisenhower' && (
@@ -583,98 +706,107 @@ export default function App() {
           )}
         </div>
 
-        {/* MOBILE FLOATING ACTION BUTTON (FAB: Botão Amarelo Vibrante com +) */}
-        {/* Floating Quick Add Button (Bottom Right) */}
-        <button
-          onClick={() => setIsQuickAddOpen(true)}
-          className="md:hidden fixed bottom-28 right-5 w-14 h-14 bg-[#facc15] hover:bg-[#eab308] active:scale-90 text-black rounded-full shadow-[0_8px_25px_rgba(250,204,21,0.55)] flex items-center justify-center z-30 transition-all duration-150"
-          title="Nova Tarefa (Rápida)"
-        >
-          <Plus className="w-7 h-7 stroke-[3] text-black" />
-        </button>
-
-        {/* MOBILE BOTTOM NAVIGATION BAR (Touch-First & Safe-Area Optimized) */}
-        <nav className="md:hidden flex items-center justify-around bg-[#000000] border-t border-[#18181c] pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] px-1 z-30 shrink-0">
-          {/* Tab 1: Tarefas (Hoje) */}
+        {/* MOBILE BOTTOM NAVIGATION BAR (Aligned 5-col grid, flush minimalist '+' button, yellow only when active) */}
+        <nav className="md:hidden grid grid-cols-5 items-center bg-[#000000] border-t border-[#18181c] py-1.5 pb-[max(0.55rem,env(safe-area-inset-bottom))] px-1 z-30 shrink-0">
+          {/* Tab 1: Tarefas */}
           <button
             onClick={() => {
               store.setTaskViewLayout('list');
               setActiveView('tasks-today');
               setSelectedTaskId(null);
             }}
-            className="flex flex-col items-center justify-center min-w-[54px] min-h-[48px] p-1.5 rounded-xl active:scale-90 transition-transform"
+            className="w-full min-w-0 flex flex-col items-center justify-center py-0.5 active:scale-95 transition-transform"
             title="Tarefas de Hoje"
           >
-            {isTaskView && store.taskViewLayout !== 'kanban' ? (
-              <div className="w-8 h-8 rounded-xl bg-[#facc15] flex items-center justify-center shadow-lg shadow-[#facc15]/30">
-                <CheckSquare className="w-5 h-5 text-black stroke-[2.5]" />
-              </div>
-            ) : (
-              <div className="w-8 h-8 rounded-xl border border-[#facc15]/30 bg-[#121215] flex items-center justify-center text-[#facc15]">
-                <CheckSquare className="w-4 h-4 text-[#facc15]" />
-              </div>
-            )}
-            <span className={`text-[10px] font-bold mt-1 ${isTaskView && store.taskViewLayout !== 'kanban' ? 'text-[#facc15]' : 'text-neutral-500'}`}>
+            <div className={`w-7 h-7 rounded-[4px] flex items-center justify-center transition-colors border ${
+              isTaskView && store.taskViewLayout !== 'kanban'
+                ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
+                : 'bg-transparent border-transparent text-neutral-400 hover:text-neutral-200'
+            }`}>
+              <CheckSquare className="w-4 h-4" />
+            </div>
+            <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${
+              isTaskView && store.taskViewLayout !== 'kanban' ? 'text-[#facc15]' : 'text-neutral-500'
+            }`}>
               Tarefas
             </span>
           </button>
 
-          {/* Tab 2: Segundo Ícone do Lado Esquerdo -> Formatos de Visualização (Diário, Semanal, Mensal, Anual, Kanban, Matriz, Listas) */}
+          {/* Tab 2: Visualizar */}
           <button
-            onClick={() => {
-              setIsViewSelectorOpen(true);
-            }}
-            className="flex flex-col items-center justify-center min-w-[54px] min-h-[48px] p-1.5 rounded-xl active:scale-90 transition-transform"
+            onClick={() => setIsViewSelectorOpen(true)}
+            className="w-full min-w-0 flex flex-col items-center justify-center py-0.5 active:scale-95 transition-transform"
             title="Escolher Formato de Visualização"
           >
-            {activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits' || store.taskViewLayout === 'kanban' ? (
-              <div className="w-8 h-8 rounded-xl bg-[#facc15] flex items-center justify-center shadow-lg shadow-[#facc15]/30">
-                <CalendarDays className="w-5 h-5 text-black stroke-[2.5]" />
-              </div>
-            ) : (
-              <div className="w-8 h-8 rounded-xl border border-[#facc15]/30 bg-[#121215] flex items-center justify-center text-[#facc15] hover:border-[#facc15]/50">
-                <CalendarDays className="w-4 h-4 text-[#facc15]" />
-              </div>
-            )}
-            <span className={`text-[10px] font-bold mt-1 ${activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits' || store.taskViewLayout === 'kanban' ? 'text-[#facc15]' : 'text-neutral-500'}`}>
-              Visualizações
+            <div className={`w-7 h-7 rounded-[4px] flex items-center justify-center transition-colors border ${
+              activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits' || store.taskViewLayout === 'kanban'
+                ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
+                : 'bg-transparent border-transparent text-neutral-400 hover:text-neutral-200'
+            }`}>
+              <CalendarDays className="w-4 h-4" />
+            </div>
+            <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${
+              activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits' || store.taskViewLayout === 'kanban'
+                ? 'text-[#facc15]'
+                : 'text-neutral-500'
+            }`}>
+              Visualizar
             </span>
           </button>
 
-          {/* Tab 3: Ranking & Escudos */}
+          {/* Center Primary CTA: minimalist flush centered '+' */}
+          <div className="w-full min-w-0 flex items-center justify-center">
+            <button
+              onClick={() => {
+                setQuickAddPrefill(null);
+                setIsQuickAddOpen(true);
+              }}
+              className="w-9 h-9 rounded-full bg-[#16161a] hover:bg-[#1f1f24] active:scale-90 border border-white/25 hover:border-[#facc15]/60 text-neutral-100 flex items-center justify-center transition-all"
+              title="Nova Tarefa"
+            >
+              <Plus className="w-4 h-4 stroke-[2.2]" />
+            </button>
+          </div>
+
+          {/* Tab 4: Escudo */}
           <button
             onClick={() => {
               setActiveView('stats');
               setSelectedTaskId(null);
             }}
-            className="flex flex-col items-center justify-center min-w-[54px] min-h-[48px] p-1.5 rounded-xl active:scale-90 transition-transform"
+            className="w-full min-w-0 flex flex-col items-center justify-center py-0.5 active:scale-95 transition-transform"
             title="Seus Rankings & Escudos"
           >
-            {activeView === 'stats' ? (
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-yellow-300 to-[#facc15] flex items-center justify-center shadow-lg shadow-[#facc15]/40 p-0.5">
-                <RankShield2D tier={calculateGamification(state).currentRank.tier} size={24} showGlow={false} />
-              </div>
-            ) : (
-              <div className="w-8 h-8 rounded-xl bg-[#121215] border border-[#facc15]/30 flex items-center justify-center p-0.5 hover:border-[#facc15]/50">
-                <RankShield2D tier={calculateGamification(state).currentRank.tier} size={22} showGlow={false} />
-              </div>
-            )}
-            <span className={`text-[10px] font-bold mt-1 ${activeView === 'stats' ? 'text-[#facc15]' : 'text-neutral-500'}`}>
+            <div className={`w-7 h-7 rounded-[4px] flex items-center justify-center p-1 transition-colors border ${
+              activeView === 'stats'
+                ? 'bg-[#facc15]/15 border-[#facc15]/55'
+                : 'bg-transparent border-transparent opacity-80'
+            }`}>
+              <RankShield2D tier={calculateGamification(state).currentRank.tier} size={18} showGlow={false} />
+            </div>
+            <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${activeView === 'stats' ? 'text-[#facc15]' : 'text-neutral-500'}`}>
               Escudo
             </span>
           </button>
 
-          {/* Tab 4: Mais / Configurações */}
+          {/* Tab 5: Foco */}
           <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="flex flex-col items-center justify-center min-w-[54px] min-h-[48px] p-1.5 rounded-xl text-neutral-400 hover:text-white active:scale-90 transition-transform"
-            title="Mais Opções & Configurações"
+            onClick={() => {
+              setActiveView('pomodoro');
+              setSelectedTaskId(null);
+            }}
+            className="w-full min-w-0 flex flex-col items-center justify-center py-0.5 active:scale-95 transition-transform"
+            title="Foco Pomodoro"
           >
-            <div className="w-8 h-8 rounded-xl border border-[#facc15]/30 bg-[#121215] flex items-center justify-center text-[#facc15] hover:border-[#facc15]/50">
-              <MoreHorizontal className="w-5 h-5 stroke-[2] text-[#facc15]" />
+            <div className={`w-7 h-7 rounded-[4px] flex items-center justify-center transition-colors border ${
+              activeView === 'pomodoro'
+                ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
+                : 'bg-transparent border-transparent text-neutral-400 hover:text-neutral-200'
+            }`}>
+              <Clock className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-bold mt-1 text-neutral-500">
-              Mais
+            <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${activeView === 'pomodoro' ? 'text-[#facc15]' : 'text-neutral-500'}`}>
+              Foco
             </span>
           </button>
         </nav>
@@ -684,7 +816,12 @@ export default function App() {
       <GlobalQuickAddModal
         store={store}
         isOpen={isQuickAddOpen}
-        onClose={() => setIsQuickAddOpen(false)}
+        onClose={() => {
+          setIsQuickAddOpen(false);
+          setQuickAddPrefill(null);
+        }}
+        initialDate={quickAddPrefill?.date || ''}
+        initialStartTime={quickAddPrefill?.startTime || ''}
       />
 
       {/* Sincronização / Backup Modal */}
@@ -727,10 +864,13 @@ export default function App() {
       <AlarmOverlayModal
         isOpen={isAlarmModalOpen}
         task={alarmActiveTask}
+        triggeredTime={alarmActiveTask?.triggeredTime || ''}
+        durationMinutes={state.settings?.durationMinutes ?? state.settings?.alarmDuration ?? 5}
         soundName={state.settings?.sound || 'radar'}
         customAudioName={customAudioInfo?.name || ''}
         onStopAlarm={handleStopAlarm}
         onSnoozeAlarm={handleSnoozeAlarm}
+        onCompleteTask={handleCompleteAlarmTask}
       />
 
       {/* Android Alarm & Lockscreen Permission Onboarding Modal */}
@@ -751,16 +891,21 @@ export default function App() {
         initialMode={calendarViewMode || 'monthly'}
         initialDates={[getTodayYMD()]}
         allowTaskSelection={true}
-        tasks={state.tasks}
+        tasks={(state.tasks || []).filter(task => !task.deleted)}
         projects={state.projects}
-        onApplyCustomSchedule={({ dates, times, pattern, taskAction, taskId, title, projectId }) => {
+        onApplyCustomSchedule={({ dates, times, pattern, taskAction, taskId, title, projectId, alarmEnabled, reminderOffset }) => {
+          const alarmFields = {
+            ...(alarmEnabled !== undefined ? { alarmEnabled } : {}),
+            ...(reminderOffset !== undefined ? { reminderOffset } : {})
+          };
           if (taskAction === 'existing' && taskId && updateTask) {
             updateTask(taskId, {
               recurringDates: dates,
               dueDate: dates[0] || '',
               recurringTimes: times,
               startTime: times[0] || '',
-              recurrencePattern: pattern
+              recurrencePattern: pattern,
+              ...alarmFields
             });
           } else if (title && addTasksForMultipleDates) {
             addTasksForMultipleDates(
@@ -771,7 +916,8 @@ export default function App() {
                 recurringTimes: times,
                 startTime: times[0] || '',
                 recurrencePattern: pattern,
-                priority: 1
+                priority: 1,
+                ...alarmFields
               },
               dates
             );

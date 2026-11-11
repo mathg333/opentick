@@ -91,7 +91,7 @@ export const RANKS_CONFIG = [
 ];
 
 export function calculateGamification(state) {
-  const tasks = state.tasks || [];
+  const tasks = (state.tasks || []).filter(t => !t.deleted);
   const habits = state.habits || [];
   const pomodoroSessions = state.pomodoroSessions || [];
   const bonusXp = state.bonusXp || 450;
@@ -102,7 +102,7 @@ export function calculateGamification(state) {
   const taskXp = completedTasks.length * 60;
   const highPriorityBonusXp = highPriorityCompleted.length * 40;
   const pomodoroXp = pomodoroSessions.length * 120;
-  const habitStreakDays = habits.reduce((acc, h) => acc + (h.streak || 0), 0);
+  const habitStreakDays = habits.reduce((acc, h) => acc + Math.max(h.currentStreak ?? h.streak ?? 0, 0), 0);
   const habitXp = habitStreakDays * 40;
 
   const totalXp = taskXp + highPriorityBonusXp + pomodoroXp + habitXp + bonusXp;
@@ -158,7 +158,7 @@ export function calculateGamification(state) {
       title: 'Hábito Inquebrável',
       desc: 'Manteve uma sequência de hábitos de 3+ dias',
       icon: '🔥',
-      unlocked: habits.some(h => (h.streak || 0) >= 3 || (h.bestStreak || 0) >= 3)
+      unlocked: habits.some(h => (h.currentStreak ?? h.streak ?? 0) >= 3 || (h.bestStreak || 0) >= 3)
     },
     {
       id: 'silver_rank',

@@ -1,14 +1,16 @@
 import React, { useMemo } from 'react';
 import { TrendingUp, CheckCircle2 } from 'lucide-react';
+import { getTodayYMD } from '../utils/taskSchedule';
 
 export default function SegmentedProgressCard({ store, onOpenStats }) {
   const { state, setActiveView } = store;
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = getTodayYMD();
 
   // Compute today's tasks & completion
   const { todayTotal, todayDone, percentage, tags, trendPercent } = useMemo(() => {
     // 1. Tasks scheduled or created for today
-    const tasksToday = state.tasks.filter(t => {
+    const tasksToday = (state.tasks || []).filter(t => {
+      if (t.deleted) return false;
       if (t.dueDate === todayStr) return true;
       if (t.recurringDates && t.recurringDates.includes(todayStr)) return true;
       if (t.completedAt && t.completedAt.startsWith(todayStr)) return true;
@@ -62,7 +64,7 @@ export default function SegmentedProgressCard({ store, onOpenStats }) {
   }, [percentage]);
 
   return (
-    <div className="bg-[#0a0a0c] border border-[#222226] rounded-2xl p-4 md:p-5 shadow-2xl relative overflow-hidden transition-all hover:border-[#2f2f36]">
+    <div className="bg-[#0a0a0c] border border-[#222226] rounded-[6px] p-4 md:p-5 shadow-2xl relative overflow-hidden transition-all hover:border-[#2f2f36]">
       {/* Top Row: Tags (3 dots menu removed per user request) */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">

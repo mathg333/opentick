@@ -11,12 +11,14 @@ import {
   ArrowDown
 } from 'lucide-react';
 
+import { ObsidianSelect } from './ObsidianControls';
+
 export default function EisenhowerMatrix({ store }) {
-  const { state, addTask, toggleTaskCompleted, updateTask, setSelectedTaskId } = store;
+  const { state, addTask, toggleTaskCompleted, updateTask, setSelectedTaskId, setActiveView } = store;
   const [quickInputs, setQuickInputs] = useState({ q1: '', q2: '', q3: '', q4: '' });
   const [mobileTab, setMobileTab] = useState('all'); // 'all', 'q1', 'q2', 'q3', 'q4'
 
-  const activeTasks = state.tasks.filter(t => !t.completed);
+  const activeTasks = (state.tasks || []).filter(t => !t.completed && !t.deleted);
 
   const q1Tasks = activeTasks.filter(t => t.urgent && t.important);
   const q2Tasks = activeTasks.filter(t => !t.urgent && t.important);
@@ -174,7 +176,7 @@ export default function EisenhowerMatrix({ store }) {
             return (
               <div
                 key={q.key}
-                className={`bg-[#0a0a0c] rounded-2xl border ${q.border} flex flex-col overflow-hidden shadow-xl min-h-[280px] md:min-h-0`}
+                className={`bg-[#0a0a0c] rounded-[6px] border ${q.border} flex flex-col overflow-hidden shadow-xl min-h-[280px] md:min-h-0`}
               >
                 {/* Quadrant Header */}
                 <div className="p-3 md:p-3.5 border-b border-[#1c1c20] flex items-center justify-between bg-[#0f0f13]">
@@ -206,7 +208,7 @@ export default function EisenhowerMatrix({ store }) {
                       placeholder={`+ Adicionar em ${q.title.split('&')[0]}...`}
                       value={quickInputs[q.key]}
                       onChange={(e) => setQuickInputs(prev => ({ ...prev, [q.key]: e.target.value }))}
-                      className="flex-1 bg-[#151518] border border-[#222226] rounded-lg px-2.5 py-1 text-xs text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-neutral-500"
+                      className="flex-1 min-w-0 bg-[#151518] border border-[#222226] rounded-[4px] px-2.5 py-1 text-xs text-neutral-100 placeholder-neutral-600 focus:outline-none focus:border-neutral-500"
                     />
                     <button
                       type="submit"
@@ -223,7 +225,12 @@ export default function EisenhowerMatrix({ store }) {
                   {q.tasks.map(task => (
                     <div
                       key={task.id}
-                      onClick={() => setSelectedTaskId(task.id)}
+                      onClick={() => {
+                        if (setActiveView) {
+                          setActiveView(task.projectId && task.projectId !== 'inbox' ? `project-${task.projectId}` : 'tasks-inbox');
+                        }
+                        setSelectedTaskId(task.id);
+                      }}
                       className="group p-2.5 rounded-xl bg-[#131317] border border-[#1f1f24] hover:border-neutral-600 hover:bg-[#18181e] transition-all cursor-pointer flex items-center justify-between gap-2 shadow-xs"
                     >
                       <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -243,18 +250,20 @@ export default function EisenhowerMatrix({ store }) {
                       </div>
 
                       {/* Move Quick Actions */}
-                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <select
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => moveQuadrant(task.id, e.target.value)}
-                          defaultValue={q.key}
-                          className="bg-[#09090b] border border-[#27272a] text-[10px] text-neutral-400 rounded px-1.5 py-0.5 focus:outline-none"
-                        >
-                          <option value="q1">Q1 (Fazer)</option>
-                          <option value="q2">Q2 (Planejar)</option>
-                          <option value="q3">Q3 (Delegar)</option>
-                          <option value="q4">Q4 (Eliminar)</option>
-                        </select>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <ObsidianSelect
+                          compact
+                          title="Mover para Quadrante"
+                          value={q.key}
+                          onChange={(val) => moveQuadrant(task.id, val)}
+                          options={[
+                            { value: 'q1', label: 'Q1 (Fazer)' },
+                            { value: 'q2', label: 'Q2 (Planejar)' },
+                            { value: 'q3', label: 'Q3 (Delegar)' },
+                            { value: 'q4', label: 'Q4 (Eliminar)' }
+                          ]}
+                          className="min-w-[92px]"
+                        />
                       </div>
                     </div>
                   ))}

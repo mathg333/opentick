@@ -1,7 +1,9 @@
-const today = new Date().toISOString().split('T')[0];
-const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-const inTwoDays = new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0];
+import { getTodayYMD, addDaysYMD } from '../utils/taskSchedule';
+
+const today = getTodayYMD();
+const yesterday = addDaysYMD(today, -1);
+const tomorrow = addDaysYMD(today, 1);
+const inTwoDays = addDaysYMD(today, 2);
 
 export const INITIAL_PROJECTS = [
   { id: 'inbox', name: 'Caixa de Entrada', color: '#facc15', isDefault: true, icon: 'Inbox' },

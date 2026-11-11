@@ -6,115 +6,139 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.WindowManager;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.JSObject;
+import org.json.JSONObject;
 
 public class MainActivity extends BridgeActivity {
 
-    private final BroadcastReceiver mAlarmStoppedReceiver = new BroadcastReceiver() {
+    private static volatile JSObject sPendingColdAlarm = null;
+
+    private final BroadcastReceiver nativeAlarmEventReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String taskId = intent != null ? intent.getStringExtra(AlarmService.EXTRA_TASK_ID) : "";
-            if (taskId == null) taskId = "";
-            final String fTaskId = taskId;
-            if (getBridge() != null && getBridge().getWebView() != null) {
-                getBridge().getWebView().post(() -> {
-                    String js = "window.dispatchEvent(new CustomEvent('nativeAlarmStopped', { detail: { taskId: '" + fTaskId + "' } }));";
-                    getBridge().eval(js, null);
-                });
+            if (intent == null || getBridge() == null) return;
+            String action = intent.getAction();
+
+            if (AlarmService.ACTION_ALARM_STOPPED_BY_USER.equals(action)) {
+                String stoppedTaskId = intent.getStringExtra(AlarmService.EXTRA_TASK_ID);
+                if (stoppedTaskId == null) stoppedTaskId = "";
+                try {
+                    JSONObject payload = new JSONObject();
+                    payload.put("taskId", stoppedTaskId);
+                    dispatchWindowEvent("nativeAlarmStopped", payload);
+                } catch (Exception ignored) {}
+            } else if (AlarmService.ACTION_ALARM_SNOOZED.equals(action)) {
+                try {
+                    JSONObject payload = new JSONObject();
+                    payload.put("taskId", safeStr(intent.getStringExtra("ALARM_TASK_ID")));
+                    payload.put("occurrenceId", safeStr(intent.getStringExtra("ALARM_OCCURRENCE_ID")));
+                    payload.put("taskTitle", safeStr(intent.getStringExtra("ALARM_TASK_TITLE")));
+                    payload.put("minutes", intent.getIntExtra("SNOOZE_MINUTES", 5));
+                    payload.put("timeLabel", safeStr(intent.getStringExtra("SNOOZE_TIME_LABEL")));
+                    payload.put("triggerMillis", intent.getLongExtra("SNOOZE_TRIGGER_MILLIS", 0L));
+                    dispatchWindowEvent("nativeAlarmSnoozed", payload);
+                } catch (Exception ignored) {}
+            } else if (AlarmReceiver.ACTION_NATIVE_ALARM_TRIGGERED.equals(action)) {
+                try {
+                    JSONObject payload = new JSONObject();
+                    payload.put("taskId", safeStr(intent.getStringExtra("ALARM_TASK_ID")));
+                    payload.put("occurrenceId", safeStr(intent.getStringExtra("ALARM_OCCURRENCE_ID")));
+                    payload.put("taskTitle", safeStr(intent.getStringExtra("ALARM_TASK_TITLE")));
+                    payload.put("timeLabel", safeStr(intent.getStringExtra("ALARM_TIME_LABEL")));
+                    payload.put("alarmMode", safeStr(intent.getStringExtra("ALARM_MODE")));
+                    dispatchWindowEvent("nativeAlarmTriggered", payload);
+                } catch (Exception ignored) {}
             }
         }
     };
 
-    private final BroadcastReceiver mAlarmTriggeredReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String taskId = intent != null ? intent.getStringExtra("ALARM_TASK_ID") : "";
-            String taskTitle = intent != null ? intent.getStringExtra("ALARM_TASK_TITLE") : "Lembrete OpenTick";
-            if (taskId == null) taskId = "";
-            if (taskTitle == null) taskTitle = "Lembrete OpenTick";
-            triggerAlarmInWebView(taskId, taskTitle);
-        }
-    };
+    public static synchronized JSObject consumePendingColdAlarm() {
+        JSObject copy = sPendingColdAlarm;
+        sPendingColdAlarm = null;
+        return copy;
+    }
+
+    private static String safeStr(String s) {
+        return s != null ? s : "";
+    }
+
+    private void dispatchWindowEvent(String eventName, JSONObject detail) {
+        if (getBridge() == null) return;
+        final String js = "window.dispatchEvent(new CustomEvent("
+            + JSONObject.quote(eventName)
+            + ", { detail: " + detail.toString() + " }));";
+        runOnUiThread(() -> {
+            if (getBridge() != null && getBridge().getWebView() != null) {
+                getBridge().getWebView().evaluateJavascript(js, null);
+            }
+        });
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(OpenTickAlarmPlugin.class);
         super.onCreate(savedInstanceState);
 
-        // Configure activity to turn screen on and show on lock screen
-        configureLockScreenFlags();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(AlarmService.ACTION_ALARM_STOPPED_BY_USER);
+        filter.addAction(AlarmService.ACTION_ALARM_SNOOZED);
+        filter.addAction(AlarmReceiver.ACTION_NATIVE_ALARM_TRIGGERED);
 
-        // Register receiver for when alarm is stopped natively
-        IntentFilter filterStopped = new IntentFilter(AlarmService.ACTION_ALARM_STOPPED_BY_USER);
-        IntentFilter filterTriggered = new IntentFilter(AlarmReceiver.ACTION_NATIVE_ALARM_TRIGGERED);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(mAlarmStoppedReceiver, filterStopped, Context.RECEIVER_NOT_EXPORTED);
-            registerReceiver(mAlarmTriggeredReceiver, filterTriggered, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(nativeAlarmEventReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(mAlarmStoppedReceiver, filterStopped);
-            registerReceiver(mAlarmTriggeredReceiver, filterTriggered);
+            registerReceiver(nativeAlarmEventReceiver, filter);
         }
 
-        // Check if opened directly by an active alarm
-        handleAlarmIntent(getIntent());
+        handleAlarmLaunchIntent(getIntent(), true);
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        configureLockScreenFlags();
-        handleAlarmIntent(intent);
+        handleAlarmLaunchIntent(intent, false);
     }
 
-    private void configureLockScreenFlags() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true);
-            setTurnScreenOn(true);
-        } else {
-            getWindow().addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-            );
-        }
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    }
+    private void handleAlarmLaunchIntent(Intent intent, boolean isColdStart) {
+        if (intent == null) return;
+        if (intent.getBooleanExtra("TRIGGERED_BY_ALARM", false)) {
+            String taskId = safeStr(intent.getStringExtra("ALARM_TASK_ID"));
+            String occId = safeStr(intent.getStringExtra("ALARM_OCCURRENCE_ID"));
+            String taskTitle = safeStr(intent.getStringExtra("ALARM_TASK_TITLE"));
+            if (taskTitle.isEmpty()) taskTitle = "Tarefa Agendada";
+            String timeLabel = safeStr(intent.getStringExtra("ALARM_TIME_LABEL"));
 
-    private void handleAlarmIntent(Intent intent) {
-        if (intent != null && intent.getBooleanExtra("TRIGGERED_BY_ALARM", false)) {
-            String taskId = intent.getStringExtra("ALARM_TASK_ID");
-            String taskTitle = intent.getStringExtra("ALARM_TASK_TITLE");
-            if (taskId == null) taskId = "";
-            if (taskTitle == null) taskTitle = "Lembrete OpenTick";
-            triggerAlarmInWebView(taskId, taskTitle);
-        }
-    }
+            JSObject pending = new JSObject();
+            pending.put("taskId", taskId);
+            pending.put("occurrenceId", occId);
+            pending.put("taskTitle", taskTitle);
+            pending.put("timeLabel", timeLabel);
+            pending.put("alarmMode", "continuous");
+            sPendingColdAlarm = pending;
 
-    private void triggerAlarmInWebView(String taskId, String taskTitle) {
-        final org.json.JSONObject detail = new org.json.JSONObject();
-        try {
-            detail.put("taskId", taskId != null ? taskId : "");
-            detail.put("taskTitle", taskTitle != null ? taskTitle : "Lembrete OpenTick");
-        } catch (Exception ignored) {}
+            if (!isColdStart) {
+                try {
+                    JSONObject detail = new JSONObject();
+                    detail.put("taskId", taskId);
+                    detail.put("occurrenceId", occId);
+                    detail.put("taskTitle", taskTitle);
+                    detail.put("timeLabel", timeLabel);
+                    detail.put("alarmMode", "continuous");
+                    dispatchWindowEvent("nativeAlarmTriggered", detail);
+                } catch (Exception ignored) {}
+            }
 
-        if (getBridge() != null && getBridge().getWebView() != null) {
-            getBridge().getWebView().post(() -> {
-                String js = "window.dispatchEvent(new CustomEvent('nativeAlarmTriggered', { detail: " + detail.toString() + " }));";
-                getBridge().eval(js, null);
-            });
+            intent.removeExtra("TRIGGERED_BY_ALARM");
         }
     }
 
     @Override
     public void onDestroy() {
         try {
-            unregisterReceiver(mAlarmStoppedReceiver);
-        } catch (Exception e) {}
-        try {
-            unregisterReceiver(mAlarmTriggeredReceiver);
-        } catch (Exception e) {}
+            unregisterReceiver(nativeAlarmEventReceiver);
+        } catch (Exception ignored) {}
         super.onDestroy();
     }
 }

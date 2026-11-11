@@ -180,18 +180,18 @@ export default function ViewFormatSelectorModal({ isOpen, onClose, store, onOpen
                 onClose();
                 onOpenCustomRecurrence();
               }}
-              className="w-full p-3 rounded-xl bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/60 flex items-center justify-between transition-all active:scale-98 mt-2"
+              className="w-full p-3 rounded-lg bg-[#121215] hover:bg-[#16161a] border border-[#222228] hover:border-[#33333d] flex items-center justify-between transition-all active:scale-98 mt-2"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#facc15] flex items-center justify-center text-black shrink-0">
-                  <SlidersHorizontal className="w-4 h-4 text-black" />
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-[#facc15]/15 border border-[#facc15]/40 flex items-center justify-center text-[#facc15] shrink-0">
+                  <SlidersHorizontal className="w-4 h-4 text-[#facc15]" />
                 </div>
-                <div className="text-left">
-                  <div className="text-xs font-black text-[#facc15]">Personalizado</div>
-                  <div className="text-[10px] text-neutral-300">Marcar vários dias, datas e horários</div>
+                <div className="text-left min-w-0">
+                  <div className="text-xs font-bold text-white">Personalizado</div>
+                  <div className="text-[10px] text-neutral-400">Marcar vários dias, datas e horários</div>
                 </div>
               </div>
-              <span className="text-[10px] font-black text-black bg-[#facc15] px-2 py-0.5 rounded-lg">
+              <span className="text-[10px] font-bold text-neutral-200 bg-[#1a1a1f] border border-[#2e2e36] px-2.5 py-1 rounded-[4px] shrink-0">
                 Abrir
               </span>
             </button>

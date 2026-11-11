@@ -58,10 +58,9 @@ const AVATAR_PRESETS = [
 ];
 
 export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
-  if (!isOpen) return null;
 
   const { state, updateUserProfile } = store;
-  const currentProfile = state.userProfile || {
+  const currentProfile = state?.userProfile || {
     name: 'Mathx',
     title: 'Mestre da Produtividade',
     avatar: '🐺',
@@ -79,6 +78,8 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
 
   const fileInputAvatarRef = useRef(null);
   const fileInputCoverRef = useRef(null);
+
+  if (!isOpen) return null;
 
   const stats = calculateGamification(state);
 
@@ -296,7 +297,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
               </button>
             </div>
 
-            <div className="grid grid-cols-8 gap-2">
+            <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5">
               {AVATAR_PRESETS.map((emoji) => {
                 const isSelected = avatarType === 'emoji' && avatar === emoji;
                 return (
@@ -306,7 +307,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
                       setAvatar(emoji);
                       setAvatarType('emoji');
                     }}
-                    className={`w-10 h-10 rounded-xl bg-[#18181c] flex items-center justify-center text-xl transition-all border ${
+                    className={`w-full aspect-square rounded-md bg-[#18181c] flex items-center justify-center text-xl transition-all border ${
                       isSelected 
                         ? 'border-[#facc15] bg-[#facc15]/20 scale-110 shadow-lg shadow-[#facc15]/25' 
                         : 'border-[#27272a] hover:border-neutral-500 hover:bg-neutral-800'

@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Clock, Check, Volume2, X, Moon, Flame } from 'lucide-react';
+import { Bell, Clock, Check, Moon, Volume2, X, CheckCircle2 } from 'lucide-react';
 
 export default function AlarmOverlayModal({
   isOpen,
   task,
+  triggeredTime = '',
   soundName = 'radar',
   customAudioName = '',
+  durationMinutes = 5,
   onStopAlarm,
-  onSnoozeAlarm
+  onSnoozeAlarm,
+  onCompleteTask
 }) {
   const [secondsElapsed, setSecondsElapsed] = useState(0);
 
@@ -16,130 +19,127 @@ export default function AlarmOverlayModal({
       setSecondsElapsed(0);
       return;
     }
-
+    setSecondsElapsed(0);
     const timer = setInterval(() => {
       setSecondsElapsed(prev => prev + 1);
     }, 1000);
-
     return () => clearInterval(timer);
-  }, [isOpen]);
+  }, [isOpen, task?.id, triggeredTime]);
 
   if (!isOpen) return null;
 
-  const now = new Date();
-  const timeFormatted = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  const dateFormatted = new Intl.DateTimeFormat('pt-BR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
-  }).format(now);
+  const totalSec = Math.max(60, (Number(durationMinutes) || 5) * 60);
+  const remainingTotal = Math.max(0, totalSec - secondsElapsed);
+  const remainingMins = Math.floor(remainingTotal / 60);
+  const remainingSeconds = remainingTotal % 60;
 
-  const remainingMinutes = Math.max(0, 4 - Math.floor(secondsElapsed / 60));
-  const remainingSeconds = Math.max(0, 59 - (secondsElapsed % 60));
+  const displayTime = triggeredTime || task?.startTime || '';
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#06060a]/85 backdrop-blur-3xl flex flex-col items-center justify-between p-6 sm:p-10 select-none animate-in fade-in duration-300">
-      {/* User-selected Moody Rain Drops on Blurred Glass Background */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity pointer-events-none"
-        style={{ backgroundImage: `url('/images/bg_rain_glass_dark.png')` }}
+    <div className="fixed inset-0 z-[999] bg-[#06060a]/92 backdrop-blur-2xl flex flex-col items-center justify-between p-6 sm:p-10 select-none animate-in fade-in duration-200">
+      <div
+        className="absolute inset-0 bg-cover bg-center opacity-35 mix-blend-luminosity pointer-events-none"
+        style={{ backgroundImage: "url('/images/bg_rain_glass_dark.png')" }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#06060a]/90 via-[#06060a]/70 to-[#06060a]/95 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-transparent to-black/95 pointer-events-none" />
 
-      {/* Background Ambient Glowing Orbs */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-[#facc15]/15 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-72 h-72 rounded-full bg-[#ff3d00]/10 blur-3xl pointer-events-none" />
-
-      {/* Top Header Status Pill */}
-      <div className="w-full flex items-center justify-between pt-2 z-10">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-lg">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#ff7a00] animate-ping" />
-          <span className="text-[11px] font-black uppercase tracking-widest text-[#ff7a00]">
-            Alarme Ativo • OpenTick
+      {/* Header */}
+      <div className="w-full max-w-md flex items-center justify-between text-neutral-300 z-10">
+        <div className="flex items-center gap-2 bg-[#141418]/90 border border-[#facc15]/30 px-3 py-1.5 rounded-md">
+          <Volume2 className="w-3.5 h-3.5 text-[#facc15] animate-pulse" />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-200 truncate max-w-[190px]">
+            {soundName === 'custom' && customAudioName
+              ? `Música: ${customAudioName}`
+              : soundName === 'none'
+              ? 'Modo Silencioso'
+              : `Alarme: ${soundName}`}
           </span>
         </div>
         <button
           onClick={onStopAlarm}
-          className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white border border-white/10 backdrop-blur-md transition-all"
+          className="p-2 rounded-md bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white border border-white/10 transition-all"
           title="Fechar"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Center Alarm Focus */}
-      <div className="flex flex-col items-center text-center space-y-6 max-w-sm w-full z-10">
-        {/* Multi-layer Concentric Glass Soundwaves */}
-        <div className="relative flex items-center justify-center my-2">
-          {/* Outer Ripple */}
-          <div className="absolute w-44 h-44 rounded-full border border-[#ff7a00]/30 bg-[#facc15]/5 animate-ping opacity-60 duration-1000" />
-          {/* Mid Ripple */}
-          <div className="absolute w-36 h-36 rounded-full border border-[#ff7a00]/40 bg-[#facc15]/10 animate-pulse duration-700" />
-          {/* Center Glowing Sphere */}
-          <div className="relative w-24 h-24 rounded-full bg-gradient-to-tr from-[#facc15] via-[#facc15] to-[#e63900] flex items-center justify-center shadow-[0_0_50px_rgba(255,107,0,0.55)] border border-white/20">
-            <Bell className="w-12 h-12 text-white animate-bounce stroke-[2.2]" />
+      {/* Center Pulsing Clock & Task Info */}
+      <div className="flex flex-col items-center justify-center text-center max-w-md w-full space-y-6 my-auto z-10">
+        <div className="relative flex items-center justify-center">
+          <div className="absolute w-40 h-40 rounded-full border border-[#facc15]/25 animate-ping" />
+          <div className="relative w-28 h-28 rounded-full bg-[#121216] border border-[#facc15]/60 shadow-[0_0_30px_rgba(250,204,21,0.18)] flex flex-col items-center justify-center">
+            <Bell className="w-10 h-10 text-[#facc15]" />
           </div>
         </div>
 
-        {/* Digital Time & Date */}
-        <div className="space-y-1.5">
-          <div className="text-6xl sm:text-7xl font-black tracking-tight text-white font-mono drop-shadow-[0_4px_20px_rgba(255,107,0,0.3)]">
-            {timeFormatted}
-          </div>
-          <div className="inline-block px-3.5 py-1 rounded-full bg-white/5 border border-white/10 text-xs text-neutral-300 font-medium capitalize backdrop-blur-md">
-            {dateFormatted}
-          </div>
-        </div>
+        <div className="space-y-2.5">
+          <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#facc15] block">
+            Compromisso OpenTick
+          </span>
 
-        {/* Frosted Glass Task Details Card */}
-        <div className="w-full bg-[#18181e]/60 border border-white/10 rounded-3xl p-5 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] backdrop-blur-xl space-y-2.5 text-left">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold text-[#ff7a00] uppercase tracking-wider flex items-center gap-1">
-              <Flame className="w-3.5 h-3.5" />
-              Lembrete da Tarefa
-            </span>
-            <div className="flex items-center gap-1 text-[11px] text-neutral-400">
-              <Volume2 className="w-3 h-3 text-[#ff7a00]" />
-              <span>{soundName === 'custom' && customAudioName ? customAudioName : 'Contínuo'}</span>
-            </div>
-          </div>
-          
-          <h2 className="text-xl font-black text-white leading-snug line-clamp-2">
-            {task ? task.title : 'Hora de concluir suas metas!'}
+          <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight break-words px-3">
+            {task?.title || 'Hora de concluir suas metas'}
           </h2>
 
-          {task?.startTime && (
-            <div className="inline-flex items-center gap-1.5 text-xs text-neutral-200 bg-white/10 border border-white/10 px-3 py-1 rounded-full font-mono">
-              <Clock className="w-3.5 h-3.5 text-[#ff7a00]" />
-              <span>Programado para as {task.startTime}</span>
+          {displayTime && (
+            <div className="inline-flex items-center gap-1.5 text-xs text-neutral-200 bg-[#141418] border border-white/12 px-3 py-1 rounded-md font-mono">
+              <Clock className="w-3.5 h-3.5 text-[#facc15]" />
+              <span>Programado para as {displayTime}</span>
             </div>
           )}
 
-          <p className="text-[11px] text-neutral-400 pt-1 border-t border-white/5">
-            Tocando continuamente • Auto-desligar em {remainingMinutes}:{String(remainingSeconds).padStart(2, '0')}
-          </p>
+          {task?.description && (
+            <p className="text-xs text-neutral-400 max-w-xs mx-auto line-clamp-2 pt-1">
+              {task.description}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Bottom Action Controls */}
-      <div className="w-full max-w-sm space-y-3 pb-2 z-10">
-        {/* Liquid Neon Orange Stop Button */}
+      {/* Controls Footer */}
+      <div className="w-full max-w-sm space-y-2.5 pb-2 z-10">
         <button
           onClick={onStopAlarm}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#ff7a00] via-[#facc15] to-[#e63900] hover:brightness-110 active:scale-98 text-white font-black text-base uppercase tracking-wider shadow-[0_0_35px_rgba(255,107,0,0.45)] border border-white/20 transition-all flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-lg bg-[#facc15] hover:bg-[#eab308] active:scale-[0.99] text-black font-black text-sm uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2"
         >
-          <Check className="w-6 h-6 stroke-[3]" />
+          <Check className="w-5 h-5 stroke-[3]" />
           <span>Parar Alarme</span>
         </button>
 
-        {/* Frosted Glass Snooze (+5 min) */}
-        <button
-          onClick={onSnoozeAlarm}
-          className="w-full py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-98 text-white font-bold text-xs border border-white/15 backdrop-blur-xl transition-all flex items-center justify-center gap-2 shadow-lg"
-        >
-          <Moon className="w-4 h-4 text-amber-300" />
-          <span>Adiar por 5 minutos (Snooze)</span>
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={onSnoozeAlarm}
+            className="py-3 rounded-lg bg-[#141418] hover:bg-[#1c1c22] active:scale-[0.99] text-neutral-100 font-semibold text-xs border border-white/15 transition-all flex items-center justify-center gap-1.5"
+          >
+            <Moon className="w-3.5 h-3.5 text-[#facc15]" />
+            <span>Adiar +5 min</span>
+          </button>
+
+          {task && onCompleteTask ? (
+            <button
+              onClick={onCompleteTask}
+              className="py-3 rounded-lg bg-[#facc15]/15 hover:bg-[#facc15]/25 active:scale-[0.99] text-[#facc15] font-semibold text-xs border border-[#facc15]/45 transition-all flex items-center justify-center gap-1.5"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Concluir Tarefa</span>
+            </button>
+          ) : (
+            <button
+              onClick={onStopAlarm}
+              className="py-3 rounded-lg bg-[#141418] hover:bg-[#1c1c22] text-neutral-300 font-semibold text-xs border border-white/10"
+            >
+              Fechar
+            </button>
+          )}
+        </div>
+
+        <p className="text-[10px] text-center text-neutral-500 pt-1">
+          Silenciamento automático em{' '}
+          <span className="text-neutral-300 font-mono">
+            {String(remainingMins).padStart(2, '0')}:{String(remainingSeconds).padStart(2, '0')}
+          </span>
+        </p>
       </div>
     </div>
   );

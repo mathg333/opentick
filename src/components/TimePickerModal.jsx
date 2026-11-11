@@ -5,7 +5,8 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
   const [activeMode, setActiveMode] = useState('hour'); // 'hour' or 'minute'
   const [hour, setHour] = useState(() => {
     if (initialTime && initialTime.includes(':')) {
-      return parseInt(initialTime.split(':')[0], 10) || 9;
+      const h = parseInt(initialTime.split(':')[0], 10);
+      return Number.isNaN(h) ? 9 : h;
     }
     return 9;
   });
@@ -24,8 +25,10 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
     if (isOpen) {
       if (initialTime && initialTime.includes(':')) {
         const parts = initialTime.split(':');
-        setHour(parseInt(parts[0], 10) || 9);
-        setMinute(parseInt(parts[1], 10) || 0);
+        const h = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        setHour(Number.isNaN(h) ? 9 : h);
+        setMinute(Number.isNaN(m) ? 0 : m);
       }
       setActiveMode('hour');
     }
@@ -365,7 +368,7 @@ export default function TimePickerModal({ isOpen, onClose, initialTime, onSelect
           <button
             type="button"
             onClick={handleConfirm}
-            className="px-6 py-2 rounded-xl text-xs font-bold bg-[#facc15] hover:bg-[#eab308] active:scale-98 text-white shadow-lg flex items-center gap-1.5"
+            className="px-5 py-2 rounded-md text-xs font-bold bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/55 text-[#facc15] flex items-center gap-1.5"
           >
             <Check className="w-4 h-4 stroke-[2.5]" />
             <span>Confirmar {String(hour).padStart(2, '0')}:{String(minute).padStart(2, '0')}</span>
