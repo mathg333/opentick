@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { getTaskTimes, getTaskDates, getTodayYMD } from './taskSchedule';
 
 // Check if running inside native Android Capacitor container
 export const isNativeAndroid = () => {
@@ -68,8 +69,8 @@ export function isAlarmDismissed(taskId, dateStr, timeStr) {
       const specificKey = `opentick_dismissed_${taskId}_${dStr}_${timeStr}`;
       const dismissedAt = localStorage.getItem(specificKey);
       if (dismissedAt) {
-        // Debounce: if user tapped STOP within the last 60 seconds, treat as dismissed
-        if (Date.now() - Number(dismissedAt) < 60 * 1000) {
+        // Debounce: if user tapped STOP within the last 120 seconds, treat as dismissed
+        if (Date.now() - Number(dismissedAt) < 120 * 1000) {
           return true;
         } else {
           localStorage.removeItem(specificKey);
@@ -247,50 +248,49 @@ export async function syncTasksToNativeAlarmManager(tasks) {
   if (!isNativeAndroid()) return;
   const now = Date.now();
   const nowDate = new Date();
-  const todayStr = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, '0')}-${String(nowDate.getDate()).padStart(2, '0')}`;
+  const todayStr = getTodayYMD();
 
   for (const task of tasks) {
-    if (task.completed || !task.startTime) {
+    const taskTimes = getTaskTimes(task);
+    const targetDates = getTaskDates(task);
+
+    if (task.completed || taskTimes.length === 0 || targetDates.length === 0) {
       await cancelNativeAlarm(task.id);
       continue;
     }
 
-    // Determine target dates
-    let targetDates = [];
-    if (task.recurringDates && task.recurringDates.length > 0) {
-      targetDates = [...task.recurringDates];
-    } else if (task.dueDate) {
-      targetDates = [task.dueDate];
-    }
-
-    if (targetDates.length === 0) {
-      await cancelNativeAlarm(task.id);
-      continue;
-    }
-
-    // Find the nearest upcoming date/time
+    // Find the nearest upcoming (date, time) slot across all scheduled dates & times
     let nextTimestamp = null;
-    const [hours, minutes] = task.startTime.split(':').map(Number);
 
     for (const dStr of targetDates) {
-      // If this task was already dismissed for this date and time, skip it
-      if (isAlarmDismissed(task.id, dStr, task.startTime)) {
-        continue;
-      }
-
       const [y, m, d] = dStr.split('-').map(Number);
-      const targetDate = new Date(y, m - 1, d, hours, minutes, 0, 0);
-      const millis = targetDate.getTime();
+      if (!y || !m || !d) continue;
 
-      // If scheduled for today and matches the current minute, fire in 1.5s so testing works instantly!
-      if (dStr === todayStr && nowDate.getHours() === hours && nowDate.getMinutes() === minutes) {
-        nextTimestamp = now + 1500;
-        break;
-      }
+      for (const timeStr of taskTimes) {
+        // If this alarm was already dismissed for this specific date and time, skip it
+        if (isAlarmDismissed(task.id, dStr, timeStr)) {
+          continue;
+        }
 
-      if (millis > now) {
-        if (nextTimestamp === null || millis < nextTimestamp) {
-          nextTimestamp = millis;
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        if (Number.isNaN(hours) || Number.isNaN(minutes)) continue;
+
+        const targetDate = new Date(y, m - 1, d, hours, minutes, 0, 0);
+        const millis = targetDate.getTime();
+
+        // If scheduled for today and matches the current minute, fire in 1.5s
+        if (dStr === todayStr && nowDate.getHours() === hours && nowDate.getMinutes() === minutes) {
+          const immediateMs = now + 1500;
+          if (nextTimestamp === null || immediateMs < nextTimestamp) {
+            nextTimestamp = immediateMs;
+          }
+          continue;
+        }
+
+        if (millis > now) {
+          if (nextTimestamp === null || millis < nextTimestamp) {
+            nextTimestamp = millis;
+          }
         }
       }
     }

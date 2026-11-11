@@ -18,6 +18,8 @@ import AlarmPermissionModal from './components/AlarmPermissionModal';
 import GamificationCelebration from './components/GamificationCelebration';
 import RankShield2D from './components/RankShield2D';
 import ViewFormatSelectorModal from './components/ViewFormatSelectorModal';
+import CustomDatePickerModal from './components/CustomDatePickerModal';
+import { getTaskTimes, isTaskOnDate, getTodayYMD } from './utils/taskSchedule';
 import { calculateGamification } from './utils/gamification';
 import { soundManager } from './utils/audio';
 import { getCustomAudioFile } from './utils/audioStorage';
@@ -51,11 +53,21 @@ import {
 
 export default function App() {
   const store = useAppStore();
-  const { activeView, setActiveView, selectedTaskId, setSelectedTaskId, state } = store;
+  const {
+    activeView,
+    setActiveView,
+    selectedTaskId,
+    setSelectedTaskId,
+    state,
+    addTasksForMultipleDates,
+    updateTask,
+    calendarViewMode
+  } = store;
 
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isViewSelectorOpen, setIsViewSelectorOpen] = useState(false);
+  const [isGlobalCustomModalOpen, setIsGlobalCustomModalOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -113,16 +125,16 @@ export default function App() {
       const stoppedId = e?.detail?.taskId;
       if (stoppedId) {
         const now = new Date();
-        const yr = now.getFullYear();
-        const mo = String(now.getMonth() + 1).padStart(2, '0');
-        const dy = String(now.getDate()).padStart(2, '0');
-        const todayStr = `${yr}-${mo}-${dy}`;
-        markAlarmDismissed(stoppedId, todayStr, alarmActiveTask?.startTime);
+        const todayStr = getTodayYMD();
+        const fallbackHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const dismissedTime = alarmActiveTask?.triggeredTime || alarmActiveTask?.startTime || fallbackHHMM;
+        markAlarmDismissed(stoppedId, todayStr, dismissedTime);
       }
       soundManager.stopContinuousAlarm();
       // Note: Do NOT call stopNativeAlarm here, as native AlarmService has already stopped!
       setIsAlarmModalOpen(false);
       setAlarmActiveTask(null);
+      syncTasksToNativeAlarmManager(state.tasks);
     };
 
     window.addEventListener('nativeAlarmTriggered', handleNativeAlarm);
@@ -132,16 +144,13 @@ export default function App() {
       window.removeEventListener('nativeAlarmTriggered', handleNativeAlarm);
       window.removeEventListener('nativeAlarmStopped', handleNativeAlarmStopped);
     };
-  }, [state.tasks]);
+  }, [state.tasks, alarmActiveTask]);
 
   // Alarm Ticker: Checks every 5 seconds if a scheduled task has reached its time
   useEffect(() => {
     const checkScheduledAlarms = async () => {
       const now = new Date();
-      const yr = now.getFullYear();
-      const mo = String(now.getMonth() + 1).padStart(2, '0');
-      const dy = String(now.getDate()).padStart(2, '0');
-      const todayStr = `${yr}-${mo}-${dy}`;
+      const todayStr = getTodayYMD();
 
       const hr = String(now.getHours()).padStart(2, '0');
       const mn = String(now.getMinutes()).padStart(2, '0');
@@ -150,16 +159,16 @@ export default function App() {
       const settings = state.settings || {};
 
       for (const t of state.tasks) {
-        if (t.completed) continue;
-        if (!t.startTime) continue;
+        const taskTimes = getTaskTimes(t);
+        if (t.completed || taskTimes.length === 0) continue;
 
-        // Verify if this alarm was already stopped/dismissed today
+        // Verify if this alarm was already stopped/dismissed for this specific date + time
         if (isAlarmDismissed(t.id, todayStr, currentHHMM)) {
           continue;
         }
 
-        const isToday = t.dueDate === todayStr || (t.recurringDates && t.recurringDates.includes(todayStr));
-        const isTimeMatch = t.startTime === currentHHMM;
+        const isToday = isTaskOnDate(t, todayStr);
+        const isTimeMatch = taskTimes.includes(currentHHMM);
 
         if (isToday && isTimeMatch) {
           const alarmKey = `${t.id}_${todayStr}_${currentHHMM}`;
@@ -190,7 +199,7 @@ export default function App() {
               });
             }
 
-            setAlarmActiveTask(t);
+            setAlarmActiveTask({ ...t, triggeredTime: currentHHMM });
             setIsAlarmModalOpen(true);
 
             // Web notification
@@ -215,15 +224,15 @@ export default function App() {
   const handleStopAlarm = () => {
     if (alarmActiveTask && alarmActiveTask.id) {
       const now = new Date();
-      const yr = now.getFullYear();
-      const mo = String(now.getMonth() + 1).padStart(2, '0');
-      const dy = String(now.getDate()).padStart(2, '0');
-      const todayStr = `${yr}-${mo}-${dy}`;
+      const todayStr = getTodayYMD();
+      const fallbackHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const targetTime = alarmActiveTask.triggeredTime || alarmActiveTask.startTime || fallbackHHMM;
 
       // Persistently record dismissal in LocalStorage and Android SharedPreferences
-      markAlarmDismissed(alarmActiveTask.id, todayStr, alarmActiveTask.startTime);
+      markAlarmDismissed(alarmActiveTask.id, todayStr, targetTime);
       cancelNativeAlarm(alarmActiveTask.id);
       stopNativeAlarm(alarmActiveTask.id);
+      syncTasksToNativeAlarmManager(state.tasks);
     } else {
       stopNativeAlarm();
     }
@@ -732,6 +741,43 @@ export default function App() {
         isOpen={isViewSelectorOpen}
         onClose={() => setIsViewSelectorOpen(false)}
         store={store}
+        onOpenCustomRecurrence={() => setIsGlobalCustomModalOpen(true)}
+      />
+
+      {/* Global Personalizado Recurrence Modal (launched from ViewFormatSelectorModal) */}
+      <CustomDatePickerModal
+        isOpen={isGlobalCustomModalOpen}
+        onClose={() => setIsGlobalCustomModalOpen(false)}
+        initialMode={calendarViewMode || 'monthly'}
+        initialDates={[getTodayYMD()]}
+        allowTaskSelection={true}
+        tasks={state.tasks}
+        projects={state.projects}
+        onApplyCustomSchedule={({ dates, times, pattern, taskAction, taskId, title, projectId }) => {
+          if (taskAction === 'existing' && taskId && updateTask) {
+            updateTask(taskId, {
+              recurringDates: dates,
+              dueDate: dates[0] || '',
+              recurringTimes: times,
+              startTime: times[0] || '',
+              recurrencePattern: pattern
+            });
+          } else if (title && addTasksForMultipleDates) {
+            addTasksForMultipleDates(
+              {
+                title,
+                projectId: projectId || 'inbox',
+                dueDate: dates[0] || '',
+                recurringTimes: times,
+                startTime: times[0] || '',
+                recurrencePattern: pattern,
+                priority: 1
+              },
+              dates
+            );
+          }
+          setActiveView('calendar');
+        }}
       />
 
       {/* Gamification Floating XP & 3D Shield Rank Up Celebration */}

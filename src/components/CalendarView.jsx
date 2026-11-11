@@ -12,12 +12,19 @@ import {
   Columns, 
   List, 
   CalendarDays, 
-  LayoutGrid 
+  LayoutGrid,
+  SlidersHorizontal
 } from 'lucide-react';
 import TimePickerModal from './TimePickerModal';
+import CustomDatePickerModal from './CustomDatePickerModal';
+import { getTaskTimes, getTaskDates, isTaskOnDate, parseYMD } from '../utils/taskSchedule';
 
 export default function CalendarView({ store }) {
-  const { state, addTask, toggleTaskCompleted, setSelectedTaskId, calendarViewMode, setCalendarViewMode } = store;
+  const { state, addTask, addTasksForMultipleDates, updateTask, toggleTaskCompleted, setSelectedTaskId, setActiveView, calendarViewMode, setCalendarViewMode } = store;
+  const openTaskDetail = (taskId) => {
+    setSelectedTaskId(taskId);
+    if (setActiveView) setActiveView('tasks-inbox');
+  };
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDayDate, setSelectedDayDate] = useState(new Date());
   const viewMode = calendarViewMode || 'month';
@@ -29,6 +36,8 @@ export default function CalendarView({ store }) {
   const [selectedSlotHour, setSelectedSlotHour] = useState(null);
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
   const [timePickerTargetDate, setTimePickerTargetDate] = useState('');
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [customModalTask, setCustomModalTask] = useState(null);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -139,15 +148,55 @@ export default function CalendarView({ store }) {
   const threeDays = get3Days();
   const monthGrid = getFullMonthGrid();
 
-  const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21];
+  const hours = Array.from({ length: 24 }, (_, i) => i);
 
   // Match tasks that are scheduled for dStr directly OR via recurringDates!
   const getTasksForDate = (dStr) => {
-    return state.tasks.filter(t => {
-      const isDue = t.dueDate === dStr;
-      const isRecur = t.recurringDates && t.recurringDates.includes(dStr);
-      return isDue || isRecur;
-    });
+    return state.tasks.filter(t => isTaskOnDate(t, dStr));
+  };
+
+  const getTaskTimesInHour = (task, hour) => {
+    return getTaskTimes(task).filter(tm => parseInt(tm.split(':')[0], 10) === hour);
+  };
+
+  const handleOpenCustomModal = (taskObj = null) => {
+    setCustomModalTask(taskObj);
+    setIsCustomModalOpen(true);
+  };
+
+  const handleApplyCustomSchedule = ({ dates, times, pattern, taskAction, taskId, title, projectId }) => {
+    if (customModalTask || (taskAction === 'existing' && taskId)) {
+      const targetId = customModalTask?.id || taskId;
+      if (targetId && updateTask) {
+        updateTask(targetId, {
+          recurringDates: dates,
+          dueDate: dates[0] || '',
+          recurringTimes: times,
+          startTime: times[0] || '',
+          recurrencePattern: pattern
+        });
+      }
+    } else if (title && addTasksForMultipleDates) {
+      addTasksForMultipleDates(
+        {
+          title,
+          projectId: projectId || 'inbox',
+          dueDate: dates[0] || '',
+          recurringTimes: times,
+          startTime: times[0] || '',
+          recurrencePattern: pattern,
+          priority: 1
+        },
+        dates
+      );
+    }
+    if (dates && dates[0]) {
+      const parsed = parseYMD(dates[0]);
+      if (parsed) {
+        setSelectedDayDate(parsed);
+        setCurrentDate(parsed);
+      }
+    }
   };
 
   const selectedDayTasks = getTasksForDate(selectedDayStr);
@@ -265,10 +314,55 @@ export default function CalendarView({ store }) {
                     </button>
                   );
                 })}
+                <div className="my-1 border-t border-white/10" />
+                <button
+                  onClick={() => {
+                    setIsViewMenuOpen(false);
+                    handleOpenCustomModal(null);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-xs font-black flex items-center gap-3 text-[#facc15] hover:bg-[#28282e] transition-colors"
+                >
+                  <SlidersHorizontal className="w-4 h-4 text-[#facc15]" />
+                  <span>Personalizado</span>
+                </button>
               </div>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Persistent Mode Bar + Prominent 'Personalizado' Customization Button across ALL modes */}
+      <div className="px-2.5 py-2 bg-[#070709] border-b border-[#18181c] flex items-center justify-between gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar flex-1 min-w-0">
+          {[
+            { id: 'day', label: 'Dia' },
+            { id: '3days', label: '3D' },
+            { id: 'week', label: 'Sem' },
+            { id: 'month', label: 'Mês' },
+            { id: 'year', label: 'Ano' },
+            { id: 'list', label: 'Lista' }
+          ].map(m => (
+            <button
+              key={m.id}
+              onClick={() => setViewMode(m.id)}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold shrink-0 transition-all border ${
+                viewMode === m.id
+                  ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
+                  : 'bg-[#141416] text-neutral-400 border-[#262629] hover:text-white'
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => handleOpenCustomModal(null)}
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#facc15] hover:bg-[#eab308] text-black font-black text-[11px] shrink-0 shadow-md shadow-[#facc15]/20 active:scale-95 transition-all"
+          title="Personalizar vários dias, datas e horários"
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5 text-black" />
+          <span>Personalizado</span>
+        </button>
       </div>
 
       {/* VIEW 1: LISTA (Orange accents) */}
@@ -332,7 +426,7 @@ export default function CalendarView({ store }) {
                 return (
                   <div
                     key={task.id}
-                    onClick={() => setSelectedTaskId(task.id)}
+                    onClick={() => openTaskDetail(task.id)}
                     className="bg-[#1c1c1e] rounded-xl overflow-hidden flex items-stretch border border-[#28282b] shadow-lg cursor-pointer hover:border-neutral-500 transition-all active:scale-[0.99]"
                   >
                     <div className={`w-1.5 shrink-0 ${leftBarColor}`} />
@@ -341,23 +435,33 @@ export default function CalendarView({ store }) {
                         <h3 className="text-sm font-bold text-white tracking-wide truncate">
                           {task.title}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-[#facc15] font-semibold">
-                          <span>{selectedDayStr === todayStr ? 'Hoje' : task.dueDate}</span>
-                          {task.startTime && (
-                            <span>• {task.startTime}{task.endTime ? ` - ${task.endTime}` : ''}</span>
+                        <div className="flex items-center flex-wrap gap-2 mt-1 text-xs text-[#facc15] font-semibold">
+                          <span>{selectedDayStr === todayStr ? 'Hoje' : (task.dueDate || selectedDayStr)}</span>
+                          {getTaskTimes(task).length > 0 && (
+                            <span>• {getTaskTimes(task).join(', ')}{task.endTime && getTaskTimes(task).length === 1 ? ` - ${task.endTime}` : ''}</span>
                           )}
-                          {task.recurringDates && task.recurringDates.length > 1 && (
-                            <span className="text-[10px] text-neutral-400 font-normal flex items-center gap-0.5">
-                              <Repeat className="w-2.5 h-2.5" />
-                              {task.recurringDates.length} dias
+                          {getTaskDates(task).length > 1 && (
+                            <span className="text-[10px] text-[#facc15]/80 font-medium flex items-center gap-0.5">
+                              <Repeat className="w-2.5 h-2.5 text-[#facc15]" />
+                              {getTaskDates(task).length} dias
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 text-neutral-400 shrink-0">
-                        <Repeat className="w-4 h-4 text-neutral-500" />
-                        <Bell className="w-4 h-4 text-neutral-500" />
+                      <div className="flex items-center gap-2 text-[#facc15] shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenCustomModal(task);
+                          }}
+                          className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                          title="Personalizar dias e horários"
+                        >
+                          <Repeat className="w-4 h-4 text-[#facc15]" />
+                        </button>
+                        <Bell className="w-4 h-4 text-[#facc15]/70" />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -378,22 +482,23 @@ export default function CalendarView({ store }) {
               {selectedDayTasks.length === 0 && (
                 <div className="py-14 text-center text-neutral-500">
                   <div className="w-16 h-16 rounded-2xl bg-[#141416] border border-[#262629] mx-auto mb-3 flex items-center justify-center">
-                    <CalendarIcon className="w-8 h-8 text-neutral-600" />
+                    <CalendarIcon className="w-8 h-8 text-[#facc15]/60" />
                   </div>
                   <p className="text-sm font-semibold text-neutral-300">Essa data está livre de tarefas</p>
-                  <p className="text-xs text-neutral-500 mt-1">Relaxe um pouco</p>
+                  <p className="text-xs text-neutral-500 mt-1">Toque em Personalizado acima para programar</p>
                 </div>
               )}
             </div>
 
-            {/* Hourly Booking Slots */}
+            {/* Hourly Booking Slots (24h) */}
             <div className="pt-4 border-t border-[#18181c] space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block mb-2">
-                Horários
+                Horários (24h)
               </span>
-              {[8, 9, 10, 11, 14, 15, 16, 17, 18, 19, 20].map(hour => {
+              {hours.map(hour => {
                 const hourFormatted = `${String(hour).padStart(2, '0')}:00`;
                 const isEditingThisSlot = selectedSlotHour === hour;
+                const slotTasks = selectedDayTasks.filter(t => getTaskTimesInHour(t, hour).length > 0);
 
                 return (
                   <div key={hour} className="flex items-center gap-3 py-1.5 border-b border-[#141416]">
@@ -429,11 +534,23 @@ export default function CalendarView({ store }) {
                           </button>
                         </div>
                       ) : (
-                        <div
-                          onClick={() => setSelectedSlotHour(hour)}
-                          className="py-1 px-2 rounded-lg text-xs text-neutral-600 hover:text-neutral-400 hover:bg-[#141416] cursor-pointer transition-colors"
-                        >
-                          + Reservar horário
+                        <div className="space-y-1">
+                          {slotTasks.map(st => (
+                            <div
+                              key={st.id}
+                              onClick={() => openTaskDetail(st.id)}
+                              className="px-2.5 py-1.5 bg-[#facc15]/15 border border-[#facc15]/35 rounded-lg text-xs text-[#facc15] font-bold flex items-center justify-between cursor-pointer"
+                            >
+                              <span className="truncate">{st.title}</span>
+                              <span className="text-[10px] font-mono ml-2 shrink-0">{getTaskTimesInHour(st, hour).join(', ')}</span>
+                            </div>
+                          ))}
+                          <div
+                            onClick={() => setSelectedSlotHour(hour)}
+                            className="py-1 px-2 rounded-lg text-xs text-neutral-600 hover:text-neutral-400 hover:bg-[#141416] cursor-pointer transition-colors"
+                          >
+                            + Reservar horário
+                          </div>
                         </div>
                       )}
                     </div>
@@ -503,22 +620,42 @@ export default function CalendarView({ store }) {
 
             {selectedDayTasks.length > 0 ? (
               <div className="space-y-2">
-                {selectedDayTasks.map(t => (
+                {selectedDayTasks.map(t => {
+                  const timesList = getTaskTimes(t);
+                  const datesCount = getTaskDates(t).length;
+                  return (
                   <div
                     key={t.id}
-                    onClick={() => setSelectedTaskId(t.id)}
-                    className="p-3 bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl flex items-center justify-between cursor-pointer"
+                    onClick={() => openTaskDetail(t.id)}
+                    className="p-3 bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl flex items-center justify-between gap-2 cursor-pointer"
                   >
-                    <div>
-                      <span className={`text-xs font-semibold ${t.completed ? 'line-through text-neutral-500' : 'text-white'}`}>
+                    <div className="min-w-0 flex-1">
+                      <span className={`text-xs font-semibold block truncate ${t.completed ? 'line-through text-neutral-500' : 'text-white'}`}>
                         {t.title}
                       </span>
-                      {t.startTime && (
-                        <div className="text-[11px] text-[#facc15] mt-0.5 font-medium">
-                          {t.startTime} - {t.endTime || ''}
+                      {(timesList.length > 0 || datesCount > 1) && (
+                        <div className="text-[11px] text-[#facc15] mt-0.5 font-medium flex items-center flex-wrap gap-2">
+                          {timesList.length > 0 && <span>{timesList.join(' • ')}</span>}
+                          {datesCount > 1 && (
+                            <span className="text-[10px] text-[#facc15]/80 flex items-center gap-0.5">
+                              <Repeat className="w-3 h-3 text-[#facc15]" /> {datesCount}d
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenCustomModal(t);
+                      }}
+                      className="p-1.5 rounded-lg hover:bg-white/10 text-[#facc15]"
+                      title="Personalizar repetição e horários"
+                    >
+                      <Repeat className="w-3.5 h-3.5 text-[#facc15]" />
+                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -530,17 +667,19 @@ export default function CalendarView({ store }) {
                     >
                       {t.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                     </button>
+                    </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               /* Empty state */
               <div className="py-8 text-center text-neutral-500">
                 <div className="w-16 h-16 rounded-2xl bg-[#141416] border border-[#262629] mx-auto mb-3 flex items-center justify-center">
-                  <CalendarIcon className="w-8 h-8 text-neutral-600" />
+                  <CalendarIcon className="w-8 h-8 text-[#facc15]/60" />
                 </div>
                 <p className="text-sm font-semibold text-neutral-300">Essa data está livre de tarefas</p>
-                <p className="text-xs text-neutral-500 mt-1">Relaxe um pouco</p>
+                <p className="text-xs text-neutral-500 mt-1">Toque em Personalizado acima para programar</p>
               </div>
             )}
           </div>
@@ -568,23 +707,23 @@ export default function CalendarView({ store }) {
                 </div>
                 {weekDays.map(d => {
                   const dStr = formatDate(d);
-                  const tasks = getTasksForDate(dStr).filter(t => parseInt(t.startTime?.split(':')[0], 10) === hour);
+                  const tasks = getTasksForDate(dStr).filter(t => getTaskTimesInHour(t, hour).length > 0);
                   return (
                     <div
                       key={dStr}
                       onClick={() => handleAddQuickAtSlot(hour, dStr)}
-                      className="bg-[#141416] hover:bg-[#1c1c1e] rounded-lg p-1 min-h-10 cursor-pointer border border-transparent hover:border-[#28282b]"
+                      className="bg-[#141416] hover:bg-[#1c1c1e] rounded-lg p-1 min-h-10 cursor-pointer border border-transparent hover:border-[#28282b] space-y-0.5"
                     >
                       {tasks.map(t => (
                         <div
                           key={t.id}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedTaskId(t.id);
+                            openTaskDetail(t.id);
                           }}
-                          className="bg-[#facc15] text-black font-bold rounded p-1 text-[10px] font-bold truncate shadow-sm"
+                          className="bg-[#facc15] text-black font-bold rounded p-1 text-[10px] truncate shadow-sm"
                         >
-                          {t.title}
+                          {getTaskTimesInHour(t, hour)[0]} {t.title}
                         </div>
                       ))}
                     </div>
@@ -617,7 +756,7 @@ export default function CalendarView({ store }) {
                 </div>
                 {threeDays.map(d => {
                   const dStr = formatDate(d);
-                  const tasks = getTasksForDate(dStr).filter(t => parseInt(t.startTime?.split(':')[0], 10) === hour);
+                  const tasks = getTasksForDate(dStr).filter(t => getTaskTimesInHour(t, hour).length > 0);
                   return (
                     <div
                       key={dStr}
@@ -629,11 +768,11 @@ export default function CalendarView({ store }) {
                           key={t.id}
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedTaskId(t.id);
+                            openTaskDetail(t.id);
                           }}
-                          className="bg-[#facc15] text-black font-bold rounded p-1 text-[11px] font-semibold truncate shadow-sm mb-1"
+                          className="bg-[#facc15] text-black font-bold rounded p-1 text-[11px] truncate shadow-sm mb-1"
                         >
-                          {t.title}
+                          {getTaskTimesInHour(t, hour)[0]} {t.title}
                         </div>
                       ))}
                     </div>
@@ -653,7 +792,7 @@ export default function CalendarView({ store }) {
           </div>
           {hours.map(hour => {
             const hourFormatted = `${String(hour).padStart(2, '0')}:00`;
-            const tasksInSlot = selectedDayTasks.filter(t => parseInt(t.startTime?.split(':')[0], 10) === hour);
+            const tasksInSlot = selectedDayTasks.filter(t => getTaskTimesInHour(t, hour).length > 0);
             return (
               <div key={hour} className="flex items-start gap-3 py-2 border-b border-[#18181c]">
                 <span className="w-16 text-xs font-mono font-bold text-neutral-400 pt-1">
@@ -663,11 +802,11 @@ export default function CalendarView({ store }) {
                   {tasksInSlot.map(t => (
                     <div
                       key={t.id}
-                      onClick={() => setSelectedTaskId(t.id)}
-                      className="bg-[#1c1c1e] border border-[#2c2c2e] p-3 rounded-xl flex items-center justify-between cursor-pointer"
+                      onClick={() => openTaskDetail(t.id)}
+                      className="bg-[#1c1c1e] border border-[#2c2c2e] p-3 rounded-xl flex items-center justify-between gap-2 cursor-pointer"
                     >
-                      <span className="text-xs font-bold text-white">{t.title}</span>
-                      <span className="text-[11px] text-[#facc15] font-mono">{t.startTime} - {t.endTime || ''}</span>
+                      <span className="text-xs font-bold text-white truncate">{t.title}</span>
+                      <span className="text-[11px] text-[#facc15] font-mono shrink-0">{getTaskTimesInHour(t, hour).join(', ')}</span>
                     </div>
                   ))}
                   {tasksInSlot.length === 0 && (
@@ -687,29 +826,78 @@ export default function CalendarView({ store }) {
 
       {/* VIEW 6: ANO */}
       {viewMode === 'year' && (
-        <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 pb-32">
-          {monthNamesLower.map((mName, mIdx) => (
-            <div
-              key={mIdx}
-              onClick={() => {
-                const d = new Date(currentDate);
-                d.setMonth(mIdx);
-                setCurrentDate(d);
-                setViewMode('month');
-              }}
-              className="bg-[#1c1c1e] hover:bg-[#28282e] border border-[#28282b] rounded-2xl p-3 cursor-pointer transition-all hover:scale-102 shadow-lg"
-            >
-              <h3 className="text-xs font-bold text-white capitalize mb-2">{mName}</h3>
-              <div className="grid grid-cols-7 gap-0.5 text-[8px] text-neutral-500 text-center">
-                {['D','S','T','Q','Q','S','S'].map((d, i) => <span key={i}>{d}</span>)}
-                {Array.from({ length: new Date(year, mIdx + 1, 0).getDate() }).map((_, i) => (
-                  <span key={i} className="py-0.5 text-neutral-300">{i + 1}</span>
-                ))}
+        <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 pb-32">
+          {monthNamesLower.map((mName, mIdx) => {
+            const firstWeekday = new Date(year, mIdx, 1).getDay();
+            const daysCount = new Date(year, mIdx + 1, 0).getDate();
+            return (
+              <div
+                key={mIdx}
+                onClick={() => {
+                  const d = new Date(currentDate);
+                  d.setMonth(mIdx);
+                  setCurrentDate(d);
+                  setViewMode('month');
+                }}
+                className="bg-[#1c1c1e] hover:bg-[#28282e] border border-[#28282b] rounded-2xl p-3 cursor-pointer transition-all hover:scale-102 shadow-lg"
+              >
+                <h3 className="text-xs font-bold text-white capitalize mb-2">{mName}</h3>
+                <div className="grid grid-cols-7 gap-0.5 text-[8px] text-neutral-500 text-center">
+                  {['D','S','T','Q','Q','S','S'].map((d, i) => <span key={i}>{d}</span>)}
+                  {Array.from({ length: firstWeekday }).map((_, i) => <span key={`empty-${i}`} />)}
+                  {Array.from({ length: daysCount }).map((_, i) => {
+                    const dayNum = i + 1;
+                    const dStr = `${year}-${String(mIdx + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+                    const hasTask = getTasksForDate(dStr).length > 0;
+                    const isTodayCell = dStr === todayStr;
+                    return (
+                      <span
+                        key={dayNum}
+                        className={`py-0.5 rounded-full leading-tight ${
+                          hasTask
+                            ? 'bg-[#facc15] text-black font-black'
+                            : isTodayCell
+                            ? 'border border-[#facc15] text-[#facc15] font-bold'
+                            : 'text-neutral-300'
+                        }`}
+                      >
+                        {dayNum}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
+
+      {/* Personalizado Modal (Diário / Semanal / Mensal / Anual + Vários Horários) */}
+      <CustomDatePickerModal
+        isOpen={isCustomModalOpen}
+        onClose={() => {
+          setIsCustomModalOpen(false);
+          setCustomModalTask(null);
+        }}
+        initialMode={viewMode}
+        initialDates={customModalTask ? getTaskDates(customModalTask) : [selectedDayStr]}
+        initialTimes={customModalTask ? getTaskTimes(customModalTask) : []}
+        allowTaskSelection={!customModalTask}
+        tasks={state.tasks}
+        projects={state.projects}
+        onApplyCustomSchedule={handleApplyCustomSchedule}
+        onSelectDates={(dates, _firstTime, meta) => {
+          if (customModalTask) {
+            handleApplyCustomSchedule({
+              dates,
+              times: meta?.times || [],
+              pattern: meta?.pattern || null,
+              taskAction: 'existing',
+              taskId: customModalTask.id
+            });
+          }
+        }}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import {
   ListTree, 
   X,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   MoreVertical,
   Calendar as CalendarIcon,
@@ -17,9 +18,11 @@ import {
   List as ListIcon,
   Edit2,
   Tag as TagIcon,
-  Repeat
+  Repeat,
+  SlidersHorizontal
 } from 'lucide-react';
 import CustomDatePickerModal from './CustomDatePickerModal';
+import { getTaskTimes, getTaskDates, getTodayYMD } from '../utils/taskSchedule';
 import EditListModal from './EditListModal';
 import TimePickerModal from './TimePickerModal';
 import SegmentedProgressCard from './SegmentedProgressCard';
@@ -51,6 +54,8 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
   const [isCustomDateModalOpen, setIsCustomDateModalOpen] = useState(false);
   const [isEditListModalOpen, setIsEditListModalOpen] = useState(false);
   const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+  const [editingTimeSlot, setEditingTimeSlot] = useState(null);
+  const [detailCalMonth, setDetailCalMonth] = useState(() => new Date());
   const [newTagInput, setNewTagInput] = useState('');
   const [quickTitle, setQuickTitle] = useState('');
   const [quickDueDate, setQuickDueDate] = useState('');
@@ -63,7 +68,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     completed: false
   });
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayYMD();
 
   // Current view title and active project
   let viewTitle = 'Caixa de Entrada';
@@ -140,8 +145,14 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     setQuickPriority(0);
   };
 
-  // Multiple Dates Confirmation Handler
-  const handleMultipleDatesSelected = ({ dates, time }) => {
+  // Multiple Dates & Multiple Times Confirmation Handler
+  const handleMultipleDatesSelected = (datesArg, firstTimeArg = '', metaArg = {}) => {
+    const dates = Array.isArray(datesArg) ? datesArg : (datesArg?.dates || []);
+    const times = Array.isArray(metaArg?.times)
+      ? metaArg.times
+      : (firstTimeArg ? [firstTimeArg] : (datesArg?.time ? [datesArg.time] : []));
+    const pattern = metaArg?.pattern || null;
+
     if (!dates || dates.length === 0) return;
     let targetProj = 'inbox';
     if (activeView.startsWith('project-')) {
@@ -149,22 +160,62 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
     }
 
     if (selectedTask) {
-      // Set recurring dates on the single task (No duplicates!)
+      const nextTimes = times.length > 0 ? times : getTaskTimes(selectedTask);
       updateTask(selectedTask.id, {
         dueDate: dates[0],
         recurringDates: dates,
-        startTime: time || selectedTask.startTime
+        recurringTimes: nextTimes,
+        startTime: nextTimes[0] || '',
+        recurrencePattern: pattern || selectedTask.recurrencePattern || null
       });
     } else {
-      // Create single task with recurring dates
       addTasksForMultipleDates({
         title: quickTitle.trim() || 'Nova Tarefa Programada',
         projectId: targetProj,
-        startTime: time,
+        recurringTimes: times,
+        startTime: times[0] || '',
+        recurrencePattern: pattern,
         priority: 1
       }, dates);
       setQuickTitle('');
     }
+  };
+
+  const handleApplyCustomFromTaskView = ({ dates, times, pattern, taskAction, taskId, title, projectId }) => {
+    if (!dates || dates.length === 0) return;
+    if (selectedTask) {
+      updateTask(selectedTask.id, {
+        dueDate: dates[0],
+        recurringDates: dates,
+        recurringTimes: times,
+        startTime: times[0] || '',
+        recurrencePattern: pattern
+      });
+      return;
+    }
+    if (taskAction === 'existing' && taskId) {
+      updateTask(taskId, {
+        dueDate: dates[0],
+        recurringDates: dates,
+        recurringTimes: times,
+        startTime: times[0] || '',
+        recurrencePattern: pattern
+      });
+      return;
+    }
+    let fallbackProj = 'inbox';
+    if (activeView.startsWith('project-')) {
+      fallbackProj = activeView.replace('project-', '');
+    }
+    addTasksForMultipleDates({
+      title: title || quickTitle.trim() || 'Nova Tarefa Programada',
+      projectId: projectId || fallbackProj,
+      recurringTimes: times,
+      startTime: times[0] || '',
+      recurrencePattern: pattern,
+      priority: 1
+    }, dates);
+    setQuickTitle('');
   };
 
   // Toggle single date inside task detail calendar
@@ -189,11 +240,14 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
   const kanbanDone = filteredTasks.filter(t => t.completed || t.kanbanStatus === 'done');
 
   // Month days for detail sheet interactive calendar
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  const year = detailCalMonth.getFullYear();
+  const month = detailCalMonth.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfWeek = new Date(year, month, 1).getDay();
+  const detailMonthNames = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
 
   return (
     <div className="flex-1 flex h-full overflow-hidden bg-[#000000]">
@@ -243,10 +297,11 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
             <button 
               onClick={() => setIsCustomDateModalOpen(true)}
-              className="p-2 text-neutral-300 hover:text-[#facc15] bg-[#1c1c1e] border border-[#2c2c2e] rounded-xl transition-colors flex items-center justify-center"
-              title="Agendamento Múltiplo / Calendário"
+              className="px-2.5 py-1.5 text-[#facc15] bg-[#1c1c1e] hover:bg-[#28282e] border border-[#facc15]/35 rounded-xl transition-colors flex items-center gap-1.5 text-[11px] font-bold"
+              title="Personalizado: Dias, Datas & Vários Horários"
             >
-              <CalendarIcon className="w-4 h-4 text-[#facc15]" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#facc15]" />
+              <span className="hidden sm:inline">Personalizado</span>
             </button>
           </div>
         </div>
@@ -336,11 +391,11 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                               <span className="text-sm font-semibold text-neutral-100 truncate block">
                                 {task.title}
                               </span>
-                              <div className="flex items-center gap-2 mt-1">
-                                {task.startTime && (
+                              <div className="flex items-center flex-wrap gap-2 mt-1">
+                                {getTaskTimes(task).length > 0 && (
                                   <span className="text-xs text-[#facc15] flex items-center gap-1 font-bold">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    {task.startTime}
+                                    <Clock className="w-3.5 h-3.5 text-[#facc15]" />
+                                    {getTaskTimes(task).join(', ')}
                                   </span>
                                 )}
                                 {recurCount > 1 && (
@@ -519,9 +574,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                   <span className="text-sm font-medium text-neutral-100 truncate block">
                                     {task.title}
                                   </span>
-                                  <div className="flex items-center gap-2 mt-0.5">
+                                  <div className="flex items-center flex-wrap gap-2 mt-0.5">
                                     <span className="text-xs text-neutral-400">
-                                      {task.dueDate} {task.startTime ? ` às ${task.startTime}` : ''}
+                                      {task.dueDate} {getTaskTimes(task).length > 0 ? ` às ${getTaskTimes(task).join(', ')}` : ''}
                                     </span>
                                     {recurCount > 1 && (
                                       <span className="text-[10px] bg-[#facc15]/20 text-[#facc15] font-bold px-1.5 py-0.2 rounded border border-[#facc15]/30 flex items-center gap-1">
@@ -643,8 +698,8 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
                       {task.dueDate && (
                         <div className="flex items-center gap-1 text-[10px] text-neutral-400">
-                          <CalendarIcon className="w-3 h-3" />
-                          <span>{task.dueDate} {task.startTime ? ` às ${task.startTime}` : ''}</span>
+                          <CalendarIcon className="w-3 h-3 text-[#facc15]" />
+                          <span className="truncate">{task.dueDate} {getTaskTimes(task).length > 0 ? ` às ${getTaskTimes(task).join(', ')}` : ''}</span>
                         </div>
                       )}
 
@@ -771,39 +826,90 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               />
             </div>
 
-            {/* Date & Time Picker */}
+            {/* Date & Multiple Times Picker + Personalizado Button */}
             <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-[#facc15]" />
-                  Data de Vencimento
+                  Data Principal
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setIsCustomDateModalOpen(true)}
-                  className="text-xs text-[#facc15] hover:underline font-bold"
-                >
-                  {selectedTask.dueDate || 'Escolher data'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white font-bold">
+                    {selectedTask.dueDate || 'Sem data'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsCustomDateModalOpen(true)}
+                    className="px-2.5 py-1 rounded-lg bg-[#facc15] hover:bg-[#eab308] text-black text-[11px] font-black flex items-center gap-1 shadow-sm"
+                  >
+                    <SlidersHorizontal className="w-3 h-3 text-black" />
+                    <span>Personalizado</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Touch-Friendly Time Button */}
-              <div className="flex items-center justify-between pt-2 border-t border-[#262629]">
-                <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-[#facc15]" />
-                  Horário
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsTimePickerOpen(true)}
-                  className="bg-[#141416] hover:bg-[#28282e] border border-[#2c2c2e] rounded-xl px-3 py-1.5 text-xs text-white font-mono font-bold flex items-center gap-1.5"
-                >
-                  <span>{selectedTask.startTime || 'Definir Horário'}</span>
-                </button>
+              {/* Multi-Time Chips Section */}
+              <div className="pt-2.5 border-t border-[#262629] space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-[#facc15]" />
+                    Horários ({getTaskTimes(selectedTask).length})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingTimeSlot(null);
+                      setIsTimePickerOpen(true);
+                    }}
+                    className="bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/40 rounded-xl px-2.5 py-1 text-[11px] text-[#facc15] font-bold flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-[#facc15]" />
+                    <span>Adicionar Horário</span>
+                  </button>
+                </div>
+
+                {getTaskTimes(selectedTask).length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {getTaskTimes(selectedTask).map(tm => (
+                      <div
+                        key={tm}
+                        className="flex items-center gap-1 bg-[#141416] border border-[#facc15]/40 text-[#facc15] rounded-lg px-2.5 py-1 text-xs font-mono font-bold"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingTimeSlot(tm);
+                            setIsTimePickerOpen(true);
+                          }}
+                          className="hover:underline"
+                        >
+                          {tm}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const remaining = getTaskTimes(selectedTask).filter(x => x !== tm);
+                            updateTask(selectedTask.id, {
+                              recurringTimes: remaining,
+                              startTime: remaining[0] || ''
+                            });
+                          }}
+                          className="p-0.5 hover:bg-[#facc15]/20 rounded text-[#facc15]"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-neutral-500">
+                    Nenhum horário definido — toque em + Adicionar Horário.
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* FULL MONTH CALENDAR VIEW OF RECURRING DATES (User request!) */}
+            {/* FULL MONTH CALENDAR VIEW OF RECURRING DATES WITH MONTH NAVIGATION */}
             <div className="bg-[#1c1c1e] p-4 rounded-2xl border border-[#2c2c2e] space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-white font-bold flex items-center gap-1.5">
@@ -811,15 +917,34 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                   Calendário de Repetições
                 </span>
                 <span className="text-[10px] text-[#facc15] font-mono font-bold">
-                  {(selectedTask.recurringDates || []).length} datas marcadas
+                  {getTaskDates(selectedTask).length} datas marcadas
                 </span>
               </div>
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={() => setDetailCalMonth(new Date(year, month - 1, 1))}
+                  className="p-1 rounded-lg bg-[#141416] border border-[#2c2c2e] text-[#facc15]"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-xs font-bold text-white">
+                  {detailMonthNames[month]} {year}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setDetailCalMonth(new Date(year, month + 1, 1))}
+                  className="p-1 rounded-lg bg-[#141416] border border-[#2c2c2e] text-[#facc15]"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
               <p className="text-[11px] text-neutral-400">
-                Toque nos dias para adicionar ou remover da repetição:
+                Toque nos dias para marcar ou use <strong className="text-[#facc15]">Personalizado</strong> acima:
               </p>
 
               {/* Mini Month Grid */}
-              <div className="pt-2">
+              <div className="pt-1">
                 <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-neutral-500 font-bold uppercase mb-1">
                   {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <span key={i}>{d}</span>)}
                 </div>
@@ -988,22 +1113,42 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
         </div>
       )}
 
-      {/* Custom Multi-Date Picker Modal */}
+      {/* Custom Multi-Date & Multi-Time Picker Modal */}
       <CustomDatePickerModal
         isOpen={isCustomDateModalOpen}
         onClose={() => setIsCustomDateModalOpen(false)}
-        initialDate={selectedTask?.dueDate || quickDueDate}
+        initialDates={selectedTask ? getTaskDates(selectedTask) : (quickDueDate ? [quickDueDate] : [todayStr])}
+        initialDate={selectedTask?.dueDate || quickDueDate || todayStr}
+        initialTimes={selectedTask ? getTaskTimes(selectedTask) : []}
         initialTime={selectedTask?.startTime || ''}
+        initialMode={selectedTask?.recurrencePattern?.mode || 'monthly'}
+        allowTaskSelection={!selectedTask && !quickTitle.trim()}
+        initialTitle={quickTitle.trim()}
+        tasks={state.tasks}
+        projects={state.projects}
+        onApplyCustomSchedule={handleApplyCustomFromTaskView}
         onSelectDates={handleMultipleDatesSelected}
       />
 
       {/* Touch-Friendly Time Picker Modal */}
       <TimePickerModal
         isOpen={isTimePickerOpen}
-        onClose={() => setIsTimePickerOpen(false)}
-        initialTime={selectedTask?.startTime || ''}
-        onSelectTime={(t) => {
-          if (selectedTask) updateTask(selectedTask.id, { startTime: t });
+        onClose={() => {
+          setIsTimePickerOpen(false);
+          setEditingTimeSlot(null);
+        }}
+        initialTime={editingTimeSlot || selectedTask?.startTime || '09:00'}
+        onSelectTime={(picked) => {
+          if (selectedTask && picked) {
+            const existing = getTaskTimes(selectedTask);
+            const base = editingTimeSlot ? existing.filter(x => x !== editingTimeSlot) : existing;
+            const nextTimes = [...new Set([...base, picked])].sort();
+            updateTask(selectedTask.id, {
+              recurringTimes: nextTimes,
+              startTime: nextTimes[0] || ''
+            });
+          }
+          setEditingTimeSlot(null);
         }}
       />
 

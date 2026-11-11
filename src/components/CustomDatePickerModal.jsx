@@ -1,225 +1,1014 @@
-import React, { useState } from 'react';
-import { X, ChevronLeft, ChevronRight, Clock, Check, Calendar as CalendarIcon, Repeat } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  Clock,
+  Check,
+  X,
+  Plus,
+  Repeat,
+  SlidersHorizontal
+} from 'lucide-react';
 import TimePickerModal from './TimePickerModal';
+import {
+  formatDateYMD,
+  getTodayYMD,
+  parseYMD,
+  getTaskTimes,
+  getTaskDates,
+  generateDailyDates,
+  generateWeeklyDates,
+  generateMonthlyRepeatedDates,
+  generateAnnualDates
+} from '../utils/taskSchedule';
 
-export default function CustomDatePickerModal({ isOpen, onClose, onSelectDates, initialDate, initialTime = '' }) {
-  const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
-  const [selectedDates, setSelectedDates] = useState(initialDate ? [initialDate] : []);
-  const [selectedTime, setSelectedTime] = useState(initialTime);
-  const [isTimePickerOpen, setIsTimePickerOpen] = useState(false);
+const WEEKDAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const MONTH_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+const MONTH_NAMES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+const QUICK_TIME_PRESETS = ['07:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
+
+export default function CustomDatePickerModal({
+  isOpen,
+  onClose,
+  onSelectDates,
+  onApplyCustomSchedule,
+  initialDates = [],
+  initialDate = '',
+  initialTimes = [],
+  initialTime = '',
+  initialMode = 'monthly',
+  allowTaskSelection = false,
+  tasks = [],
+  projects = [],
+  initialTitle = ''
+}) {
+  const [mode, setMode] = useState('monthly'); // 'daily' | 'weekly' | 'monthly' | 'annual'
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [selectedTimes, setSelectedTimes] = useState([]);
+
+  // Multi-time picker modal state
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [editingTimeTarget, setEditingTimeTarget] = useState(null); // string HH:MM if editing existing, null if adding
+
+  // Task create / select state (when allowTaskSelection = true)
+  const [taskAction, setTaskAction] = useState('new'); // 'new' | 'existing'
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskProjectId, setNewTaskProjectId] = useState('inbox');
+  const [selectedTaskId, setSelectedTaskId] = useState('');
+
+  // Monthly calendar navigation & multi-month repeat
+  const [currentMonth, setCurrentMonth] = useState(() => new Date());
+  const [monthlyHorizon, setMonthlyHorizon] = useState(1); // 1, 3, 6, 12 months
+  const [additiveMode, setAdditiveMode] = useState(false);
+
+  // Daily mode config
+  const [dailyInterval, setDailyInterval] = useState(1);
+  const [dailyDuration, setDailyDuration] = useState(30);
+  const [dailyStartDate, setDailyStartDate] = useState(getTodayYMD());
+
+  // Weekly mode config
+  const [weeklyDays, setWeeklyDays] = useState([1, 3, 5]); // default Seg, Qua, Sex
+  const [weeklyInterval, setWeeklyInterval] = useState(1);
+  const [weeklyDurationWeeks, setWeeklyDurationWeeks] = useState(12);
+
+  // Annual mode config
+  const [annualYear, setAnnualYear] = useState(() => new Date().getFullYear());
+  const [annualMonths, setAnnualMonths] = useState(() => [new Date().getMonth()]);
+  const [annualDaysOfMonth, setAnnualDaysOfMonth] = useState(() => [new Date().getDate()]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const todayStr = getTodayYMD();
+    let baseDates = [];
+    if (Array.isArray(initialDates) && initialDates.length > 0) {
+      baseDates = [...new Set(initialDates)].filter(Boolean).sort();
+    } else if (initialDate) {
+      baseDates = [initialDate];
+    } else {
+      baseDates = [todayStr];
+    }
+
+    let baseTimes = [];
+    if (Array.isArray(initialTimes) && initialTimes.length > 0) {
+      baseTimes = [...new Set(initialTimes)].filter(Boolean).sort();
+    } else if (initialTime) {
+      baseTimes = [initialTime];
+    }
+
+    const mappedMode =
+      initialMode === 'day' || initialMode === 'daily' ? 'daily' :
+      initialMode === 'week' || initialMode === '3days' || initialMode === 'weekly' ? 'weekly' :
+      initialMode === 'year' || initialMode === 'annual' ? 'annual' :
+      'monthly';
+
+    setMode(mappedMode);
+    setSelectedDates(baseDates);
+    setSelectedTimes(baseTimes);
+    setDailyStartDate(baseDates[0] || todayStr);
+
+    const anchor = parseYMD(baseDates[0] || todayStr) || new Date();
+    setCurrentMonth(new Date(anchor.getFullYear(), anchor.getMonth(), 1));
+    setAnnualYear(anchor.getFullYear());
+    setAnnualMonths([anchor.getMonth()]);
+    setAnnualDaysOfMonth([anchor.getDate()]);
+    setWeeklyDays([anchor.getDay()]);
+    setMonthlyHorizon(1);
+    setAdditiveMode(false);
+
+    setTaskAction('new');
+    setNewTaskTitle(initialTitle || '');
+    setNewTaskProjectId(projects?.[0]?.id || 'inbox');
+    const availableTasks = (tasks || []).filter(t => !t.completed);
+    setSelectedTaskId(availableTasks[0]?.id || tasks?.[0]?.id || '');
+  }, [isOpen]);
+
+  const handleSelectExistingTask = (taskId) => {
+    setSelectedTaskId(taskId);
+    const found = (tasks || []).find(t => t.id === taskId);
+    if (!found) return;
+    const d = getTaskDates(found);
+    const tm = getTaskTimes(found);
+    if (d.length > 0) setSelectedDates(d);
+    if (tm.length > 0) setSelectedTimes(tm);
+    else setSelectedTimes([]);
+    if (found.recurrencePattern?.mode) {
+      setMode(found.recurrencePattern.mode);
+    }
+  };
+
+  const applyGeneratedDates = (generated) => {
+    const clean = [...new Set(generated)].filter(Boolean).sort();
+    if (additiveMode) {
+      setSelectedDates(prev => [...new Set([...prev, ...clean])].sort());
+    } else {
+      setSelectedDates(clean);
+    }
+  };
+
+  // Monthly calendar matrix
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+  const calendarDays = useMemo(() => {
+    const cells = [];
+    for (let i = firstDayOfMonth - 1; i >= 0; i--) {
+      const d = daysInPrevMonth - i;
+      const prevMonthObj = new Date(year, month - 1, d);
+      cells.push({
+        day: d,
+        dateStr: formatDateYMD(prevMonthObj),
+        isCurrentMonth: false
+      });
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const currObj = new Date(year, month, d);
+      cells.push({
+        day: d,
+        dateStr: formatDateYMD(currObj),
+        isCurrentMonth: true
+      });
+    }
+    const remainingCells = 42 - cells.length;
+    for (let d = 1; d <= remainingCells; d++) {
+      const nextMonthObj = new Date(year, month + 1, d);
+      cells.push({
+        day: d,
+        dateStr: formatDateYMD(nextMonthObj),
+        isCurrentMonth: false
+      });
+    }
+    return cells;
+  }, [year, month, firstDayOfMonth, daysInMonth, daysInPrevMonth]);
 
   if (!isOpen) return null;
 
-  const year = currentMonthDate.getFullYear();
-  const month = currentMonthDate.getMonth();
+  const todayStr = getTodayYMD();
 
-  const prevMonth = () => {
-    const d = new Date(currentMonthDate);
-    d.setMonth(d.getMonth() - 1);
-    setCurrentMonthDate(d);
-  };
-
-  const nextMonth = () => {
-    const d = new Date(currentMonthDate);
-    d.setMonth(d.getMonth() + 1);
-    setCurrentMonthDate(d);
-  };
-
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 is Sunday
-
-  const formatDateStr = (dayNum) => {
-    const mo = String(month + 1).padStart(2, '0');
-    const dy = String(dayNum).padStart(2, '0');
-    return `${year}-${mo}-${dy}`;
-  };
-
-  const toggleDate = (dStr) => {
-    if (selectedDates.includes(dStr)) {
-      setSelectedDates(selectedDates.filter(d => d !== dStr));
-    } else {
-      setSelectedDates([...selectedDates, dStr]);
-    }
-  };
-
-  const handleSelectAllDaysInMonth = () => {
-    const all = [];
-    for (let i = 1; i <= daysInMonth; i++) {
-      all.push(formatDateStr(i));
-    }
-    setSelectedDates(all);
-  };
-
-  const handleSelectWeekdays = () => {
-    const weekdays = [];
-    for (let i = 1; i <= daysInMonth; i++) {
-      const d = new Date(year, month, i);
-      const day = d.getDay();
-      if (day >= 1 && day <= 5) {
-        weekdays.push(formatDateStr(i));
+  const toggleDate = (dateStr) => {
+    setSelectedDates(prev => {
+      if (prev.includes(dateStr)) {
+        return prev.filter(d => d !== dateStr);
       }
+      return [...prev, dateStr].sort();
+    });
+  };
+
+  const toggleTimePreset = (timeStr) => {
+    setSelectedTimes(prev => {
+      if (prev.includes(timeStr)) {
+        return prev.filter(t => t !== timeStr);
+      }
+      return [...prev, timeStr].sort();
+    });
+  };
+
+  const handleTimePicked = (pickedTime) => {
+    if (!pickedTime) return;
+    setSelectedTimes(prev => {
+      const filtered = editingTimeTarget ? prev.filter(t => t !== editingTimeTarget) : prev;
+      return [...new Set([...filtered, pickedTime])].sort();
+    });
+    setEditingTimeTarget(null);
+  };
+
+  // Mode generators
+  const triggerDailyApply = (interval = dailyInterval, duration = dailyDuration, start = dailyStartDate) => {
+    const generated = generateDailyDates(start || todayStr, interval, duration);
+    applyGeneratedDates(generated);
+  };
+
+  const triggerWeeklyApply = (
+    days = weeklyDays,
+    interval = weeklyInterval,
+    weeks = weeklyDurationWeeks
+  ) => {
+    if (!days || days.length === 0) return;
+    const generated = generateWeeklyDates(dailyStartDate || todayStr, days, interval, weeks);
+    applyGeneratedDates(generated);
+  };
+
+  const toggleWeeklyDay = (dayIdx) => {
+    const next = weeklyDays.includes(dayIdx)
+      ? weeklyDays.filter(d => d !== dayIdx)
+      : [...weeklyDays, dayIdx].sort((a, b) => a - b);
+    setWeeklyDays(next);
+    if (next.length > 0) {
+      triggerWeeklyApply(next, weeklyInterval, weeklyDurationWeeks);
     }
-    setSelectedDates(weekdays);
+  };
+
+  const applyMonthlyHorizonToSelected = (horizon) => {
+    setMonthlyHorizon(horizon);
+    // Extract unique day-of-month numbers from currently viewed month (or all selected dates)
+    const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}-`;
+    const inViewDays = selectedDates
+      .filter(d => d.startsWith(monthPrefix))
+      .map(d => parseInt(d.split('-')[2], 10));
+    const fallbackDays = selectedDates.map(d => parseInt(d.split('-')[2], 10));
+    const dayNumbers = [...new Set(inViewDays.length > 0 ? inViewDays : fallbackDays)].filter(Boolean);
+    if (dayNumbers.length === 0) return;
+    const generated = generateMonthlyRepeatedDates(dayNumbers, year, month, horizon);
+    applyGeneratedDates(generated);
+  };
+
+  const toggleAnnualMonth = (mIdx) => {
+    const nextMonths = annualMonths.includes(mIdx)
+      ? annualMonths.filter(m => m !== mIdx)
+      : [...annualMonths, mIdx].sort((a, b) => a - b);
+    setAnnualMonths(nextMonths);
+    if (nextMonths.length > 0 && annualDaysOfMonth.length > 0) {
+      applyGeneratedDates(generateAnnualDates(annualYear, nextMonths, annualDaysOfMonth));
+    }
+  };
+
+  const toggleAnnualDay = (dayNum) => {
+    const nextDays = annualDaysOfMonth.includes(dayNum)
+      ? annualDaysOfMonth.filter(d => d !== dayNum)
+      : [...annualDaysOfMonth, dayNum].sort((a, b) => a - b);
+    setAnnualDaysOfMonth(nextDays);
+    if (annualMonths.length > 0 && nextDays.length > 0) {
+      applyGeneratedDates(generateAnnualDates(annualYear, annualMonths, nextDays));
+    }
   };
 
   const handleConfirm = () => {
-    onSelectDates({
-      dates: selectedDates.sort(),
-      time: selectedTime
-    });
+    const datesToApply = selectedDates.length > 0 ? [...selectedDates].sort() : [todayStr];
+    const timesToApply = [...new Set(selectedTimes)].filter(Boolean).sort();
+    const pattern = {
+      mode,
+      dailyInterval,
+      dailyDuration,
+      weeklyDays,
+      weeklyInterval,
+      weeklyDurationWeeks,
+      monthlyHorizon,
+      annualYear,
+      annualMonths,
+      annualDaysOfMonth
+    };
+
+    if (allowTaskSelection && onApplyCustomSchedule) {
+      if (taskAction === 'new' && !newTaskTitle.trim()) return;
+      if (taskAction === 'existing' && !selectedTaskId) return;
+      onApplyCustomSchedule({
+        dates: datesToApply,
+        times: timesToApply,
+        pattern,
+        taskAction,
+        taskId: selectedTaskId,
+        title: newTaskTitle.trim(),
+        projectId: newTaskProjectId
+      });
+    }
+
+    if (onSelectDates) {
+      onSelectDates(datesToApply, timesToApply[0] || '', {
+        times: timesToApply,
+        pattern
+      });
+    }
     onClose();
   };
 
-  const monthNames = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-  ];
+  const isConfirmDisabled =
+    allowTaskSelection &&
+    ((taskAction === 'new' && !newTaskTitle.trim()) ||
+      (taskAction === 'existing' && !selectedTaskId));
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs select-none animate-in fade-in">
-      <div 
-        onClick={e => e.stopPropagation()} 
-        className="w-full max-w-sm bg-[#1c1c1e] border border-[#2c2c2e] rounded-3xl p-5 shadow-2xl space-y-4"
-      >
+    <div className="fixed inset-0 z-[105] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-150">
+      <div className="w-full max-w-md bg-[#0A0A0C] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] animate-in zoom-in-95 duration-200">
+
         {/* Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-[#28282b]">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-[#facc15]" />
-            <h2 className="text-base font-bold text-white">Datas e Horários</h2>
+        <div className="px-4 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#111114] shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#facc15]/15 border border-[#facc15]/30 flex items-center justify-center text-[#facc15] shrink-0">
+              <SlidersHorizontal size={18} />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-black text-white tracking-tight truncate">Personalizado</h3>
+              <p className="text-[11px] text-[#facc15]/80 font-medium truncate">
+                Marque vários dias, datas e horários em qualquer modo
+              </p>
+            </div>
           </div>
-          <button onClick={onClose} className="p-1 text-neutral-400 hover:text-white">
-            <X className="w-5 h-5" />
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 text-[#facc15] hover:bg-white/10 rounded-xl transition-colors shrink-0"
+            aria-label="Fechar"
+          >
+            <X size={18} />
           </button>
         </div>
 
-        {/* Quick Presets */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-          <button
-            type="button"
-            onClick={() => {
-              const todayStr = new Date().toISOString().split('T')[0];
-              setSelectedDates([todayStr]);
-            }}
-            className="px-2.5 py-1 bg-[#141416] hover:bg-[#28282e] border border-[#2c2c2e] rounded-lg text-neutral-300 font-medium shrink-0"
-          >
-            Hoje
-          </button>
-          <button
-            type="button"
-            onClick={handleSelectWeekdays}
-            className="px-2.5 py-1 bg-[#141416] hover:bg-[#28282e] border border-[#2c2c2e] rounded-lg text-neutral-300 font-medium shrink-0"
-          >
-            Dias Úteis (Seg-Sex)
-          </button>
-          <button
-            type="button"
-            onClick={handleSelectAllDaysInMonth}
-            className="px-2.5 py-1 bg-[#141416] hover:bg-[#28282e] border border-[#2c2c2e] rounded-lg text-neutral-300 font-medium shrink-0"
-          >
-            Todo Dia do Mês
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedDates([])}
-            className="px-2.5 py-1 bg-[#141416] hover:bg-[#28282e] border border-[#2c2c2e] rounded-lg text-neutral-400 font-medium shrink-0"
-          >
-            Limpar
-          </button>
-        </div>
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3.5 custom-scrollbar">
 
-        {/* Month Selector */}
-        <div className="flex items-center justify-between px-1">
-          <span className="text-sm font-bold text-white">
-            {monthNames[month]} {year}
-          </span>
-          <div className="flex items-center gap-1">
-            <button onClick={prevMonth} className="p-1 text-neutral-400 hover:text-white rounded-lg">
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button onClick={nextMonth} className="p-1 text-neutral-400 hover:text-white rounded-lg">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Calendar Grid (Multiple Dates Selection highlighted in Orange) */}
-        <div>
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-neutral-500 font-bold uppercase mb-1">
-            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => (
-              <span key={d}>{d}</span>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center">
-            {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-              <div key={`empty-${i}`} className="h-8" />
-            ))}
-
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const dayNum = i + 1;
-              const dStr = formatDateStr(dayNum);
-              const isSelected = selectedDates.includes(dStr);
-
-              return (
+          {/* Optional Task Selection / Creation when invoked from Calendar or Visualizations */}
+          {allowTaskSelection && (
+            <div className="bg-[#141417] border border-white/10 rounded-2xl p-3 space-y-2.5">
+              <div className="grid grid-cols-2 gap-1.5 bg-[#0A0A0C] p-1 rounded-xl border border-white/5">
                 <button
-                  key={dStr}
                   type="button"
-                  onClick={() => toggleDate(dStr)}
-                  className={`h-8 w-8 mx-auto rounded-full text-xs font-semibold flex items-center justify-center transition-all ${
-                    isSelected
-                      ? 'bg-[#facc15] text-black font-bold font-bold shadow-md scale-105'
-                      : 'text-neutral-200 hover:bg-[#28282e]'
+                  onClick={() => setTaskAction('new')}
+                  className={`py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    taskAction === 'new'
+                      ? 'bg-[#facc15] text-black shadow'
+                      : 'text-[#8E8E93] hover:text-white'
                   }`}
                 >
-                  {dayNum}
+                  <Plus size={13} className={taskAction === 'new' ? 'text-black' : 'text-[#facc15]'} />
+                  Nova Tarefa
                 </button>
-              );
-            })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTaskAction('existing');
+                    if (selectedTaskId) handleSelectExistingTask(selectedTaskId);
+                  }}
+                  className={`py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    taskAction === 'existing'
+                      ? 'bg-[#facc15] text-black shadow'
+                      : 'text-[#8E8E93] hover:text-white'
+                  }`}
+                >
+                  <Repeat size={13} className={taskAction === 'existing' ? 'text-black' : 'text-[#facc15]'} />
+                  Tarefa Existente
+                </button>
+              </div>
+
+              {taskAction === 'new' ? (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    placeholder="Nome da tarefa ou rotina (ex: Tomar água, Treinar)..."
+                    className="w-full bg-[#0A0A0C] border border-white/10 focus:border-[#facc15]/60 rounded-xl px-3 py-2 text-xs text-white placeholder-[#555558] outline-none font-medium"
+                  />
+                  {projects && projects.length > 0 && (
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
+                      <span className="text-[10px] font-bold text-[#8E8E93] shrink-0">Lista:</span>
+                      {projects.map(p => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setNewTaskProjectId(p.id)}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-bold shrink-0 border transition-all ${
+                            newTaskProjectId === p.id
+                              ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
+                              : 'bg-[#0A0A0C] text-[#8E8E93] border-white/5 hover:text-white'
+                          }`}
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <select
+                    value={selectedTaskId}
+                    onChange={(e) => handleSelectExistingTask(e.target.value)}
+                    className="w-full bg-[#0A0A0C] border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none font-semibold"
+                  >
+                    {(tasks || []).length === 0 && (
+                      <option value="">Nenhuma tarefa cadastrada ainda</option>
+                    )}
+                    {(tasks || []).map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.completed ? '✓ ' : ''}{t.title} ({getTaskDates(t).length}d · {getTaskTimes(t).length}h)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 4-Mode Selector Tabs (Diário, Semanal, Mensal, Anual) */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#8E8E93]">
+                Modo de Repetição
+              </span>
+              <button
+                type="button"
+                onClick={() => setAdditiveMode(prev => !prev)}
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${
+                  additiveMode
+                    ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/40'
+                    : 'bg-white/5 text-[#8E8E93] border-white/10 hover:text-white'
+                }`}
+              >
+                {additiveMode ? '+ Somando às datas' : 'Substituir ao gerar'}
+              </button>
+            </div>
+            <div className="grid grid-cols-4 gap-1 bg-[#141417] p-1 rounded-xl border border-white/10">
+              {[
+                { id: 'daily', label: 'Diário' },
+                { id: 'weekly', label: 'Semanal' },
+                { id: 'monthly', label: 'Mensal' },
+                { id: 'annual', label: 'Anual' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setMode(tab.id)}
+                  className={`py-2 rounded-lg text-[11px] font-black transition-all ${
+                    mode === tab.id
+                      ? 'bg-[#facc15] text-black shadow-md shadow-[#facc15]/25'
+                      : 'text-[#A1A1AA] hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* MODE 1: DIÁRIO */}
+          {mode === 'daily' && (
+            <div className="bg-[#141417] border border-white/10 rounded-2xl p-3 space-y-3">
+              <div>
+                <div className="text-[11px] font-bold text-white mb-1.5">Repetir a cada quantos dias?</div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[
+                    { v: 1, label: 'Todo dia' },
+                    { v: 2, label: '2 dias' },
+                    { v: 3, label: '3 dias' },
+                    { v: 5, label: '5 dias' },
+                    { v: 7, label: '7 dias' }
+                  ].map(opt => (
+                    <button
+                      key={opt.v}
+                      type="button"
+                      onClick={() => {
+                        setDailyInterval(opt.v);
+                        triggerDailyApply(opt.v, dailyDuration, dailyStartDate);
+                      }}
+                      className={`py-1.5 px-1 rounded-lg text-[10px] font-bold border transition-all ${
+                        dailyInterval === opt.v
+                          ? 'bg-[#facc15] text-black border-[#facc15]'
+                          : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-[11px] font-bold text-white mb-1.5">Horizonte de dias a gerar:</div>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[7, 14, 30, 60, 90].map(dur => (
+                    <button
+                      key={dur}
+                      type="button"
+                      onClick={() => {
+                        setDailyDuration(dur);
+                        triggerDailyApply(dailyInterval, dur, dailyStartDate);
+                      }}
+                      className={`py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
+                        dailyDuration === dur
+                          ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/60'
+                          : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
+                      }`}
+                    >
+                      {dur}d
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-[#8E8E93] font-bold">Início:</span>
+                  <input
+                    type="date"
+                    value={dailyStartDate}
+                    onChange={(e) => {
+                      const val = e.target.value || todayStr;
+                      setDailyStartDate(val);
+                      triggerDailyApply(dailyInterval, dailyDuration, val);
+                    }}
+                    className="bg-[#0A0A0C] border border-white/10 rounded-lg px-2 py-1 text-[11px] text-white outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => triggerDailyApply()}
+                  className="px-3 py-1.5 rounded-lg bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/40 text-[#facc15] text-[10px] font-black transition-all"
+                >
+                  Gerar Datas Diárias
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* MODE 2: SEMANAL */}
+          {mode === 'weekly' && (
+            <div className="bg-[#141417] border border-white/10 rounded-2xl p-3 space-y-3">
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-bold text-white">Marque os dias da semana:</span>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const weekdays = [1, 2, 3, 4, 5];
+                        setWeeklyDays(weekdays);
+                        triggerWeeklyApply(weekdays, weeklyInterval, weeklyDurationWeeks);
+                      }}
+                      className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[#facc15] font-bold"
+                    >
+                      Seg-Sex
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const weekend = [0, 6];
+                        setWeeklyDays(weekend);
+                        triggerWeeklyApply(weekend, weeklyInterval, weeklyDurationWeeks);
+                      }}
+                      className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[#facc15] font-bold"
+                    >
+                      FDS
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {WEEKDAY_LABELS.map((lbl, idx) => {
+                    const active = weeklyDays.includes(idx);
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => toggleWeeklyDay(idx)}
+                        className={`py-2 rounded-xl text-[11px] font-black border transition-all ${
+                          active
+                            ? 'bg-[#facc15] text-black border-[#facc15] shadow-md shadow-[#facc15]/20'
+                            : 'bg-[#0A0A0C] text-[#8E8E93] border-white/10 hover:text-white'
+                        }`}
+                      >
+                        {lbl}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <div className="text-[10px] font-bold text-[#8E8E93] mb-1">Frequência</div>
+                  <div className="grid grid-cols-2 gap-1">
+                    {[
+                      { v: 1, label: 'Toda sem.' },
+                      { v: 2, label: 'A cada 2' }
+                    ].map(opt => (
+                      <button
+                        key={opt.v}
+                        type="button"
+                        onClick={() => {
+                          setWeeklyInterval(opt.v);
+                          triggerWeeklyApply(weeklyDays, opt.v, weeklyDurationWeeks);
+                        }}
+                        className={`py-1.5 rounded-lg text-[10px] font-bold border ${
+                          weeklyInterval === opt.v
+                            ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
+                            : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-[#8E8E93] mb-1">Duração</div>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[
+                      { v: 4, label: '1m' },
+                      { v: 12, label: '3m' },
+                      { v: 24, label: '6m' },
+                      { v: 52, label: '1a' }
+                    ].map(dur => (
+                      <button
+                        key={dur.v}
+                        type="button"
+                        onClick={() => {
+                          setWeeklyDurationWeeks(dur.v);
+                          triggerWeeklyApply(weeklyDays, weeklyInterval, dur.v);
+                        }}
+                        className={`py-1.5 rounded-lg text-[10px] font-bold border ${
+                          weeklyDurationWeeks === dur.v
+                            ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
+                            : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10'
+                        }`}
+                      >
+                        {dur.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODE 4: ANUAL */}
+          {mode === 'annual' && (
+            <div className="bg-[#141417] border border-white/10 rounded-2xl p-3 space-y-3">
+              {/* Year Nav */}
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const y = annualYear - 1;
+                    setAnnualYear(y);
+                    if (annualMonths.length > 0 && annualDaysOfMonth.length > 0) {
+                      applyGeneratedDates(generateAnnualDates(y, annualMonths, annualDaysOfMonth));
+                    }
+                  }}
+                  className="p-1.5 rounded-lg bg-[#0A0A0C] border border-white/10 text-[#facc15] hover:bg-white/5"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-sm font-black text-white tracking-wider">Ano {annualYear}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const y = annualYear + 1;
+                    setAnnualYear(y);
+                    if (annualMonths.length > 0 && annualDaysOfMonth.length > 0) {
+                      applyGeneratedDates(generateAnnualDates(y, annualMonths, annualDaysOfMonth));
+                    }
+                  }}
+                  className="p-1.5 rounded-lg bg-[#0A0A0C] border border-white/10 text-[#facc15] hover:bg-white/5"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              {/* Months multi-select */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-bold text-white">1. Meses do ano:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const allM = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+                      setAnnualMonths(allM);
+                      if (annualDaysOfMonth.length > 0) {
+                        applyGeneratedDates(generateAnnualDates(annualYear, allM, annualDaysOfMonth));
+                      }
+                    }}
+                    className="text-[10px] font-bold text-[#facc15] hover:underline"
+                  >
+                    Todos os 12 meses
+                  </button>
+                </div>
+                <div className="grid grid-cols-6 gap-1">
+                  {MONTH_SHORT.map((mName, idx) => {
+                    const active = annualMonths.includes(idx);
+                    return (
+                      <button
+                        key={mName}
+                        type="button"
+                        onClick={() => toggleAnnualMonth(idx)}
+                        className={`py-1.5 rounded-lg text-[10px] font-black border transition-all ${
+                          active
+                            ? 'bg-[#facc15] text-black border-[#facc15]'
+                            : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
+                        }`}
+                      >
+                        {mName}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Day of month multi-select */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-bold text-white">2. Dias do mês ({annualDaysOfMonth.length}):</span>
+                  <div className="flex gap-1">
+                    {[
+                      { label: '1, 15', days: [1, 15] },
+                      { label: '1, 10, 20', days: [1, 10, 20] }
+                    ].map(preset => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          setAnnualDaysOfMonth(preset.days);
+                          if (annualMonths.length > 0) {
+                            applyGeneratedDates(generateAnnualDates(annualYear, annualMonths, preset.days));
+                          }
+                        }}
+                        className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-[#facc15] font-bold"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-8 gap-1">
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(dayNum => {
+                    const active = annualDaysOfMonth.includes(dayNum);
+                    return (
+                      <button
+                        key={dayNum}
+                        type="button"
+                        onClick={() => toggleAnnualDay(dayNum)}
+                        className={`h-7 rounded-lg text-[10px] font-bold border transition-all ${
+                          active
+                            ? 'bg-[#facc15] text-black border-[#facc15]'
+                            : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
+                        }`}
+                      >
+                        {dayNum}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODE 3 (MENSAL) OR INTERACTIVE CALENDAR FINE-TUNER (always visible in Mensal, or helpful quick view in Daily/Weekly) */}
+          {(mode === 'monthly' || mode === 'daily' || mode === 'weekly') && (
+            <div className="bg-[#141417] border border-white/10 rounded-2xl p-3">
+              {/* Month Navigation Header */}
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
+                  className="p-1.5 text-[#facc15] hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div className="flex items-center gap-1.5 text-xs font-black text-white">
+                  <CalendarIcon size={13} className="text-[#facc15]" />
+                  <span>{MONTH_NAMES[month]} {year}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
+                  className="p-1.5 text-[#facc15] hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              {/* Weekdays */}
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {WEEKDAY_LABELS.map((w, i) => (
+                  <div key={i} className="text-center text-[10px] font-bold text-[#8E8E93] py-0.5">
+                    {w[0]}
+                  </div>
+                ))}
+              </div>
+
+              {/* Interactive Multi-Day Grid */}
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((cell, idx) => {
+                  const isSelected = selectedDates.includes(cell.dateStr);
+                  const isToday = cell.dateStr === todayStr;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => toggleDate(cell.dateStr)}
+                      className={`h-8 rounded-lg flex flex-col items-center justify-center relative text-[11px] transition-all ${
+                        isSelected
+                          ? 'bg-[#facc15] text-black font-black shadow-md shadow-[#facc15]/20'
+                          : isToday
+                          ? 'bg-[#facc15]/15 text-[#facc15] font-bold border border-[#facc15]/40'
+                          : cell.isCurrentMonth
+                          ? 'text-white/90 hover:bg-white/10 font-medium'
+                          : 'text-[#555558] hover:bg-white/5'
+                      }`}
+                    >
+                      <span>{cell.day}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Monthly Quick Multi-Month Repetition Bar */}
+              {mode === 'monthly' && (
+                <div className="mt-3 pt-2.5 border-t border-white/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[#A1A1AA]">
+                      Repetir os dias marcados pelos próximos:
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[
+                      { h: 1, label: 'Só este mês' },
+                      { h: 3, label: '3 meses' },
+                      { h: 6, label: '6 meses' },
+                      { h: 12, label: '12 meses' }
+                    ].map(opt => (
+                      <button
+                        key={opt.h}
+                        type="button"
+                        onClick={() => applyMonthlyHorizonToSelected(opt.h)}
+                        className={`py-1.5 px-1 rounded-lg text-[10px] font-bold border transition-all ${
+                          monthlyHorizon === opt.h
+                            ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
+                            : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* SHARED ACROSS ALL MODES: MULTIPLE TIMES PER DAY */}
+          <div className="bg-[#141417] border border-[#facc15]/25 rounded-2xl p-3 space-y-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Clock size={15} className="text-[#facc15]" />
+                <span className="text-xs font-black text-white">
+                  Horários ({selectedTimes.length})
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingTimeTarget(null);
+                  setShowTimePicker(true);
+                }}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#facc15] hover:bg-[#eab308] text-black text-[11px] font-black transition-all shadow-sm"
+              >
+                <Plus size={13} strokeWidth={3} />
+                Adicionar Horário
+              </button>
+            </div>
+
+            {/* Active Selected Times Chips */}
+            {selectedTimes.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedTimes.map(timeStr => (
+                  <div
+                    key={timeStr}
+                    className="flex items-center gap-1 bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] rounded-xl px-2.5 py-1 text-xs font-black"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingTimeTarget(timeStr);
+                        setShowTimePicker(true);
+                      }}
+                      className="hover:underline"
+                      title="Editar horário"
+                    >
+                      {timeStr}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTimes(prev => prev.filter(t => t !== timeStr))}
+                      className="p-0.5 hover:bg-[#facc15]/20 rounded text-[#facc15]"
+                      aria-label={`Remover ${timeStr}`}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[11px] text-[#8E8E93]">
+                Sem horário fixo (toque em + Adicionar Horário ou use um atalho abaixo para marcar vários).
+              </p>
+            )}
+
+            {/* Quick 1-Tap Multi-Time Presets */}
+            <div className="flex flex-wrap gap-1 pt-0.5">
+              {QUICK_TIME_PRESETS.map(preset => {
+                const active = selectedTimes.includes(preset);
+                return (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => toggleTimePreset(preset)}
+                    className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all ${
+                      active
+                        ? 'bg-[#facc15] text-black border-[#facc15]'
+                        : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
+                    }`}
+                  >
+                    {preset}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Selected Summary Bar */}
+          <div className="bg-[#111114] border border-white/10 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+            <div className="text-[11px] text-[#E4E4E7] font-semibold truncate">
+              <span className="text-[#facc15] font-black">{selectedDates.length}</span>{' '}
+              {selectedDates.length === 1 ? 'dia marcado' : 'dias marcados'}
+              {selectedTimes.length > 0 && (
+                <>
+                  {' · '}
+                  <span className="text-[#facc15] font-black">{selectedTimes.length}</span>{' '}
+                  {selectedTimes.length === 1 ? 'horário' : 'horários'}
+                </>
+              )}
+            </div>
+            {selectedDates.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedDates([todayStr])}
+                className="text-[10px] font-bold text-[#8E8E93] hover:text-[#facc15] shrink-0"
+              >
+                Resetar p/ Hoje
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Touch-Friendly Time Selector (Opens TimePickerModal on click) */}
-        <div className="pt-2 border-t border-[#28282b] flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-neutral-300 font-medium">
-            <Clock className="w-4 h-4 text-[#facc15]" />
-            <span>Horário Repetido:</span>
-          </div>
+        {/* Footer Confirm Action */}
+        <div className="px-4 py-3 border-t border-white/10 bg-[#111114] shrink-0">
           <button
             type="button"
-            onClick={() => setIsTimePickerOpen(true)}
-            className="bg-[#141416] hover:bg-[#242428] border border-[#2c2c2e] text-white text-xs font-mono font-bold rounded-xl px-3 py-1.5 focus:outline-none flex items-center gap-1.5"
-          >
-            <span>{selectedTime || 'Toque p/ definir'}</span>
-          </button>
-        </div>
-
-        {/* Selected Summary and Confirm Button */}
-        <div className="pt-2 border-t border-[#28282b] flex items-center justify-between gap-2">
-          <span className="text-xs text-neutral-400 truncate">
-            {selectedDates.length === 0 
-              ? 'Nenhuma data' 
-              : selectedDates.length === 1 
-              ? `1 data (${selectedDates[0]})` 
-              : `${selectedDates.length} datas selecionadas`}
-            {selectedTime ? ` às ${selectedTime}` : ''}
-          </span>
-
-          <button
-            type="button"
+            disabled={isConfirmDisabled}
             onClick={handleConfirm}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-[#facc15] hover:bg-[#eab308] text-black font-bold shadow-md shrink-0"
+            className="w-full py-3 rounded-2xl bg-[#facc15] hover:bg-[#eab308] disabled:opacity-40 disabled:cursor-not-allowed text-black font-black text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#facc15]/25"
           >
-            Confirmar
+            <Check size={16} strokeWidth={3} />
+            Confirmar ({selectedDates.length} {selectedDates.length === 1 ? 'dia' : 'dias'} · {selectedTimes.length || 0} {selectedTimes.length === 1 ? 'horário' : 'horários'})
           </button>
         </div>
       </div>
 
-      {/* Touch-Friendly Time Picker Modal */}
+      {/* Analog Time Picker Modal for Adding/Editing Individual Times */}
       <TimePickerModal
-        isOpen={isTimePickerOpen}
-        onClose={() => setIsTimePickerOpen(false)}
-        initialTime={selectedTime}
-        onSelectTime={t => setSelectedTime(t)}
+        isOpen={showTimePicker}
+        onClose={() => {
+          setShowTimePicker(false);
+          setEditingTimeTarget(null);
+        }}
+        initialTime={editingTimeTarget || selectedTimes[selectedTimes.length - 1] || '09:00'}
+        onSelectTime={handleTimePicked}
       />
     </div>
   );

@@ -106,6 +106,16 @@ export function useAppStore() {
 
   // Tasks actions
   const addTask = (taskData) => {
+    const recurringDates = [...new Set(
+      taskData.recurringDates && taskData.recurringDates.length > 0
+        ? taskData.recurringDates
+        : (taskData.dueDate ? [taskData.dueDate] : [])
+    )].filter(Boolean).sort();
+    const recurringTimes = [...new Set(
+      taskData.recurringTimes && taskData.recurringTimes.length > 0
+        ? taskData.recurringTimes
+        : (taskData.startTime ? [taskData.startTime] : [])
+    )].filter(Boolean).sort();
     const newTask = {
       id: 'task-' + Date.now(),
       title: taskData.title,
@@ -114,9 +124,11 @@ export function useAppStore() {
       priority: taskData.priority !== undefined ? taskData.priority : 0,
       urgent: taskData.urgent ?? false,
       important: taskData.important ?? false,
-      dueDate: taskData.dueDate || '',
-      recurringDates: taskData.recurringDates || (taskData.dueDate ? [taskData.dueDate] : []),
-      startTime: taskData.startTime || '',
+      dueDate: taskData.dueDate || recurringDates[0] || '',
+      recurringDates,
+      startTime: recurringTimes[0] || '',
+      recurringTimes,
+      recurrencePattern: taskData.recurrencePattern || null,
       endTime: taskData.endTime || '',
       completed: false,
       kanbanStatus: taskData.kanbanStatus || 'todo', // 'todo', 'in_progress', 'done'
@@ -134,7 +146,14 @@ export function useAppStore() {
 
   // Create ONE single task with multiple scheduled dates (User request: Single clean title in task list!)
   const addTasksForMultipleDates = (taskData, datesList) => {
-    const dates = datesList && datesList.length > 0 ? datesList : (taskData.dueDate ? [taskData.dueDate] : []);
+    const dates = [...new Set(
+      datesList && datesList.length > 0 ? datesList : (taskData.dueDate ? [taskData.dueDate] : [])
+    )].filter(Boolean).sort();
+    const times = [...new Set(
+      taskData.recurringTimes && taskData.recurringTimes.length > 0
+        ? taskData.recurringTimes
+        : (taskData.startTime ? [taskData.startTime] : [])
+    )].filter(Boolean).sort();
     const newTask = {
       id: 'task-' + Date.now(),
       title: taskData.title,
@@ -145,7 +164,9 @@ export function useAppStore() {
       important: taskData.important ?? false,
       dueDate: dates[0] || '',
       recurringDates: dates,
-      startTime: taskData.startTime || '',
+      startTime: times[0] || '',
+      recurringTimes: times,
+      recurrencePattern: taskData.recurrencePattern || null,
       endTime: taskData.endTime || '',
       completed: false,
       kanbanStatus: 'todo',
@@ -162,7 +183,12 @@ export function useAppStore() {
   };
 
   const updateTask = (id, updates) => {
-    if (updates.startTime || updates.dueDate || updates.recurringDates) {
+    if (
+      updates.startTime !== undefined ||
+      updates.dueDate !== undefined ||
+      updates.recurringDates !== undefined ||
+      updates.recurringTimes !== undefined
+    ) {
       clearAlarmDismissed(id);
     }
     setState(prev => ({
@@ -175,10 +201,34 @@ export function useAppStore() {
           } else if (updates.kanbanStatus !== undefined) {
             updated.completed = updates.kanbanStatus === 'done';
           }
-          // If dueDate is updated without recurringDates, sync recurringDates
-          if (updates.dueDate && !updates.recurringDates) {
+          // Sync recurringDates <-> dueDate
+          if (updates.recurringDates !== undefined) {
+            const cleanDates = [...new Set(updates.recurringDates)].filter(Boolean).sort();
+            updated.recurringDates = cleanDates;
+            if (updates.dueDate === undefined) {
+              updated.dueDate = cleanDates[0] || '';
+            }
+          } else if (updates.dueDate !== undefined) {
             if (!updated.recurringDates || updated.recurringDates.length <= 1) {
-              updated.recurringDates = [updates.dueDate];
+              updated.recurringDates = updates.dueDate ? [updates.dueDate] : [];
+            }
+          }
+          // Sync recurringTimes <-> startTime
+          if (updates.recurringTimes !== undefined) {
+            const cleanTimes = [...new Set(updates.recurringTimes)].filter(Boolean).sort();
+            updated.recurringTimes = cleanTimes;
+            if (updates.startTime === undefined) {
+              updated.startTime = cleanTimes[0] || '';
+            }
+          } else if (updates.startTime !== undefined) {
+            const prevTimes = Array.isArray(t.recurringTimes) ? t.recurringTimes.filter(Boolean) : [];
+            if (prevTimes.length <= 1) {
+              updated.recurringTimes = updates.startTime ? [updates.startTime] : [];
+            } else if (updates.startTime) {
+              updated.recurringTimes = [...new Set([updates.startTime, ...prevTimes.slice(1)])].filter(Boolean).sort();
+            } else {
+              updated.recurringTimes = prevTimes.slice(1);
+              updated.startTime = updated.recurringTimes[0] || '';
             }
           }
           return updated;
