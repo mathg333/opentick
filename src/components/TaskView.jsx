@@ -96,9 +96,10 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
   } else if (activeView === 'tasks-today') {
     viewTitle = 'Hoje';
     filteredTasks = activeTasks.filter(t => {
+      const hasMultiDates = Array.isArray(t.recurringDates) && t.recurringDates.length > 1;
       const matchDue = t.dueDate === todayStr;
       const matchRecur = t.recurringDates && t.recurringDates.includes(todayStr);
-      const overdue = !t.completed && t.dueDate && t.dueDate < todayStr;
+      const overdue = !hasMultiDates && !t.completed && t.dueDate && t.dueDate < todayStr;
       return matchDue || matchRecur || overdue;
     });
   } else if (activeView === 'tasks-completed') {
@@ -119,8 +120,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
   const noDateTasks = pendingTasks.filter(t => !t.dueDate && (!t.recurringDates || t.recurringDates.length === 0));
   const todayTasks = pendingTasks.filter(t => {
+    const hasMultiDates = Array.isArray(t.recurringDates) && t.recurringDates.length > 1;
     const isToday = t.dueDate === todayStr || (t.recurringDates && t.recurringDates.includes(todayStr));
-    const isOverdue = t.dueDate && t.dueDate < todayStr;
+    const isOverdue = !hasMultiDates && t.dueDate && t.dueDate < todayStr;
     return isToday || isOverdue;
   });
   const upcomingTasks = pendingTasks.filter(t => {

@@ -51,7 +51,7 @@ export default function TimeSlotModal({
   // Weekly inline state
   const [weeklyDays, setWeeklyDays] = useState([1, 3, 5]);
   const [weeklyStartDate, setWeeklyStartDate] = useState('');
-  const [weeklyWeeksCount, setWeeklyWeeksCount] = useState(12);
+  const [weeklyWeeksCount, setWeeklyWeeksCount] = useState(1);
 
   // Monthly inline state
   const [monthCursor, setMonthCursor] = useState(() => new Date());
@@ -70,7 +70,7 @@ export default function TimeSlotModal({
   const [timePickerTarget, setTimePickerTarget] = useState(null); // 'start' | 'end' | 'extra' | null
 
   // Daily repeat duration
-  const [dailyDurationDays, setDailyDurationDays] = useState(30);
+  const [dailyDurationDays, setDailyDurationDays] = useState(1);
 
   // Category, priority & alarm
   const [projectId, setProjectId] = useState('inbox');
@@ -102,7 +102,7 @@ export default function TimeSlotModal({
 
     setWeeklyDays([anchor.getDay()]);
     setWeeklyStartDate(baseDate);
-    setWeeklyWeeksCount(12);
+    setWeeklyWeeksCount(1);
 
     setMonthCursor(new Date(anchor.getFullYear(), anchor.getMonth(), 1));
     setMonthlyPickedDates([baseDate]);
@@ -117,7 +117,7 @@ export default function TimeSlotModal({
     setExtraTimes([]);
     setTimePickerTarget(null);
     setProjectId(projects?.[0]?.id || 'inbox');
-    setDailyDurationDays(30);
+    setDailyDurationDays(1);
     setPriority(1);
     setAlarmEnabled(true);
     setReminderOffset(0);
@@ -447,8 +447,8 @@ export default function TimeSlotModal({
                 </div>
                 <div>
                   <span className="text-[10px] text-neutral-500 font-medium block mb-1">Duração (dias consecutivos)</span>
-                  <div className="grid grid-cols-4 gap-1">
-                    {[7, 15, 30, 90].map((dCount) => (
+                  <div className="grid grid-cols-5 gap-1">
+                    {[1, 7, 15, 30, 90].map((dCount) => (
                       <button
                         key={dCount}
                         type="button"
@@ -502,8 +502,8 @@ export default function TimeSlotModal({
                   </div>
                   <div>
                     <span className="text-[10px] text-neutral-500 font-medium block mb-1">Semanas</span>
-                    <div className="grid grid-cols-4 gap-1">
-                      {[4, 8, 12, 26].map((w) => (
+                    <div className="grid grid-cols-5 gap-1">
+                      {[1, 4, 8, 12, 26].map((w) => (
                         <button
                           key={w}
                           type="button"

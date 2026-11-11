@@ -195,6 +195,11 @@ export default function CalendarView({ store, onQuickCreateAt }) {
     return activeTasks.filter(t => isTaskOnDate(t, dStr));
   };
 
+  // Mark calendar dates only when an incomplete task is scheduled for this day AND has at least one programmed time
+  const hasScheduledTasks = (dStr) => {
+    return getTasksForDate(dStr).some(t => !t.completed && getTaskTimes(t).length > 0);
+  };
+
   const getTaskTimesInHour = (task, hour) => {
     return getTaskTimes(task).filter(tm => parseInt(tm.split(':')[0], 10) === hour);
   };
@@ -277,7 +282,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
       if (onQuickCreateAt) {
         onQuickCreateAt(dStr, '');
       } else {
-        handleOpenBookingSlot(9, dStr, viewMode === 'year' ? 'annual' : viewMode === 'week' ? 'weekly' : 'monthly');
+        handleOpenBookingSlot(9, dStr, 'single');
       }
     }
   };
@@ -454,7 +459,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                 const dStr = formatDate(day);
                 const isSelected = dStr === selectedDayStr;
                 const isToday = dStr === todayStr;
-                const hasTasks = getTasksForDate(dStr).some(t => !t.completed);
+                const hasTasks = hasScheduledTasks(dStr);
 
                 return (
                   <button
@@ -638,7 +643,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
               const dStr = formatDate(item.date);
               const isSelected = dStr === selectedDayStr;
               const isToday = dStr === todayStr;
-              const hasTasks = getTasksForDate(dStr).some(t => !t.completed);
+              const hasTasks = hasScheduledTasks(dStr);
 
               return (
                 <button
@@ -784,7 +789,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                   return (
                     <div
                       key={dStr}
-                      onClick={() => handleHourCellPress(hour, dStr, 'weekly')}
+                      onClick={() => handleHourCellPress(hour, dStr, 'single')}
                       className={`bg-[#141416] hover:bg-[#1c1c1e] rounded-lg p-1 min-h-10 cursor-pointer border space-y-0.5 transition-colors relative group ${
                         focusedSlotKey === `${dStr}-${hour}` ? 'border-[#facc15]/50' : 'border-transparent hover:border-[#facc15]/30'
                       }`}
@@ -794,7 +799,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleOpenBookingSlot(hour, dStr, 'weekly');
+                            handleOpenBookingSlot(hour, dStr, 'single');
                           }}
                           className="absolute top-0.5 right-0.5 z-10 px-1 py-0.5 rounded-[3px] bg-[#18181c] border border-[#facc15]/60 text-[#facc15] text-[8px] font-bold"
                           title="Reservar com repetição"
@@ -848,7 +853,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                   return (
                     <div
                       key={dStr}
-                      onClick={() => handleHourCellPress(hour, dStr, 'weekly')}
+                      onClick={() => handleHourCellPress(hour, dStr, 'single')}
                       className={`relative bg-[#141416] hover:bg-[#1c1c1e] rounded-[4px] p-1.5 min-h-12 cursor-pointer border transition-colors ${
                         focusedSlotKey === `${dStr}-${hour}` ? 'border-[#facc15]/50' : 'border-[#222226] hover:border-[#facc15]/30'
                       }`}
@@ -858,7 +863,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleOpenBookingSlot(hour, dStr, 'weekly');
+                            handleOpenBookingSlot(hour, dStr, 'single');
                           }}
                           className="absolute top-0.5 right-0.5 z-10 px-1.5 py-0.5 rounded-[3px] bg-[#18181c] border border-[#facc15]/60 text-[#facc15] text-[9px] font-bold"
                         >
@@ -991,7 +996,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                   {Array.from({ length: daysCount }).map((_, i) => {
                     const dayNum = i + 1;
                     const dStr = `${year}-${String(mIdx + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-                    const hasTask = getTasksForDate(dStr).some(t => !t.completed);
+                    const hasTask = hasScheduledTasks(dStr);
                     const isTodayCell = dStr === todayStr;
                     return (
                       <span
