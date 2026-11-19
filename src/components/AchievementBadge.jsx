@@ -11,8 +11,8 @@ export default function AchievementBadge({ id, unlocked = false, size = 26 }) {
 
   const primary = unlocked ? `url(#${gradGold})` : '#52525b';
   const secondary = unlocked ? `url(#${gradCore})` : '#3f3f46';
-  const accent = unlocked ? '#fef08a' : '#71717a';
-  const darkCut = unlocked ? '#181405' : '#18181b';
+  const accent = unlocked ? '#ffffff' : '#71717a';
+  const darkCut = unlocked ? '#09090b' : '#18181b';
 
   const renderGlyph = () => {
     switch (id) {
@@ -180,18 +180,18 @@ export default function AchievementBadge({ id, unlocked = false, size = 26 }) {
       width={size}
       height={size}
       viewBox="0 0 32 32"
-      className="shrink-0 drop-shadow-[0_2px_6px_rgba(250,204,21,0.22)]"
+      className="shrink-0 drop-shadow-[0_2px_6px_rgba(255,255,255,0.15)]"
       aria-hidden="true"
     >
       <defs>
         <linearGradient id={gradGold} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#fef08a" />
-          <stop offset="50%" stopColor="#facc15" />
-          <stop offset="100%" stopColor="#ca8a04" />
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="50%" stopColor="#e4e4e7" />
+          <stop offset="100%" stopColor="#a1a1aa" />
         </linearGradient>
         <linearGradient id={gradCore} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#fde047" />
-          <stop offset="100%" stopColor="#a16207" />
+          <stop offset="0%" stopColor="#f4f4f5" />
+          <stop offset="100%" stopColor="#71717a" />
         </linearGradient>
       </defs>
       {renderGlyph()}

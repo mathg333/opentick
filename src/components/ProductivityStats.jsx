@@ -58,7 +58,7 @@ export default function ProductivityStats({ store }) {
       return { backgroundImage: "url('/images/bg_rain_glass_dark.png')" };
     }
     if (profile.coverPreset === 'sunset_lava') {
-      return { background: 'linear-gradient(135deg, #ff7a00, #ff3d00, #991b1b)' };
+      return { background: 'linear-gradient(135deg, #18181b, #27272a, #3f3f46)' };
     }
     if (profile.coverPreset === 'cyber_neon') {
       return { background: 'linear-gradient(135deg, #1e1b4b, #4338ca, #3b82f6)' };
@@ -74,7 +74,7 @@ export default function ProductivityStats({ store }) {
       {/* Desktop Header - Limpo e Minimalista */}
       <div className="hidden md:flex px-8 pt-5 pb-4 border-b border-[#1c1c22] bg-[#0c0c0e] items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-neutral-500 to-white p-0.5 shadow-md shadow-[#facc15]/20 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-neutral-500 to-white p-0.5 shadow-md shadow-white/10 flex items-center justify-center shrink-0">
             <div className="w-full h-full rounded-[10px] bg-[#121215] flex items-center justify-center">
               <Trophy className="w-4 h-4 text-white" />
             </div>
@@ -126,7 +126,7 @@ export default function ProductivityStats({ store }) {
                 className="relative group shrink-0 cursor-pointer" 
                 title="Toque para alterar avatar e perfil"
               >
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-neutral-500 via-[#facc15] to-orange-400 p-1 shadow-2xl ring-4 ring-[#121215] group-hover:scale-105 transition-transform">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-neutral-600 via-neutral-300 to-white p-1 shadow-2xl ring-4 ring-[#121215] group-hover:scale-105 transition-transform">
                   <div className="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center font-black text-white text-3xl sm:text-4xl select-none">
                     {profile.avatarType === 'image' && profile.avatar ? (
                       <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -270,7 +270,7 @@ export default function ProductivityStats({ store }) {
                   onClick={() => setPreviewRank(rank)}
                   className={`rounded-2xl border p-3 flex flex-col items-center text-center relative transition-all cursor-pointer active:scale-95 ${
                     isSelected
-                      ? 'bg-gradient-to-b from-[#1e1e28] to-[#121218] border-white/60 ring-2 ring-white/60/40 shadow-xl shadow-[#facc15]/20 scale-102'
+                      ? 'bg-gradient-to-b from-[#1e1e28] to-[#121218] border-white/60 ring-2 ring-white/40 shadow-xl shadow-white/10 scale-102'
                       : isUnlocked
                       ? 'bg-[#121216] border-[#2c2c36] hover:border-neutral-500'
                       : 'bg-[#0a0a0c] border-[#1c1c20] opacity-45 hover:opacity-75'
@@ -383,18 +383,18 @@ export default function ProductivityStats({ store }) {
                 key={ach.id}
                 className={`p-3.5 rounded-2xl border flex items-center gap-3.5 transition-all relative overflow-hidden ${
                   ach.unlocked
-                    ? 'bg-gradient-to-br from-[#18171b] via-[#131317] to-[#0e0e11] border-white/60/35 shadow-lg shadow-[#facc15]/5'
+                    ? 'bg-gradient-to-br from-[#18171b] via-[#131317] to-[#0e0e11] border-white/20 shadow-lg shadow-white/5'
                     : 'bg-[#0a0a0c] border-[#1c1c20] opacity-55'
                 }`}
               >
                 {ach.unlocked && (
-                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#facc15]/55 to-transparent pointer-events-none" />
+                  <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
                 )}
 
                 <div
                   className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
                     ach.unlocked
-                      ? 'bg-gradient-to-br from-[#facc15]/20 via-[#eab308]/10 to-[#0a0a0c] border border-white/30 shadow-[0_0_16px_rgba(250,204,21,0.16)]'
+                      ? 'bg-gradient-to-br from-white/10 via-white/5 to-[#0a0a0c] border border-white/20 shadow-[0_0_12px_rgba(255,255,255,0.08)]'
                       : 'bg-[#121216] border border-[#24242b]'
                   }`}
                 >

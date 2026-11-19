@@ -22,9 +22,9 @@ const COVER_PRESETS = [
   },
   {
     id: 'sunset_lava',
-    name: 'Sunset Lava',
+    name: 'Grafite Noturno',
     preview: '',
-    style: { background: 'linear-gradient(135deg, #ff7a00, #ff3d00, #991b1b)' }
+    style: { background: 'linear-gradient(135deg, #18181b, #27272a, #3f3f46)' }
   },
   {
     id: 'cyber_neon',
@@ -188,7 +188,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
 
                 <button
                   onClick={() => fileInputAvatarRef.current?.click()}
-                  className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white hover:bg-[#eab308] text-black flex items-center justify-center shadow-lg border border-black"
+                  className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center shadow-lg border border-black"
                   title="Upload Foto"
                 >
                   <Camera className="w-3.5 h-3.5" />
@@ -369,7 +369,7 @@ export default function ProfileCustomizeModal({ isOpen, onClose, store }) {
           </button>
           <button
             onClick={handleSave}
-            className="px-5 py-2.5 rounded-xl bg-white hover:bg-[#eab308] text-black font-bold text-xs uppercase tracking-wider shadow-lg shadow-[#facc15]/30 transition-all flex items-center gap-1.5"
+            className="px-5 py-2.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-bold text-xs uppercase tracking-wider shadow-lg shadow-white/20 transition-all flex items-center gap-1.5"
           >
             <Check className="w-4 h-4 stroke-[3]" />
             Salvar Perfil

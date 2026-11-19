@@ -36,7 +36,7 @@ export default function HabitTracker({ store }) {
     setIsAdding(false);
   };
 
-  const colors = ['#facc15', '#eab308', '#fde047', '#f59e0b', '#ca8a04', '#d97706'];
+  const colors = ['#ffffff', '#e4e4e7', '#a1a1aa', '#71717a', '#52525b', '#3b82f6'];
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#121215]">

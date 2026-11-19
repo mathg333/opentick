@@ -20,7 +20,7 @@ export default function EditListModal({ isOpen, onClose, project, store }) {
   if (!isOpen || !project) return null;
 
   const colors = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
+    '#ffffff', '#3b82f6', '#10b981', '#ef4444', 
     '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'
   ];
 

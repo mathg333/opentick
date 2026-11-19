@@ -237,7 +237,7 @@ export default function SettingsModal({
                       <RankShield2D tier={stats.currentRank.tier} size={16} />
                       <span className="text-[10px] font-bold text-neutral-300">{stats.currentRank.shortName}</span>
                     </div>
-                    <span className="bg-amber-950 text-neutral-200 px-1.5 py-0.2 rounded text-[9px] font-mono font-bold">
+                    <span className="bg-white/10 text-neutral-200 border border-white/20 px-1.5 py-0.2 rounded text-[9px] font-mono font-bold">
                       Nv.{stats.level}
                     </span>
                     <span className="text-[10px] text-neutral-500 font-mono">
@@ -778,7 +778,7 @@ export default function SettingsModal({
               <h3 className="text-sm font-bold text-white">Cor de Destaque</h3>
               <div className="flex gap-3">
                 {[
-                  { color: '#facc15', label: 'Amarelo Ouro OpenTick' },
+                  { color: '#ffffff', label: 'Branco Titânio (Padrão)' },
                   { color: '#4c82f7', label: 'Azul Clássico' },
                   { color: '#10b981', label: 'Esmeralda' },
                   { color: '#8b5cf6', label: 'Roxo' },
@@ -788,11 +788,11 @@ export default function SettingsModal({
                     key={c.color}
                     onClick={() => updateSettings({ accentColor: c.color })}
                     className={`w-9 h-9 rounded-full flex items-center justify-center transition-transform ${
-                      (settings.accentColor || '#facc15') === c.color ? 'scale-115 ring-2 ring-white' : ''
+                      (settings.accentColor || '#ffffff') === c.color ? 'scale-115 ring-2 ring-white' : ''
                     }`}
                     style={{ backgroundColor: c.color }}
                   >
-                    {(settings.accentColor || '#facc15') === c.color && <Check className="w-4 h-4 text-black stroke-[3]" />}
+                    {(settings.accentColor || '#ffffff') === c.color && <Check className="w-4 h-4 text-black stroke-[3]" />}
                   </button>
                 ))}
               </div>

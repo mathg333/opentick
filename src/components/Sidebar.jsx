@@ -102,7 +102,7 @@ export default function Sidebar({
       return { backgroundImage: "url('/images/bg_rain_glass_dark.png')" };
     }
     if (profile.coverPreset === 'sunset_lava') {
-      return { background: 'linear-gradient(135deg, #ff7a00, #ff3d00, #991b1b)' };
+      return { background: 'linear-gradient(135deg, #18181b, #27272a, #3f3f46)' };
     }
     if (profile.coverPreset === 'cyber_neon') {
       return { background: 'linear-gradient(135deg, #1e1b4b, #4338ca, #3b82f6)' };
@@ -355,7 +355,7 @@ export default function Sidebar({
               />
               <div className="flex items-center justify-between pt-0.5">
                 <div className="flex items-center gap-1.5">
-                  {['#facc15', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f59e0b'].map((c) => (
+                  {['#ffffff', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#64748b'].map((c) => (
                     <button
                       key={c}
                       type="button"

@@ -443,7 +443,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
         </div>
       </div>
 
-      {/* VIEW 1: LISTA (Orange accents) */}
+      {/* VIEW 1: LISTA */}
       {viewMode === 'list' && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Weekly Strip */}
@@ -634,7 +634,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
         </div>
       )}
 
-      {/* VIEW 2: MÊS (Exact Reproduction of media_1793160069391_067f42d6.jpg in Orange) */}
+      {/* VIEW 2: MÊS */}
       {viewMode === 'month' && (
         <div className="flex-1 overflow-y-auto px-4 py-2 pb-32">
           {/* Day of week header row */}
