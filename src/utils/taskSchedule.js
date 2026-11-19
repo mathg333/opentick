@@ -83,9 +83,9 @@ export function generateWeeklyDates(startDateStrOrOpts, weekdays = [1, 3, 5], in
   let startDateStr = startDateStrOrOpts;
   if (startDateStrOrOpts && typeof startDateStrOrOpts === 'object' && !Array.isArray(startDateStrOrOpts)) {
     startDateStr = startDateStrOrOpts.startDateStr || getTodayYMD();
-    weekdays = startDateStrOrOpts.weekdays || [new Date().getDay()];
+    weekdays = startDateStrOrOpts.weekdays || startDateStrOrOpts.selectedDays || [new Date().getDay()];
     intervalWeeks = startDateStrOrOpts.intervalWeeks ?? 1;
-    durationWeeks = startDateStrOrOpts.durationWeeks ?? 12;
+    durationWeeks = startDateStrOrOpts.durationWeeks ?? startDateStrOrOpts.weeksCount ?? 12;
   }
   const base = parseYMD(startDateStr) || parseYMD(getTodayYMD());
   const cleanDays = Array.isArray(weekdays) && weekdays.length > 0

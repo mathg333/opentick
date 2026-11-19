@@ -1,4 +1,4 @@
-import { getTodayYMD, addDaysYMD } from '../utils/taskSchedule';
+import { getTodayYMD, addDaysYMD } from '../utils/taskSchedule.js';
 
 const today = getTodayYMD();
 const yesterday = addDaysYMD(today, -1);
