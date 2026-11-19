@@ -354,12 +354,12 @@ export default function CustomDatePickerModal({
         {/* Header */}
         <div className="px-4 py-3.5 border-b border-white/10 flex items-center justify-between bg-[#111114] shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-md bg-[#facc15]/15 border border-[#facc15]/30 flex items-center justify-center text-[#facc15] shrink-0">
+            <div className="w-9 h-9 rounded-md bg-white/10 border border-white/20 flex items-center justify-center text-white shrink-0">
               <SlidersHorizontal size={18} />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-black text-white tracking-tight truncate">Personalizado</h3>
-              <p className="text-[11px] text-[#facc15]/80 font-medium truncate">
+              <p className="text-[11px] text-neutral-400 font-medium truncate">
                 Marque vários dias, datas e horários em qualquer modo
               </p>
             </div>
@@ -367,7 +367,7 @@ export default function CustomDatePickerModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 text-[#facc15] hover:bg-white/10 rounded-md transition-colors shrink-0"
+            className="p-2 text-neutral-400 hover:text-white hover:bg-white/10 rounded-md transition-colors shrink-0"
             aria-label="Fechar"
           >
             <X size={18} />
@@ -386,11 +386,11 @@ export default function CustomDatePickerModal({
                   onClick={() => setTaskAction('new')}
                   className={`py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                     taskAction === 'new'
-                      ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/50'
+                      ? 'bg-white/15 text-white border border-white/40'
                       : 'text-[#8E8E93] hover:text-white'
                   }`}
                 >
-                  <Plus size={13} className={taskAction === 'new' ? 'text-[#facc15]' : 'text-[#8E8E93]'} />
+                  <Plus size={13} className={taskAction === 'new' ? 'text-white' : 'text-[#8E8E93]'} />
                   Nova Tarefa
                 </button>
                 <button
@@ -401,11 +401,11 @@ export default function CustomDatePickerModal({
                   }}
                   className={`py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                     taskAction === 'existing'
-                      ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/50'
+                      ? 'bg-white/15 text-white border border-white/40'
                       : 'text-[#8E8E93] hover:text-white'
                   }`}
                 >
-                  <Layers size={13} className={taskAction === 'existing' ? 'text-[#facc15]' : 'text-[#8E8E93]'} />
+                  <Layers size={13} className={taskAction === 'existing' ? 'text-white' : 'text-[#8E8E93]'} />
                   Agendadas ({activeTasks.length})
                 </button>
               </div>
@@ -417,7 +417,7 @@ export default function CustomDatePickerModal({
                     value={newTaskTitle}
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                     placeholder="Nome da tarefa ou rotina (ex: Tomar água, Treinar)..."
-                    className="w-full bg-[#0A0A0C] border border-white/10 focus:border-[#facc15]/60 rounded-md px-3 py-2 text-xs text-white placeholder-[#555558] outline-none font-medium"
+                    className="w-full bg-[#0A0A0C] border border-white/10 focus:border-white/50 rounded-md px-3 py-2 text-xs text-white placeholder-[#555558] outline-none font-medium"
                   />
                   {projects && projects.length > 0 && (
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar">
@@ -429,7 +429,7 @@ export default function CustomDatePickerModal({
                           onClick={() => setNewTaskProjectId(p.id)}
                           className={`px-2 py-1 rounded-lg text-[10px] font-bold shrink-0 border transition-all ${
                             newTaskProjectId === p.id
-                              ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
+                              ? 'bg-white/15 text-white border-white/40'
                               : 'bg-[#0A0A0C] text-[#8E8E93] border-white/5 hover:text-white'
                           }`}
                         >
@@ -456,7 +456,7 @@ export default function CustomDatePickerModal({
                           onClick={() => setExistingFreqFilter(f.id)}
                           className={`px-2 py-1 rounded-lg text-[10px] font-bold shrink-0 border transition-all ${
                             existingFreqFilter === f.id
-                              ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
+                              ? 'bg-white/15 text-white border-white/40'
                               : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
                           }`}
                         >
@@ -467,7 +467,7 @@ export default function CustomDatePickerModal({
                     <button
                       type="button"
                       onClick={() => setIsOverviewOpen(true)}
-                      className="px-2.5 py-1 rounded-lg bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] text-[10px] font-black flex items-center gap-1 shrink-0"
+                      className="px-2.5 py-1 rounded-lg bg-white/10 border border-white/20 text-neutral-200 text-[10px] font-bold flex items-center gap-1 shrink-0"
                       title="Abrir Super Janela com todas as tarefas e detalhes"
                     >
                       <Maximize2 size={11} />
@@ -491,20 +491,20 @@ export default function CustomDatePickerModal({
                             onClick={() => handleSelectExistingTask(t.id)}
                             className={`w-full px-2.5 py-1.5 rounded-[4px] border text-left transition-all flex items-center justify-between gap-2 ${
                               isSel
-                                ? 'bg-[#facc15]/12 border-[#facc15]/55'
+                                ? 'bg-white/15 border-white/40'
                                 : 'bg-[#0A0A0C] border-white/10 hover:border-white/25'
                             }`}
                           >
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 mb-0.5">
-                                <span className="px-1.5 py-0.5 rounded bg-[#facc15]/15 text-[#facc15] text-[9px] font-black uppercase">
+                                <span className="px-1.5 py-0.5 rounded bg-white/10 text-neutral-300 text-[9px] font-bold uppercase">
                                   {freqName}
                                 </span>
                                 <span className="text-[10px] font-mono text-[#A1A1AA]">
                                   {tDates.length}d · {tTimes.length}h
                                 </span>
                               </div>
-                              <div className={`text-xs font-bold truncate ${isSel ? 'text-[#facc15]' : 'text-white'}`}>
+                              <div className="text-xs font-bold truncate text-white">
                                 {t.title}
                               </div>
                               {t.description && (
@@ -512,7 +512,7 @@ export default function CustomDatePickerModal({
                               )}
                             </div>
                             <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                              isSel ? 'bg-[#facc15]/20 border-[#facc15]/70 text-[#facc15]' : 'border-[#3f3f46]'
+                              isSel ? 'bg-white text-black border-white' : 'border-[#3f3f46]'
                             }`}>
                               {isSel && <Check size={10} strokeWidth={3} />}
                             </div>
@@ -541,7 +541,7 @@ export default function CustomDatePickerModal({
                 onClick={() => setAdditiveMode(prev => !prev)}
                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all ${
                   additiveMode
-                    ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/40'
+                    ? 'bg-white/15 text-white border-white/30'
                     : 'bg-white/5 text-[#8E8E93] border-white/10 hover:text-white'
                 }`}
               >
@@ -559,9 +559,9 @@ export default function CustomDatePickerModal({
                   key={tab.id}
                   type="button"
                   onClick={() => setMode(tab.id)}
-                  className={`py-2 rounded-lg text-[11px] font-black transition-all ${
+                  className={`py-2 rounded-lg text-[11px] font-bold transition-all ${
                     mode === tab.id
-                      ? 'bg-[#facc15] text-black'
+                      ? 'bg-white text-black font-bold'
                       : 'text-[#A1A1AA] hover:text-white'
                   }`}
                 >
@@ -593,7 +593,7 @@ export default function CustomDatePickerModal({
                       }}
                       className={`py-1.5 px-1 rounded-lg text-[10px] font-bold border transition-all ${
                         dailyInterval === opt.v
-                          ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
+                          ? 'bg-white/15 text-white border-white/35'
                           : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
                       }`}
                     >
@@ -616,7 +616,7 @@ export default function CustomDatePickerModal({
                       }}
                       className={`py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
                         dailyDuration === dur
-                          ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/60'
+                          ? 'bg-white/15 text-white border-white/35'
                           : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
                       }`}
                     >
@@ -642,7 +642,7 @@ export default function CustomDatePickerModal({
                 <button
                   type="button"
                   onClick={() => triggerDailyApply()}
-                  className="px-3 py-1.5 rounded-lg bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/40 text-[#facc15] text-[10px] font-black transition-all"
+                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/25 text-white text-[10px] font-bold transition-all"
                 >
                   Gerar Datas Diárias
                 </button>
@@ -664,7 +664,7 @@ export default function CustomDatePickerModal({
                         setWeeklyDays(weekdays);
                         triggerWeeklyApply(weekdays, weeklyInterval, weeklyDurationWeeks);
                       }}
-                      className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[#facc15] font-bold"
+                      className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white font-bold"
                     >
                       Seg-Sex
                     </button>
@@ -675,7 +675,7 @@ export default function CustomDatePickerModal({
                         setWeeklyDays(weekend);
                         triggerWeeklyApply(weekend, weeklyInterval, weeklyDurationWeeks);
                       }}
-                      className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-[#facc15] font-bold"
+                      className="text-[10px] px-2 py-0.5 rounded bg-white/5 hover:bg-white/10 text-neutral-300 hover:text-white font-bold"
                     >
                       FDS
                     </button>
@@ -691,7 +691,7 @@ export default function CustomDatePickerModal({
                         onClick={() => toggleWeeklyDay(idx)}
                         className={`py-2 rounded-md text-[11px] font-black border transition-all ${
                           active
-                            ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
+                            ? 'bg-white/15 text-white border-white/35'
                             : 'bg-[#0A0A0C] text-[#8E8E93] border-white/10 hover:text-white'
                         }`}
                       >
@@ -719,7 +719,7 @@ export default function CustomDatePickerModal({
                         }}
                         className={`py-1.5 rounded-lg text-[10px] font-bold border ${
                           weeklyInterval === opt.v
-                            ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
+                            ? 'bg-white/15 text-white border-white/35'
                             : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10'
                         }`}
                       >
@@ -746,7 +746,7 @@ export default function CustomDatePickerModal({
                         }}
                         className={`py-1.5 rounded-lg text-[10px] font-bold border ${
                           weeklyDurationWeeks === dur.v
-                            ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
+                            ? 'bg-white/15 text-white border-white/35'
                             : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10'
                         }`}
                       >
@@ -773,7 +773,7 @@ export default function CustomDatePickerModal({
                       applyGeneratedDates(generateAnnualDates(y, annualMonths, annualDaysOfMonth));
                     }
                   }}
-                  className="p-1.5 rounded-lg bg-[#0A0A0C] border border-white/10 text-[#facc15] hover:bg-white/5"
+                  className="p-1.5 rounded-lg bg-[#0A0A0C] border border-white/10 text-neutral-300 hover:text-white hover:bg-white/5"
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -787,7 +787,7 @@ export default function CustomDatePickerModal({
                       applyGeneratedDates(generateAnnualDates(y, annualMonths, annualDaysOfMonth));
                     }
                   }}
-                  className="p-1.5 rounded-lg bg-[#0A0A0C] border border-white/10 text-[#facc15] hover:bg-white/5"
+                  className="p-1.5 rounded-lg bg-[#0A0A0C] border border-white/10 text-neutral-300 hover:text-white hover:bg-white/5"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -806,7 +806,7 @@ export default function CustomDatePickerModal({
                         applyGeneratedDates(generateAnnualDates(annualYear, allM, annualDaysOfMonth));
                       }
                     }}
-                    className="text-[10px] font-bold text-[#facc15] hover:underline"
+                    className="text-[10px] font-bold text-neutral-300 hover:text-white hover:underline"
                   >
                     Todos os 12 meses
                   </button>
@@ -821,7 +821,7 @@ export default function CustomDatePickerModal({
                         onClick={() => toggleAnnualMonth(idx)}
                         className={`py-1.5 rounded-lg text-[10px] font-black border transition-all ${
                           active
-                            ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
+                            ? 'bg-white/15 text-white border-white/35'
                             : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
                         }`}
                       >
@@ -850,7 +850,7 @@ export default function CustomDatePickerModal({
                             applyGeneratedDates(generateAnnualDates(annualYear, annualMonths, preset.days));
                           }
                         }}
-                        className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-[#facc15] font-bold"
+                        className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-neutral-300 font-bold"
                       >
                         {preset.label}
                       </button>
@@ -867,7 +867,7 @@ export default function CustomDatePickerModal({
                         onClick={() => toggleAnnualDay(dayNum)}
                         className={`h-7 rounded-lg text-[10px] font-bold border transition-all ${
                           active
-                            ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/55'
+                            ? 'bg-white/15 text-white border-white/35'
                             : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
                         }`}
                       >
@@ -888,18 +888,18 @@ export default function CustomDatePickerModal({
                 <button
                   type="button"
                   onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
-                  className="p-1.5 text-[#facc15] hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-1.5 text-neutral-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <div className="flex items-center gap-1.5 text-xs font-black text-white">
-                  <CalendarIcon size={13} className="text-[#facc15]" />
+                  <CalendarIcon size={13} className="text-neutral-300" />
                   <span>{MONTH_NAMES[month]} {year}</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setCurrentMonth(new Date(year, month + 1, 1))}
-                  className="p-1.5 text-[#facc15] hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-1.5 text-neutral-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -925,13 +925,15 @@ export default function CustomDatePickerModal({
                       type="button"
                       onClick={() => toggleDate(cell.dateStr)}
                       className={`h-8 rounded-lg flex flex-col items-center justify-center relative text-[11px] transition-all ${
-                        isSelected
-                          ? 'bg-[#facc15] text-black font-black'
-                          : isToday
-                          ? 'bg-[#facc15]/15 text-[#facc15] font-bold border border-[#facc15]/40'
+                        isToday
+                          ? isSelected
+                            ? 'bg-[#facc15] text-black font-black ring-2 ring-[#facc15] shadow-[0_0_8px_rgba(250,204,21,0.3)]'
+                            : 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_8px_rgba(250,204,21,0.25)]'
+                          : isSelected
+                          ? 'bg-white text-black font-bold'
                           : cell.isCurrentMonth
                           ? 'text-white/90 hover:bg-white/10 font-medium'
-                          : 'text-[#555558] hover:bg-white/5'
+                          : 'text-neutral-600 hover:bg-white/5 font-normal'
                       }`}
                     >
                       <span>{cell.day}</span>

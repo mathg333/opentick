@@ -148,7 +148,7 @@ export default function ScheduledTasksOverviewModal({
         {/* Header */}
         <div className="px-4 py-3 border-b border-white/10 bg-[#111114] flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-md bg-[#16161a] border border-white/10 flex items-center justify-center text-[#facc15] shrink-0">
+            <div className="w-8 h-8 rounded-md bg-[#16161a] border border-white/10 flex items-center justify-center text-white shrink-0">
               <Layers size={16} />
             </div>
             <div className="min-w-0">
@@ -173,7 +173,7 @@ export default function ScheduledTasksOverviewModal({
         {/* Search + Filter Controls */}
         <div className="px-3.5 pt-2.5 pb-2 bg-[#0e0e11] border-b border-white/10 space-y-2 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="flex-1 min-w-0 flex items-center gap-2 bg-[#141417] border border-white/10 focus-within:border-[#facc15]/50 rounded-md px-2.5 py-1.5">
+            <div className="flex-1 min-w-0 flex items-center gap-2 bg-[#141417] border border-white/10 focus-within:border-white/30 rounded-md px-2.5 py-1.5">
               <Search size={13} className="text-neutral-400 shrink-0" />
               <input
                 type="text"
@@ -188,7 +188,7 @@ export default function ScheduledTasksOverviewModal({
               onClick={() => setShowCompleted((p) => !p)}
               className={`px-2.5 py-1.5 rounded-md text-[10px] font-semibold border transition-all shrink-0 ${
                 showCompleted
-                  ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50'
+                  ? 'bg-white/10 text-white border-white/30'
                   : 'bg-[#141417] text-[#8E8E93] border-white/10 hover:text-white'
               }`}
             >
@@ -206,14 +206,14 @@ export default function ScheduledTasksOverviewModal({
                   onClick={() => setFilterMode(tab.id)}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-semibold shrink-0 border flex items-center gap-1.5 transition-all ${
                     active
-                      ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50'
+                      ? 'bg-white/10 text-white border-white/30'
                       : 'bg-[#141417] text-[#A1A1AA] border-white/10 hover:text-white'
                   }`}
                 >
                   <span>{tab.label}</span>
                   <span
                     className={`px-1.5 py-0.2 rounded text-[9px] font-mono ${
-                      active ? 'bg-[#facc15]/20 text-[#facc15]' : 'bg-white/5 text-neutral-400'
+                      active ? 'bg-white/20 text-white' : 'bg-white/5 text-neutral-400'
                     }`}
                   >
                     {tab.count}
@@ -247,20 +247,20 @@ export default function ScheduledTasksOverviewModal({
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="px-1.5 py-0.5 rounded-[3px] bg-white/[0.06] border border-white/10 text-neutral-300 text-[9px] font-semibold uppercase tracking-wide inline-flex items-center gap-1">
-                          <Repeat size={9} className="text-[#facc15]" />
+                          <Repeat size={9} className="text-neutral-400" />
                           {MODE_LABELS[t._freq] || 'Agendada'}
                         </span>
                         <span className="px-1.5 py-0.5 rounded-[3px] bg-white/5 border border-white/10 text-[9px] font-medium text-neutral-400">
                           {t._projectName}
                         </span>
                         {t.priority > 0 && (
-                          <span className="px-1.5 py-0.5 rounded-[3px] bg-[#facc15]/10 text-[#facc15] text-[9px] font-bold inline-flex items-center gap-0.5">
+                          <span className="px-1.5 py-0.5 rounded-[3px] bg-white/10 text-white text-[9px] font-semibold inline-flex items-center gap-0.5 border border-white/15">
                             <Flag size={8} />
                             P{t.priority}
                           </span>
                         )}
                         {t.completed && (
-                          <span className="px-1.5 py-0.5 rounded-[3px] bg-[#facc15]/12 text-[#facc15] text-[9px] font-semibold inline-flex items-center gap-1">
+                          <span className="px-1.5 py-0.5 rounded-[3px] bg-white/10 text-white text-[9px] font-semibold inline-flex items-center gap-1 border border-white/15">
                             <Check size={9} />
                             Concluída
                           </span>
@@ -285,9 +285,9 @@ export default function ScheduledTasksOverviewModal({
                           onSelectTask(t);
                           onClose();
                         }}
-                        className="px-2.5 py-1 rounded-md bg-[#18181c] hover:bg-[#222228] border border-white/12 hover:border-[#facc15]/45 text-neutral-200 text-[10px] font-semibold flex items-center gap-1 shrink-0 active:scale-95 transition-all"
+                        className="px-2.5 py-1 rounded-md bg-[#18181c] hover:bg-[#222228] border border-white/12 hover:border-white/30 text-neutral-200 text-[10px] font-semibold flex items-center gap-1 shrink-0 active:scale-95 transition-all"
                       >
-                        <SlidersHorizontal size={11} className="text-[#facc15]" />
+                        <SlidersHorizontal size={11} className="text-neutral-400" />
                         <span>Personalizar</span>
                       </button>
                     )}
@@ -298,13 +298,13 @@ export default function ScheduledTasksOverviewModal({
                     {t._times.length > 0 && (
                       <div className="flex items-center flex-wrap gap-1">
                         <span className="text-[10px] text-[#8E8E93] flex items-center gap-1 mr-0.5">
-                          <Clock size={10} className="text-[#facc15]" />
+                          <Clock size={10} className="text-neutral-400" />
                           Horários:
                         </span>
                         {t._times.map((tm) => (
                           <span
                             key={tm}
-                            className="px-1.5 py-0.5 rounded-[3px] bg-[#0A0A0C] border border-white/10 text-[#facc15] text-[10px] font-mono font-semibold"
+                            className="px-1.5 py-0.5 rounded-[3px] bg-[#0A0A0C] border border-white/10 text-white text-[10px] font-mono font-semibold"
                           >
                             {tm}{t.endTime && t._times.length === 1 ? ` - ${t.endTime}` : ''}
                           </span>
@@ -330,7 +330,7 @@ export default function ScheduledTasksOverviewModal({
                           <button
                             type="button"
                             onClick={() => setExpandedTaskId(isExpanded ? null : t.id)}
-                            className="px-1.5 py-0.5 rounded-[3px] bg-white/5 text-[#facc15] text-[10px] font-semibold inline-flex items-center gap-0.5"
+                            className="px-1.5 py-0.5 rounded-[3px] bg-white/5 text-neutral-300 hover:text-white text-[10px] font-semibold inline-flex items-center gap-0.5"
                           >
                             {isExpanded ? (
                               <>

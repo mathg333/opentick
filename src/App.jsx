@@ -108,7 +108,7 @@ export default function App() {
         if (pending && pending.taskId) {
           const foundTask = (state.tasks || []).find(task => task.id === pending.taskId) || {
             id: pending.taskId,
-            title: pending.taskTitle || 'Lembrete OpenTick'
+            title: pending.taskTitle || 'Lembrete OpenTask'
           };
           setAlarmActiveTask({
             ...foundTask,
@@ -134,7 +134,7 @@ export default function App() {
       if (!taskId) return;
       const foundTask = (state.tasks || []).find(task => task.id === taskId) || {
         id: taskId,
-        title: taskTitle || 'Lembrete OpenTick'
+        title: taskTitle || 'Lembrete OpenTask'
       };
       setAlarmActiveTask({
         ...foundTask,
@@ -206,8 +206,8 @@ export default function App() {
 
         try {
           if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification(taskObj.title || 'Lembrete OpenTick', {
-              body: `OpenTick: Alarme agendado para às ${timeLabel}`,
+            new Notification(taskObj.title || 'Lembrete OpenTask', {
+              body: `OpenTask: Alarme agendado para às ${timeLabel}`,
               icon: '/vite.svg',
               requireInteraction: alarmMode !== 'short'
             });
@@ -327,7 +327,7 @@ export default function App() {
       markAlarmDismissed(occId);
 
       if (isNativeAndroid()) {
-        snoozeNativeAlarm(alarmActiveTask.id, alarmActiveTask.title || 'Lembrete OpenTick', snoozeMins, occId);
+        snoozeNativeAlarm(alarmActiveTask.id, alarmActiveTask.title || 'Lembrete OpenTask', snoozeMins, occId);
       } else {
         webSnoozesRef.current.push({
           task: alarmActiveTask,
@@ -554,7 +554,7 @@ export default function App() {
       const proj = state.projects.find(p => p.id === projId);
       return proj ? proj.name : 'Lista';
     }
-    return 'OpenTick';
+    return 'OpenTask';
   };
 
   return (
@@ -567,7 +567,7 @@ export default function App() {
             className="p-1 -ml-1 text-white hover:text-neutral-300 active:scale-95 transition-transform"
             title="Abrir Menu de Listas"
           >
-            <Menu className="w-6 h-6 stroke-[2] text-neutral-200 hover:text-[#facc15] transition-colors" />
+            <Menu className="w-6 h-6 stroke-[2] text-neutral-200 hover:text-white transition-colors" />
           </button>
           <h1 className="text-lg font-bold text-white tracking-tight truncate max-w-[270px]">
             {getHeaderTitle()}
@@ -586,7 +586,7 @@ export default function App() {
               title="Ver Seus Rankings, Escudos e XP"
             >
               <RankShield2D tier={calculateGamification(state).currentRank.tier} size={20} showGlow={false} />
-              <span className="text-[11px] font-black text-amber-300 font-mono">
+              <span className="text-[11px] font-black text-neutral-200 font-mono">
                 Nv.{calculateGamification(state).level}
               </span>
             </button>
@@ -597,7 +597,7 @@ export default function App() {
             className="p-1.5 text-neutral-400 hover:text-white rounded-lg active:bg-neutral-800"
             title="Pesquisar"
           >
-            <Search className="w-5 h-5 text-neutral-300 hover:text-[#facc15] transition-colors" />
+            <Search className="w-5 h-5 text-neutral-300 hover:text-white transition-colors" />
           </button>
           
         </div>
@@ -641,9 +641,9 @@ export default function App() {
       {/* MAIN VIEW CONTENT AREA */}
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#000000] relative">
         {missingPermissions && (
-          <div className="bg-[#facc15]/15 border-b border-[#facc15]/30 px-4 py-2.5 flex items-center justify-between text-xs text-neutral-200 z-30">
+          <div className="bg-[#141418] border-b border-white/15 px-4 py-2.5 flex items-center justify-between text-xs text-neutral-200 z-30">
             <div className="flex items-center gap-2">
-              <span className="text-[#facc15] text-sm">⏰</span>
+              <span className="text-white text-sm">⏰</span>
               <span>Para o alarme abrir na tela de bloqueio, ative as permissões.</span>
             </div>
             <button
@@ -654,7 +654,7 @@ export default function App() {
                 setTimeout(requestFullScreenIntentPermission, 1500);
                 setMissingPermissions(false);
               }}
-              className="px-2.5 py-1 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/50 text-[#facc15] font-bold rounded-[4px] text-[11px] shrink-0 transition-colors"
+              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 border border-white/25 text-white font-semibold rounded-[4px] text-[11px] shrink-0 transition-colors"
             >
               Ativar
             </button>
@@ -699,7 +699,7 @@ export default function App() {
           )}
         </div>
 
-        {/* MOBILE BOTTOM NAVIGATION BAR (Aligned 5-col grid, flush minimalist '+' button, yellow only when active) */}
+        {/* MOBILE BOTTOM NAVIGATION BAR (Aligned 5-col grid, flush minimalist '+' button, white active state) */}
         <nav className="md:hidden grid grid-cols-5 items-center bg-[#000000] border-t border-[#18181c] py-1.5 pb-[max(0.55rem,env(safe-area-inset-bottom))] px-1 z-30 shrink-0">
           {/* Tab 1: Tarefas */}
           <button
@@ -713,13 +713,13 @@ export default function App() {
           >
             <div className={`w-7 h-7 rounded-[4px] flex items-center justify-center transition-colors border ${
               isTaskView
-                ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
+                ? 'bg-white/15 border-white/60 text-white'
                 : 'bg-transparent border-transparent text-neutral-400 hover:text-neutral-200'
             }`}>
               <CheckSquare className="w-4 h-4" />
             </div>
             <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${
-              isTaskView ? 'text-[#facc15]' : 'text-neutral-500'
+              isTaskView ? 'text-white font-bold' : 'text-neutral-500'
             }`}>
               Tarefas
             </span>
@@ -736,14 +736,14 @@ export default function App() {
           >
             <div className={`w-7 h-7 rounded-[4px] flex items-center justify-center transition-colors border ${
               activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits'
-                ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
+                ? 'bg-white/15 border-white/60 text-white'
                 : 'bg-transparent border-transparent text-neutral-400 hover:text-neutral-200'
             }`}>
               <CalendarDays className="w-4 h-4" />
             </div>
             <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${
               activeView === 'calendar' || activeView === 'eisenhower' || activeView === 'habits'
-                ? 'text-[#facc15]'
+                ? 'text-white font-bold'
                 : 'text-neutral-500'
             }`}>
               Visualizar
@@ -757,7 +757,7 @@ export default function App() {
                 setQuickAddPrefill(null);
                 setIsQuickAddOpen(true);
               }}
-              className="w-9 h-9 rounded-full bg-[#16161a] hover:bg-[#1f1f24] active:scale-90 border border-white/25 hover:border-[#facc15]/60 text-neutral-100 flex items-center justify-center transition-all"
+              className="w-9 h-9 rounded-full bg-[#16161a] hover:bg-[#1f1f24] active:scale-90 border border-white/25 hover:border-white/60 text-neutral-100 flex items-center justify-center transition-all"
               title="Nova Tarefa"
             >
               <Plus className="w-4 h-4 stroke-[2.2]" />
@@ -775,12 +775,12 @@ export default function App() {
           >
             <div className={`w-7 h-7 rounded-[4px] flex items-center justify-center p-1 transition-colors border ${
               activeView === 'stats'
-                ? 'bg-[#facc15]/15 border-[#facc15]/55'
+                ? 'bg-white/15 border-white/60'
                 : 'bg-transparent border-transparent opacity-80'
             }`}>
               <RankShield2D tier={calculateGamification(state).currentRank.tier} size={18} showGlow={false} />
             </div>
-            <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${activeView === 'stats' ? 'text-[#facc15]' : 'text-neutral-500'}`}>
+            <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${activeView === 'stats' ? 'text-white font-bold' : 'text-neutral-500'}`}>
               Escudo
             </span>
           </button>
@@ -796,12 +796,12 @@ export default function App() {
           >
             <div className={`w-7 h-7 rounded-[4px] flex items-center justify-center transition-colors border ${
               activeView === 'pomodoro'
-                ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
+                ? 'bg-white/15 border-white/60 text-white'
                 : 'bg-transparent border-transparent text-neutral-400 hover:text-neutral-200'
             }`}>
               <Clock className="w-4 h-4" />
             </div>
-            <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${activeView === 'pomodoro' ? 'text-[#facc15]' : 'text-neutral-500'}`}>
+            <span className={`text-[10px] font-semibold mt-0.5 truncate max-w-full ${activeView === 'pomodoro' ? 'text-white font-bold' : 'text-neutral-500'}`}>
               Foco
             </span>
           </button>

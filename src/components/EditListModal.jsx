@@ -4,7 +4,7 @@ import { X, Trash2, Check } from 'lucide-react';
 export default function EditListModal({ isOpen, onClose, project, store }) {
   const { updateProject, deleteProject } = store;
   const [name, setName] = useState('');
-  const [color, setColor] = useState('#facc15');
+  const [color, setColor] = useState('#ffffff');
   const [icon, setIcon] = useState('📁');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -12,7 +12,7 @@ export default function EditListModal({ isOpen, onClose, project, store }) {
     setConfirmDelete(false);
     if (project) {
       setName(project.name);
-      setColor(project.color || '#facc15');
+      setColor(project.color || '#ffffff');
       setIcon(project.icon || '📁');
     }
   }, [project, isOpen]);
@@ -132,7 +132,7 @@ export default function EditListModal({ isOpen, onClose, project, store }) {
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/55 text-[#facc15]"
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-neutral-200 text-black transition-colors"
               >
                 Salvar
               </button>

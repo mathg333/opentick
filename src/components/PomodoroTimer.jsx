@@ -111,7 +111,7 @@ export default function PomodoroTimer({ store, activeTask }) {
       <div className="px-4 py-3 md:px-8 md:pt-6 md:pb-4 border-b border-[#222226] bg-[#0c0c0e] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-[#18181c] border border-[#27272a] flex items-center justify-center shrink-0">
-            <Clock className="w-4 h-4 text-yellow-400" />
+            <Clock className="w-4 h-4 text-neutral-300" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -127,7 +127,7 @@ export default function PomodoroTimer({ store, activeTask }) {
 
         <div className="flex items-center gap-2 text-xs">
           <div className="bg-[#09090b] px-2.5 py-1 rounded-xl border border-[#222226] flex items-center gap-1.5">
-            <Flame className="w-3.5 h-3.5 text-[#facc15] fill-current" />
+            <Flame className="w-3.5 h-3.5 text-neutral-300 fill-current" />
             <span className="font-bold text-neutral-100">{totalMinutesToday} min</span>
             <span className="text-neutral-500 hidden sm:inline">({todaySessions.length} sessões)</span>
           </div>
@@ -141,7 +141,7 @@ export default function PomodoroTimer({ store, activeTask }) {
           <button
             onClick={() => switchMode('pomodoro')}
             className={`px-3 md:px-5 py-2 rounded-xl text-xs font-bold transition-all flex-1 sm:flex-none text-center ${
-              mode === 'pomodoro' ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/45' : 'text-neutral-400 hover:text-white border border-transparent'
+              mode === 'pomodoro' ? 'bg-white/15 text-white border border-white/40' : 'text-neutral-400 hover:text-white border border-transparent'
             }`}
           >
             Foco (25m)
@@ -207,7 +207,7 @@ export default function PomodoroTimer({ store, activeTask }) {
             className={`px-6 md:px-8 py-3 rounded-2xl font-bold text-sm flex items-center gap-2.5 shadow-xl transition-all active:scale-95 ${
               isRunning
                 ? 'bg-[#27272a] text-white border border-[#3f3f46]'
-                : 'bg-[#141418] hover:bg-[#1c1c22] text-neutral-100 border border-[#facc15]/45'
+                : 'bg-white hover:bg-neutral-200 text-black border border-white'
             }`}
           >
             {isRunning ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
@@ -255,7 +255,7 @@ export default function PomodoroTimer({ store, activeTask }) {
               step="0.05"
               value={volume}
               onChange={handleVolumeChange}
-              className="w-20 accent-[#facc15]"
+              className="w-20 accent-white"
             />
           </div>
 
@@ -274,7 +274,7 @@ export default function PomodoroTimer({ store, activeTask }) {
                   onClick={() => handleToggleNoise(snd.id === 'none' ? noiseType : snd.id)}
                   className={`p-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
                     isActive
-                      ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50 font-semibold'
+                      ? 'bg-white/15 text-white border-white/40 font-semibold'
                       : 'bg-[#151518] text-neutral-400 border-[#222226] hover:text-white'
                   }`}
                 >

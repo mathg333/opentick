@@ -403,7 +403,7 @@ export default function HomeHabitCard({ store }) {
               <div className="text-[10px] text-[#8E8E93] mt-0.5">Concluídos</div>
             </div>
             <div className="bg-[#121215] border border-white/[0.07] rounded-md p-2 text-center">
-              <div className="text-xs font-bold text-[#facc15]">{overviewStats.overallPct}%</div>
+              <div className="text-xs font-bold text-white">{overviewStats.overallPct}%</div>
               <div className="text-[10px] text-[#8E8E93] mt-0.5">Taxa Geral</div>
             </div>
             <div className="bg-[#121215] border border-white/[0.07] rounded-md p-2 text-center">
@@ -420,7 +420,7 @@ export default function HomeHabitCard({ store }) {
               <div className="text-[10px] text-[#8E8E93] mt-0.5">Concluídos</div>
             </div>
             <div className="bg-[#121215] border border-white/[0.07] rounded-md p-2 text-center">
-              <div className="text-xs font-bold text-[#facc15]">{specificStats.rate}%</div>
+              <div className="text-xs font-bold text-white">{specificStats.rate}%</div>
               <div className="text-[10px] text-[#8E8E93] mt-0.5">Desempenho</div>
             </div>
             <div className="bg-[#121215] border border-white/[0.07] rounded-md p-2 text-center">
@@ -466,13 +466,13 @@ export default function HomeHabitCard({ store }) {
                           viewScope === 'specific' && !cell.isFuture && activeItem ? 'cursor-pointer' : ''
                         } ${
                           high
-                            ? 'bg-[#facc15]'
+                            ? 'bg-white'
                             : cell.isDone
-                            ? 'bg-[#facc15]/80'
+                            ? 'bg-white/70'
                             : cell.isFuture
                             ? 'bg-[#141418] opacity-30'
                             : 'bg-[#191920] border border-[#24242c] hover:border-neutral-500'
-                        } ${cell.isToday ? 'ring-1 ring-white/60' : ''}`}
+                        } ${cell.isToday ? 'ring-2 ring-[#facc15]' : ''}`}
                       />
                     );
                   })}
@@ -505,7 +505,7 @@ export default function HomeHabitCard({ store }) {
               className={`flex-1 py-2 px-3 rounded-md font-semibold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 border ${
                 isDoneToday
                   ? 'bg-white/10 border-white/20 text-white'
-                  : 'bg-[#121215] hover:bg-[#1a1a1f] border-white/12 text-neutral-200'
+                  : 'bg-white text-black font-bold hover:bg-neutral-200 border-white'
               }`}
             >
               <Check className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -517,7 +517,7 @@ export default function HomeHabitCard({ store }) {
               onClick={handleOpenNote}
               className={`flex-1 py-2 px-3 rounded-md font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors border ${
                 noteModalOpen
-                  ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
+                  ? 'bg-white/10 border-white/30 text-white'
                   : 'bg-[#121215] hover:bg-[#1a1a1f] text-neutral-300 border-white/12'
               }`}
             >
@@ -533,7 +533,7 @@ export default function HomeHabitCard({ store }) {
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
               placeholder={`Escrever nota para "${activeItem.title}"...`}
-              className="w-full bg-[#121215] border border-white/10 focus:border-[#facc15]/50 rounded-md p-2 text-xs text-white placeholder-neutral-500 outline-none resize-none h-16"
+              className="w-full bg-[#121215] border border-white/10 focus:border-white/40 rounded-md p-2 text-xs text-white placeholder-neutral-500 outline-none resize-none h-16"
             />
             <div className="flex justify-end gap-2">
               <button
@@ -546,7 +546,7 @@ export default function HomeHabitCard({ store }) {
               <button
                 type="button"
                 onClick={handleSaveNote}
-                className="px-3 py-1 rounded-md bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] text-xs font-bold"
+                className="px-3 py-1 rounded-md bg-white/15 border border-white/30 text-white text-xs font-semibold"
               >
                 Salvar Nota
               </button>
@@ -567,7 +567,7 @@ export default function HomeHabitCard({ store }) {
           >
             <div className="px-4 py-3 border-b border-white/10 bg-[#111114] flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-md bg-[#16161a] border border-white/10 flex items-center justify-center text-[#facc15]">
+                <div className="w-7 h-7 rounded-md bg-[#16161a] border border-white/10 flex items-center justify-center text-white">
                   <ListChecks size={15} />
                 </div>
                 <div>
@@ -585,7 +585,7 @@ export default function HomeHabitCard({ store }) {
             </div>
 
             <div className="px-3.5 pt-2.5 pb-2 space-y-2 border-b border-white/10 bg-[#0e0e11] shrink-0">
-              <div className="flex items-center gap-2 bg-[#141417] border border-white/10 focus-within:border-[#facc15]/50 rounded-md px-2.5 py-1.5">
+              <div className="flex items-center gap-2 bg-[#141417] border border-white/10 focus-within:border-white/40 rounded-md px-2.5 py-1.5">
                 <Search size={13} className="text-neutral-400 shrink-0" />
                 <input
                   type="text"
@@ -608,7 +608,7 @@ export default function HomeHabitCard({ store }) {
                     onClick={() => setPickerTab(tb.id)}
                     className={`py-1 rounded-[4px] text-[11px] font-semibold transition-all border ${
                       pickerTab === tb.id
-                        ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/45'
+                        ? 'bg-white/10 text-white border-white/30'
                         : 'text-[#8E8E93] border-transparent'
                     }`}
                   >
@@ -627,7 +627,7 @@ export default function HomeHabitCard({ store }) {
                 }}
                 className={`w-full px-2.5 py-1.5 rounded-[4px] border flex items-center justify-between gap-2 text-left transition-all ${
                   viewScope === 'overview'
-                    ? 'bg-[#facc15]/12 border-[#facc15]/55'
+                    ? 'bg-white/10 border-white/30'
                     : 'bg-[#121215] border-white/[0.08] hover:border-white/20'
                 }`}
               >
@@ -642,7 +642,7 @@ export default function HomeHabitCard({ store }) {
                     </div>
                   </div>
                 </div>
-                <span className="text-xs font-mono font-bold text-[#facc15] shrink-0">
+                <span className="text-xs font-mono font-bold text-white shrink-0">
                   {overviewStats.overallPct}%
                 </span>
               </button>
@@ -666,7 +666,7 @@ export default function HomeHabitCard({ store }) {
                       }}
                       className={`w-full px-2.5 py-1.5 rounded-[4px] border flex items-center justify-between gap-2 text-left transition-all ${
                         isSelected
-                          ? 'bg-[#facc15]/12 border-[#facc15]/55'
+                          ? 'bg-white/10 border-white/30'
                           : 'bg-[#121215] border-white/[0.08] hover:border-white/20'
                       }`}
                     >
@@ -676,12 +676,12 @@ export default function HomeHabitCard({ store }) {
                             {it.freqLabel}
                           </span>
                           {it.completedToday && (
-                            <span className="px-1.5 py-0.5 rounded-[3px] bg-[#facc15]/15 text-[#facc15] text-[9px] font-bold">
+                            <span className="px-1.5 py-0.5 rounded-[3px] bg-white/10 text-white text-[9px] font-bold">
                               Concluído
                             </span>
                           )}
                         </div>
-                        <div className={`text-xs font-semibold truncate ${isSelected ? 'text-[#facc15]' : 'text-white'}`}>
+                        <div className="text-xs font-semibold truncate text-white">
                           {it.title}
                         </div>
                         <div className="text-[10px] text-[#8E8E93] truncate mt-0.5">
@@ -692,7 +692,7 @@ export default function HomeHabitCard({ store }) {
                       <div
                         className={`w-4 h-4 rounded-[3px] border flex items-center justify-center shrink-0 ${
                           isSelected
-                            ? 'bg-[#facc15] border-[#facc15] text-black'
+                            ? 'bg-white border-white text-black'
                             : 'border-[#3f3f46] bg-[#0A0A0C]'
                         }`}
                       >

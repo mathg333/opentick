@@ -77,6 +77,7 @@ export default function TimeSlotModal({
   const [priority, setPriority] = useState(1);
   const [alarmEnabled, setAlarmEnabled] = useState(true);
   const [reminderOffset, setReminderOffset] = useState(0);
+  const todayStr = getTodayYMD();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -291,7 +292,7 @@ export default function TimeSlotModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={`O que você vai fazer às ${startTime}?`}
-              className="w-full bg-[#121216] border border-white/12 focus:border-[#facc15]/50 rounded-xl px-4 py-3 sm:py-3.5 text-base sm:text-lg text-white placeholder-neutral-500 outline-none font-medium transition-colors"
+              className="w-full bg-[#121216] border border-white/12 focus:border-white/40 rounded-xl px-4 py-3 sm:py-3.5 text-base sm:text-lg text-white placeholder-neutral-500 outline-none font-medium transition-colors"
             />
           </div>
 
@@ -306,7 +307,7 @@ export default function TimeSlotModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Adicione observações, link, local ou detalhes..."
-              className="w-full bg-[#121216] border border-white/12 focus:border-[#facc15]/50 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 outline-none resize-none leading-relaxed min-h-[75px] transition-colors"
+              className="w-full bg-[#121216] border border-white/12 focus:border-white/40 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 outline-none resize-none leading-relaxed min-h-[75px] transition-colors"
             />
           </div>
 
@@ -369,7 +370,7 @@ export default function TimeSlotModal({
                 {extraTimes.map((tm) => (
                   <span
                     key={tm}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-[#facc15]/10 border border-[#facc15]/30 text-[#facc15] text-[11px] font-mono font-semibold"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-white/10 border border-white/20 text-white text-[11px] font-mono font-semibold"
                   >
                     {tm}
                     <button
@@ -455,7 +456,7 @@ export default function TimeSlotModal({
                         onClick={() => setDailyDurationDays(dCount)}
                         className={`py-1.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                           dailyDurationDays === dCount
-                            ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/40'
+                            ? 'bg-white/10 text-white border-white/30'
                             : 'bg-[#0B0B0E] text-neutral-400 border-white/[0.08] hover:text-white'
                         }`}
                       >
@@ -484,7 +485,7 @@ export default function TimeSlotModal({
                           onClick={() => toggleItem(setWeeklyDays, idx)}
                           className={`py-1.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                             active
-                              ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50'
+                              ? 'bg-white/10 text-white border-white/30'
                               : 'bg-transparent text-neutral-400 border-white/[0.08] hover:text-white hover:bg-white/[0.04]'
                           }`}
                         >
@@ -510,7 +511,7 @@ export default function TimeSlotModal({
                           onClick={() => setWeeklyWeeksCount(w)}
                           className={`py-1.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                             weeklyWeeksCount === w
-                              ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/40'
+                              ? 'bg-white/10 text-white border-white/30'
                               : 'bg-[#0B0B0E] text-neutral-400 border-white/[0.08] hover:text-white'
                           }`}
                         >
@@ -552,14 +553,19 @@ export default function TimeSlotModal({
                     if (!dStr) return <div key={`m-e-${idx}`} />;
                     const dayNum = parseInt(dStr.split('-')[2], 10);
                     const picked = monthlyPickedDates.includes(dStr);
+                    const isTodayCell = dStr === todayStr;
                     return (
                       <button
                         key={dStr}
                         type="button"
                         onClick={() => toggleItem(setMonthlyPickedDates, dStr)}
                         className={`w-7 h-7 mx-auto rounded-[4px] text-[11px] flex items-center justify-center transition-colors ${
-                          picked
-                            ? 'bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] font-bold'
+                          isTodayCell
+                            ? picked
+                              ? 'bg-[#facc15] text-black font-black ring-2 ring-[#facc15] shadow-[0_0_8px_rgba(250,204,21,0.3)]'
+                              : 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_8px_rgba(250,204,21,0.25)]'
+                            : picked
+                            ? 'bg-white text-black font-bold'
                             : 'text-neutral-300 hover:bg-white/[0.06] font-normal'
                         }`}
                       >
@@ -581,7 +587,7 @@ export default function TimeSlotModal({
                         onClick={() => setMonthlyHorizon(h)}
                         className={`py-1.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                           monthlyHorizon === h
-                            ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/40'
+                            ? 'bg-white/10 text-white border-white/30'
                             : 'bg-[#0B0B0E] text-neutral-400 border-white/[0.08] hover:text-white'
                         }`}
                       >
@@ -631,7 +637,7 @@ export default function TimeSlotModal({
                           onClick={() => toggleItem(setAnnualMonths, idx)}
                           className={`py-1.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                             active
-                              ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50'
+                              ? 'bg-white/10 text-white border-white/30'
                               : 'bg-[#0B0B0E] text-neutral-400 border-white/[0.08] hover:text-white'
                           }`}
                         >
@@ -656,7 +662,7 @@ export default function TimeSlotModal({
                           onClick={() => toggleItem(setAnnualDays, dayNum)}
                           className={`w-7 h-7 mx-auto rounded-[4px] text-[10px] transition-colors ${
                             active
-                              ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/50 font-bold'
+                              ? 'bg-white/15 text-white border border-white/40 font-bold'
                               : 'text-neutral-300 hover:bg-white/[0.06] font-normal'
                           }`}
                         >
@@ -685,7 +691,7 @@ export default function TimeSlotModal({
                       onClick={() => setProjectId(p.id)}
                       className={`px-2.5 py-1 rounded-[4px] text-[11px] font-medium shrink-0 border transition-colors ${
                         projectId === p.id
-                          ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/40'
+                          ? 'bg-white/10 text-white border-white/30'
                           : 'bg-[#121216] text-neutral-400 border-white/[0.08] hover:text-white'
                       }`}
                     >
@@ -708,7 +714,7 @@ export default function TimeSlotModal({
                   onClick={() => setAlarmEnabled((p) => !p)}
                   className={`px-2 py-0.5 rounded-[4px] text-[10px] font-semibold border transition-colors ${
                     alarmEnabled
-                      ? 'bg-[#facc15]/12 border-[#facc15]/40 text-[#facc15]'
+                      ? 'bg-white/15 border-white/30 text-white'
                       : 'bg-[#0B0B0E] border-white/[0.08] text-neutral-500'
                   }`}
                 >
@@ -730,7 +736,7 @@ export default function TimeSlotModal({
                       onClick={() => setReminderOffset(opt.value)}
                       className={`px-2 py-0.5 rounded-[4px] text-[10px] shrink-0 border transition-colors ${
                         reminderOffset === opt.value
-                          ? 'bg-[#facc15]/12 border-[#facc15]/40 text-[#facc15] font-semibold'
+                          ? 'bg-white/15 border-white/30 text-white font-semibold'
                           : 'bg-[#0B0B0E] border-white/[0.08] text-neutral-400 hover:text-white'
                       }`}
                     >
@@ -755,11 +761,11 @@ export default function TimeSlotModal({
                       onClick={() => setPriority(opt.value)}
                       className={`py-2 px-2.5 rounded-lg text-xs sm:text-sm font-semibold border flex items-center justify-center gap-1.5 transition-colors ${
                         selected
-                          ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50 font-bold'
+                          ? 'bg-white/15 text-white border-white/40 font-bold'
                           : 'bg-[#121216] text-neutral-400 border-white/[0.08] hover:text-white'
                       }`}
                     >
-                      <Flag size={12} className={selected ? 'text-[#facc15]' : 'text-neutral-500'} />
+                      <Flag size={12} className={selected ? 'text-white' : 'text-neutral-500'} />
                       <span>{opt.label}</span>
                     </button>
                   );

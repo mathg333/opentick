@@ -1,6 +1,6 @@
 {
   "appId": "com.opentick.app",
-  "appName": "OpenTick",
+  "appName": "OpenTask",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {

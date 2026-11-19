@@ -57,7 +57,7 @@ export function ObsidianSelect({
           >
             <div className="px-4 py-3 border-b border-white/10 bg-[#111114] flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-7 h-7 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-[#facc15] shrink-0">
+                <div className="w-7 h-7 rounded-md bg-white/5 border border-white/10 flex items-center justify-center text-neutral-300 shrink-0">
                   <SlidersHorizontal size={14} />
                 </div>
                 <div className="min-w-0">
@@ -80,7 +80,7 @@ export function ObsidianSelect({
 
             {options.length > 5 && (
               <div className="px-3 pt-2.5 pb-1 shrink-0">
-                <div className="flex items-center gap-2 bg-[#141417] border border-white/10 focus-within:border-[#facc15]/50 rounded-lg px-3 py-2">
+                <div className="flex items-center gap-2 bg-[#141417] border border-white/10 focus-within:border-white/40 rounded-lg px-3 py-2">
                   <Search size={14} className="text-neutral-400 shrink-0" />
                   <input
                     type="text"
@@ -111,20 +111,20 @@ export function ObsidianSelect({
                       }}
                       className={`w-full px-3.5 py-2.5 rounded-lg border flex items-center justify-between gap-3 text-left transition-all ${
                         isSelected
-                          ? 'bg-[#facc15]/12 border-[#facc15]/55'
+                          ? 'bg-white/15 border-white/40'
                           : 'bg-[#121215] border-white/[0.08] hover:border-white/20'
                       }`}
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           {opt.completed && (
-                            <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-white/10 text-[#facc15] shrink-0">
+                            <span className="inline-flex items-center justify-center w-4 h-4 rounded bg-white/10 text-white shrink-0">
                               <Check size={10} className="stroke-[3]" />
                             </span>
                           )}
                           <span
                             className={`text-sm font-semibold leading-snug truncate ${
-                              isSelected ? 'text-[#facc15]' : 'text-neutral-200'
+                              isSelected ? 'text-white font-bold' : 'text-neutral-200'
                             }`}
                           >
                             {opt.label}
@@ -140,7 +140,7 @@ export function ObsidianSelect({
                       <div
                         className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 transition-all ${
                           isSelected
-                            ? 'bg-[#facc15] border-[#facc15] text-black'
+                            ? 'bg-white border-white text-black font-bold'
                             : 'border-[#4a4a52] bg-[#0A0A0C]'
                         }`}
                       >
@@ -173,7 +173,7 @@ export function ObsidianSelect({
         } ${className}`}
       >
         <span className="truncate flex-1 flex items-center gap-1.5 min-w-0">
-          {selected?.completed && <Check size={compact ? 10 : 12} className="text-[#facc15] shrink-0" />}
+          {selected?.completed && <Check size={compact ? 10 : 12} className="text-white shrink-0" />}
           <span className="truncate">{selected ? selected.label : placeholder}</span>
           {!compact && selected?.meta && (
             <span className="text-[10px] font-mono text-neutral-400 shrink-0">
@@ -250,7 +250,7 @@ export function ObsidianDateButton({
           >
             <div className="px-3.5 py-2.5 border-b border-white/10 bg-[#111114] flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CalendarIcon size={14} className="text-[#facc15]" />
+                <CalendarIcon size={14} className="text-neutral-300" />
                 <span className="text-xs font-bold text-white uppercase tracking-wider">
                   Selecionar Dia
                 </span>
@@ -305,10 +305,12 @@ export function ObsidianDateButton({
                         setIsOpen(false);
                       }}
                       className={`h-8 rounded-md text-xs font-semibold flex items-center justify-center transition-all ${
-                        isSel
-                          ? 'bg-[#facc15]/20 text-[#facc15] border border-[#facc15]/70 font-bold'
-                          : isToday
-                          ? 'bg-white/10 text-white border border-white/25'
+                        isToday
+                          ? isSel
+                            ? 'bg-[#facc15] text-black font-black ring-2 ring-[#facc15] shadow-[0_0_8px_rgba(250,204,21,0.3)]'
+                            : 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_8px_rgba(250,204,21,0.25)]'
+                          : isSel
+                          ? 'bg-white text-black font-bold'
                           : 'bg-[#141417] text-neutral-300 hover:bg-white/10 border border-white/5'
                       }`}
                     >
@@ -326,7 +328,7 @@ export function ObsidianDateButton({
                   onChange(todayStr);
                   setIsOpen(false);
                 }}
-                className="px-3 py-1 rounded-md bg-[#141417] border border-white/12 hover:border-[#facc15]/40 text-neutral-200 text-[11px] font-semibold"
+                className="px-3 py-1 rounded-md bg-[#141417] border border-white/12 hover:border-white/30 text-neutral-200 text-[11px] font-semibold"
               >
                 Hoje
               </button>

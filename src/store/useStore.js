@@ -39,7 +39,7 @@ export function useAppStore() {
             bonusXp: parsed.bonusXp ?? 450,
             settings: {
               theme: 'amoled',
-              accentColor: '#facc15',
+              accentColor: '#ffffff',
               sound: 'radar',
               volume: 0.9,
               durationMinutes: 5,
@@ -76,7 +76,7 @@ export function useAppStore() {
       bonusXp: 450,
       settings: {
         theme: 'amoled',
-        accentColor: '#facc15',
+        accentColor: '#ffffff',
         sound: 'radar',
         volume: 0.9,
         durationMinutes: 5,
@@ -425,7 +425,7 @@ export function useAppStore() {
       id: 'habit-' + Date.now(),
       name: habitData.name,
       icon: habitData.icon || 'Flame',
-      color: habitData.color || '#facc15',
+      color: habitData.color || '#ffffff',
       frequency: habitData.frequency || 'daily',
       targetDays: habitData.targetDays || [0, 1, 2, 3, 4, 5, 6],
       currentStreak: 0,
@@ -518,7 +518,7 @@ export function useAppStore() {
     const newProj = {
       id: 'proj-' + Date.now(),
       name: projectData.name,
-      color: projectData.color || '#facc15',
+      color: projectData.color || '#ffffff',
       icon: projectData.icon || 'Folder'
     };
     setState(prev => ({ ...prev, projects: [...prev.projects, newProj] }));
@@ -563,7 +563,7 @@ export function useAppStore() {
       const newProjects = projects.map(p => ({
         id: 'tt-proj-' + p.id,
         name: p.name,
-        color: p.color || '#facc15',
+        color: p.color || '#ffffff',
         icon: 'Folder'
       }));
 

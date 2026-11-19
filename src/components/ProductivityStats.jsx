@@ -74,9 +74,9 @@ export default function ProductivityStats({ store }) {
       {/* Desktop Header - Limpo e Minimalista */}
       <div className="hidden md:flex px-8 pt-5 pb-4 border-b border-[#1c1c22] bg-[#0c0c0e] items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-[#facc15] p-0.5 shadow-md shadow-[#facc15]/20 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-neutral-500 to-white p-0.5 shadow-md shadow-[#facc15]/20 flex items-center justify-center shrink-0">
             <div className="w-full h-full rounded-[10px] bg-[#121215] flex items-center justify-center">
-              <Trophy className="w-4 h-4 text-[#facc15]" />
+              <Trophy className="w-4 h-4 text-white" />
             </div>
           </div>
           <div>
@@ -90,7 +90,7 @@ export default function ProductivityStats({ store }) {
           onClick={() => setIsProfileModalOpen(true)}
           className="text-xs font-bold text-white bg-[#1c1c22] hover:bg-[#25252d] border border-[#2c2c34] px-3.5 py-1.5 rounded-xl flex items-center gap-2 transition-all shadow"
         >
-          <Camera className="w-3.5 h-3.5 text-[#facc15]" />
+          <Camera className="w-3.5 h-3.5 text-white" />
           <span>Editar Perfil & Capa</span>
         </button>
       </div>
@@ -112,7 +112,7 @@ export default function ProductivityStats({ store }) {
               className="relative z-10 text-[11px] sm:text-xs font-bold text-white bg-black/65 hover:bg-black/85 px-3 py-1.5 rounded-full border border-white/20 backdrop-blur-md flex items-center gap-1.5 shadow transition-all active:scale-95"
               title="Trocar Foto de Perfil ou Imagem de Capa"
             >
-              <Camera className="w-3.5 h-3.5 text-[#facc15]" />
+              <Camera className="w-3.5 h-3.5 text-white" />
               <span>Trocar Foto / Capa</span>
             </button>
           </div>
@@ -126,7 +126,7 @@ export default function ProductivityStats({ store }) {
                 className="relative group shrink-0 cursor-pointer" 
                 title="Toque para alterar avatar e perfil"
               >
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-amber-500 via-[#facc15] to-orange-400 p-1 shadow-2xl ring-4 ring-[#121215] group-hover:scale-105 transition-transform">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-tr from-neutral-500 via-[#facc15] to-orange-400 p-1 shadow-2xl ring-4 ring-[#121215] group-hover:scale-105 transition-transform">
                   <div className="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center font-black text-white text-3xl sm:text-4xl select-none">
                     {profile.avatarType === 'image' && profile.avatar ? (
                       <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -135,7 +135,7 @@ export default function ProductivityStats({ store }) {
                     )}
                   </div>
                 </div>
-                <div className="absolute bottom-0 right-0 bg-[#facc15] text-black rounded-full p-1.5 shadow-md border-2 border-[#121215] flex items-center justify-center">
+                <div className="absolute bottom-0 right-0 bg-white text-black rounded-full p-1.5 shadow-md border-2 border-[#121215] flex items-center justify-center">
                   <Camera className="w-3.5 h-3.5" />
                 </div>
               </div>
@@ -146,8 +146,8 @@ export default function ProductivityStats({ store }) {
                   <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                     {profile.name || 'Mathx'}
                   </h2>
-                  <span className="bg-[#facc15]/15 text-[#facc15] font-extrabold text-[11px] px-2.5 py-0.5 rounded-full border border-[#facc15]/30 font-mono flex items-center gap-1">
-                    <Zap className="w-3 h-3 fill-[#facc15] text-[#facc15]" />
+                  <span className="bg-white/10 text-white font-extrabold text-[11px] px-2.5 py-0.5 rounded-full border border-white/20 font-mono flex items-center gap-1">
+                    <Zap className="w-3 h-3 fill-white text-white" />
                     Nível {stats.level}
                   </span>
                 </div>
@@ -180,7 +180,7 @@ export default function ProductivityStats({ store }) {
                 {isPreviewing && (
                   <button
                     onClick={() => setPreviewRank(null)}
-                    className="text-[10px] text-amber-400 font-bold underline hover:text-amber-300"
+                    className="text-[10px] text-neutral-200 font-bold underline hover:text-neutral-200"
                   >
                     Voltar ao Meu Elo
                   </button>
@@ -206,7 +206,7 @@ export default function ProductivityStats({ store }) {
           <div className="px-4 sm:px-6 pb-5 pt-3 border-t border-[#1c1c22]">
             <div className="flex items-center justify-between text-xs font-bold mb-2">
               <span className="text-neutral-200 flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-[#facc15] fill-[#facc15]" />
+                <Zap className="w-3.5 h-3.5 text-white fill-white" />
                 Progresso para o próximo Ranking
               </span>
               <span className="text-neutral-400 font-mono text-[11px]">
@@ -219,7 +219,7 @@ export default function ProductivityStats({ store }) {
             {/* Barra Visual */}
             <div className="w-full h-3 rounded-full bg-[#1c1c24] border border-[#272730] overflow-hidden p-0.5">
               <div 
-                className="h-full rounded-full bg-gradient-to-r from-amber-500 via-[#facc15] to-[#ff3d00] transition-all duration-500 shadow-[0_0_12px_rgba(255,107,0,0.5)]"
+                className="h-full rounded-full bg-gradient-to-r from-neutral-500 via-[#facc15] to-[#ff3d00] transition-all duration-500 shadow-[0_0_12px_rgba(255,107,0,0.5)]"
                 style={{ width: `${stats.tierProgressPct}%` }}
               />
             </div>
@@ -229,12 +229,12 @@ export default function ProductivityStats({ store }) {
                 Elo atual: <strong className="text-white">{stats.currentRank.name}</strong>
               </span>
               {stats.nextRank ? (
-                <span className="text-amber-400 font-bold">
+                <span className="text-neutral-200 font-bold">
                   Faltam apenas {stats.xpToNextTier} XP para {stats.nextRank.shortName}
                 </span>
               ) : (
-                <span className="text-[#facc15] font-bold inline-flex items-center gap-1">
-                  <Crown className="w-3.5 h-3.5 text-[#facc15]" />
+                <span className="text-white font-bold inline-flex items-center gap-1">
+                  <Crown className="w-3.5 h-3.5 text-white" />
                   Soberano de Rubi Supremo
                 </span>
               )}
@@ -246,14 +246,14 @@ export default function ProductivityStats({ store }) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-xl bg-[#facc15]/15 border border-[#facc15]/30 text-[#facc15]">
+              <div className="p-1.5 rounded-xl bg-white/10 border border-white/20 text-white">
                 <Shield className="w-5 h-5" />
               </div>
               <h3 className="text-base sm:text-lg font-black text-white tracking-tight">
                 Seus Rankings
               </h3>
             </div>
-            <span className="text-xs font-bold text-[#facc15] bg-[#facc15]/10 px-3 py-1 rounded-full border border-[#facc15]/25">
+            <span className="text-xs font-bold text-white bg-white/5 px-3 py-1 rounded-full border border-white/60/25">
               Elo: {stats.currentRank.name}
             </span>
           </div>
@@ -270,7 +270,7 @@ export default function ProductivityStats({ store }) {
                   onClick={() => setPreviewRank(rank)}
                   className={`rounded-2xl border p-3 flex flex-col items-center text-center relative transition-all cursor-pointer active:scale-95 ${
                     isSelected
-                      ? 'bg-gradient-to-b from-[#1e1e28] to-[#121218] border-[#facc15] ring-2 ring-[#facc15]/40 shadow-xl shadow-[#facc15]/20 scale-102'
+                      ? 'bg-gradient-to-b from-[#1e1e28] to-[#121218] border-white/60 ring-2 ring-white/60/40 shadow-xl shadow-[#facc15]/20 scale-102'
                       : isUnlocked
                       ? 'bg-[#121216] border-[#2c2c36] hover:border-neutral-500'
                       : 'bg-[#0a0a0c] border-[#1c1c20] opacity-45 hover:opacity-75'
@@ -278,7 +278,7 @@ export default function ProductivityStats({ store }) {
                   title={`Toque para visualizar o escudo de ${rank.shortName}`}
                 >
                   {isCurrent && (
-                    <span className="absolute -top-2.5 bg-[#facc15] text-black text-[9px] font-black px-2.5 py-0.5 rounded-full shadow tracking-wider uppercase">
+                    <span className="absolute -top-2.5 bg-white text-black text-[9px] font-black px-2.5 py-0.5 rounded-full shadow tracking-wider uppercase">
                       Seu Elo
                     </span>
                   )}
@@ -304,8 +304,8 @@ export default function ProductivityStats({ store }) {
 
                   <div className="mt-2.5 w-full pt-2 border-t border-white/5 flex items-center justify-center">
                     {isUnlocked ? (
-                      <span className="inline-flex items-center gap-1.5 text-[10px] text-amber-300 font-extrabold">
-                        <Crown className="w-3.5 h-3.5 text-[#facc15] fill-[#facc15]" />
+                      <span className="inline-flex items-center gap-1.5 text-[10px] text-neutral-200 font-extrabold">
+                        <Crown className="w-3.5 h-3.5 text-white fill-white" />
                         Conquistado
                       </span>
                     ) : (
@@ -326,7 +326,7 @@ export default function ProductivityStats({ store }) {
           <div className="bg-[#121215] border border-[#27272a] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
               <span className="font-bold">Tarefas Concluídas</span>
-              <CheckCircle2 className="w-4 h-4 text-[#facc15]" />
+              <CheckCircle2 className="w-4 h-4 text-white" />
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{completedTasks}</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
@@ -337,7 +337,7 @@ export default function ProductivityStats({ store }) {
           <div className="bg-[#121215] border border-[#27272a] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
               <span className="font-bold">Tempo de Foco</span>
-              <Clock className="w-4 h-4 text-[#facc15]" />
+              <Clock className="w-4 h-4 text-white" />
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{totalFocusHours}h</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
@@ -348,7 +348,7 @@ export default function ProductivityStats({ store }) {
           <div className="bg-[#121215] border border-[#27272a] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
               <span className="font-bold">Maior Sequência</span>
-              <Flame className="w-4 h-4 text-[#facc15]" />
+              <Flame className="w-4 h-4 text-white" />
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{bestHabitStreak} dias</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
@@ -359,7 +359,7 @@ export default function ProductivityStats({ store }) {
           <div className="bg-[#121215] border border-[#27272a] rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between text-neutral-400 text-xs mb-2">
               <span className="font-bold">Taxa de Conclusão</span>
-              <TrendingUp className="w-4 h-4 text-[#facc15]" />
+              <TrendingUp className="w-4 h-4 text-white" />
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{completionRate}%</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
@@ -372,7 +372,7 @@ export default function ProductivityStats({ store }) {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-neutral-200 uppercase tracking-wider flex items-center gap-2">
-              <Award className="w-4 h-4 text-[#facc15]" />
+              <Award className="w-4 h-4 text-white" />
               Sala de Conquistas & Insígnias ({stats.unlockedAchievementsCount}/{stats.achievements.length})
             </h3>
           </div>
@@ -383,7 +383,7 @@ export default function ProductivityStats({ store }) {
                 key={ach.id}
                 className={`p-3.5 rounded-2xl border flex items-center gap-3.5 transition-all relative overflow-hidden ${
                   ach.unlocked
-                    ? 'bg-gradient-to-br from-[#18171b] via-[#131317] to-[#0e0e11] border-[#facc15]/35 shadow-lg shadow-[#facc15]/5'
+                    ? 'bg-gradient-to-br from-[#18171b] via-[#131317] to-[#0e0e11] border-white/60/35 shadow-lg shadow-[#facc15]/5'
                     : 'bg-[#0a0a0c] border-[#1c1c20] opacity-55'
                 }`}
               >
@@ -394,7 +394,7 @@ export default function ProductivityStats({ store }) {
                 <div
                   className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
                     ach.unlocked
-                      ? 'bg-gradient-to-br from-[#facc15]/20 via-[#eab308]/10 to-[#0a0a0c] border border-[#facc15]/45 shadow-[0_0_16px_rgba(250,204,21,0.16)]'
+                      ? 'bg-gradient-to-br from-[#facc15]/20 via-[#eab308]/10 to-[#0a0a0c] border border-white/30 shadow-[0_0_16px_rgba(250,204,21,0.16)]'
                       : 'bg-[#121216] border border-[#24242b]'
                   }`}
                 >
@@ -407,7 +407,7 @@ export default function ProductivityStats({ store }) {
                       {ach.title}
                     </h4>
                     {ach.unlocked ? (
-                      <span className="text-[10px] text-[#facc15] bg-[#facc15]/12 border border-[#facc15]/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0">
+                      <span className="text-[10px] text-white bg-white/10 border border-white/20 px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0">
                         <Check className="w-2.5 h-2.5 stroke-[3]" />
                         Conquistado
                       </span>

@@ -45,8 +45,8 @@ export default function AlarmOverlayModal({
 
       {/* Header */}
       <div className="w-full max-w-md flex items-center justify-between text-neutral-300 z-10">
-        <div className="flex items-center gap-2 bg-[#141418]/90 border border-[#facc15]/30 px-3 py-1.5 rounded-md">
-          <Volume2 className="w-3.5 h-3.5 text-[#facc15] animate-pulse" />
+        <div className="flex items-center gap-2 bg-[#141418]/90 border border-white/20 px-3 py-1.5 rounded-md">
+          <Volume2 className="w-3.5 h-3.5 text-white animate-pulse" />
           <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-200 truncate max-w-[190px]">
             {soundName === 'custom' && customAudioName
               ? `Música: ${customAudioName}`
@@ -67,15 +67,15 @@ export default function AlarmOverlayModal({
       {/* Center Pulsing Clock & Task Info */}
       <div className="flex flex-col items-center justify-center text-center max-w-md w-full space-y-6 my-auto z-10">
         <div className="relative flex items-center justify-center">
-          <div className="absolute w-40 h-40 rounded-full border border-[#facc15]/25 animate-ping" />
-          <div className="relative w-28 h-28 rounded-full bg-[#121216] border border-[#facc15]/60 shadow-[0_0_30px_rgba(250,204,21,0.18)] flex flex-col items-center justify-center">
-            <Bell className="w-10 h-10 text-[#facc15]" />
+          <div className="absolute w-40 h-40 rounded-full border border-white/15 animate-ping" />
+          <div className="relative w-28 h-28 rounded-full bg-[#121216] border border-white/40 shadow-[0_0_30px_rgba(255,255,255,0.08)] flex flex-col items-center justify-center">
+            <Bell className="w-10 h-10 text-white" />
           </div>
         </div>
 
         <div className="space-y-2.5">
-          <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#facc15] block">
-            Compromisso OpenTick
+          <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-neutral-400 block">
+            Compromisso OpenTask
           </span>
 
           <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight break-words px-3">
@@ -84,7 +84,7 @@ export default function AlarmOverlayModal({
 
           {displayTime && (
             <div className="inline-flex items-center gap-1.5 text-xs text-neutral-200 bg-[#141418] border border-white/12 px-3 py-1 rounded-md font-mono">
-              <Clock className="w-3.5 h-3.5 text-[#facc15]" />
+              <Clock className="w-3.5 h-3.5 text-neutral-300" />
               <span>Programado para as {displayTime}</span>
             </div>
           )}
@@ -101,7 +101,7 @@ export default function AlarmOverlayModal({
       <div className="w-full max-w-sm space-y-2.5 pb-2 z-10">
         <button
           onClick={onStopAlarm}
-          className="w-full py-3.5 rounded-lg bg-[#facc15] hover:bg-[#eab308] active:scale-[0.99] text-black font-black text-sm uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2"
+          className="w-full py-3.5 rounded-lg bg-white hover:bg-neutral-200 active:scale-[0.99] text-black font-black text-sm uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2"
         >
           <Check className="w-5 h-5 stroke-[3]" />
           <span>Parar Alarme</span>
@@ -112,14 +112,14 @@ export default function AlarmOverlayModal({
             onClick={onSnoozeAlarm}
             className="py-3 rounded-lg bg-[#141418] hover:bg-[#1c1c22] active:scale-[0.99] text-neutral-100 font-semibold text-xs border border-white/15 transition-all flex items-center justify-center gap-1.5"
           >
-            <Moon className="w-3.5 h-3.5 text-[#facc15]" />
+            <Moon className="w-3.5 h-3.5 text-neutral-300" />
             <span>Adiar +5 min</span>
           </button>
 
           {task && onCompleteTask ? (
             <button
               onClick={onCompleteTask}
-              className="py-3 rounded-lg bg-[#facc15]/15 hover:bg-[#facc15]/25 active:scale-[0.99] text-[#facc15] font-semibold text-xs border border-[#facc15]/45 transition-all flex items-center justify-center gap-1.5"
+              className="py-3 rounded-lg bg-white/10 hover:bg-white/20 active:scale-[0.99] text-white font-semibold text-xs border border-white/20 transition-all flex items-center justify-center gap-1.5"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Concluir Tarefa</span>

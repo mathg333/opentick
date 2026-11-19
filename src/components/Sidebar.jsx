@@ -64,7 +64,7 @@ export default function Sidebar({
   }, []);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectColor, setNewProjectColor] = useState('#facc15');
+  const [newProjectColor, setNewProjectColor] = useState('#ffffff');
   const [confirmDeleteProjId, setConfirmDeleteProjId] = useState(null);
 
   const today = new Date();
@@ -173,7 +173,7 @@ export default function Sidebar({
           className="p-3 pt-0 pb-3 flex items-center gap-3 cursor-pointer hover:bg-white/[0.02] transition-colors relative"
         >
           <div className="relative shrink-0 -mt-6">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-zinc-600 via-amber-500 to-[#facc15] p-0.5 shadow-xl ring-2 ring-[#0e0e10]">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-neutral-600 via-neutral-400 to-white p-0.5 shadow-xl ring-2 ring-[#0e0e10]">
               <div className="w-full h-full rounded-full bg-[#1c1c1e] overflow-hidden flex items-center justify-center font-black text-white text-2xl select-none">
                 {profile.avatarType === 'image' && profile.avatar ? (
                   <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -182,7 +182,7 @@ export default function Sidebar({
                 )}
               </div>
             </div>
-            <span className="absolute -top-0.5 -right-0.5 bg-[#18181c] border border-[#facc15]/50 text-[#facc15] text-[9px] font-black rounded-full p-0.5 shadow-md flex items-center justify-center w-5 h-5">
+            <span className="absolute -top-0.5 -right-0.5 bg-[#18181c] border border-white/30 text-white text-[9px] font-black rounded-full p-0.5 shadow-md flex items-center justify-center w-5 h-5">
               👑
             </span>
           </div>
@@ -203,7 +203,7 @@ export default function Sidebar({
               <span className="bg-[#1c1c22] border border-[#2c2c34] text-neutral-300 font-semibold px-1.5 py-0.2 rounded font-mono text-[9px]">
                 Nv.{gamificationStats.level}
               </span>
-              <span className="text-[#facc15] text-[10px] font-mono truncate">
+              <span className="text-neutral-300 text-[10px] font-mono truncate">
                 {gamificationStats.totalXp} XP
               </span>
             </div>
@@ -219,7 +219,7 @@ export default function Sidebar({
             onClick={() => handleSelectView('tasks-today')}
             className={`w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs font-semibold transition-all border ${
               activeView === 'tasks-today'
-                ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/45'
+                ? 'bg-white/10 text-white border-white/20'
                 : 'text-neutral-300 hover:bg-[#1a1a1e] border-transparent'
             }`}
           >
@@ -227,7 +227,7 @@ export default function Sidebar({
               <div
                 className={`w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs shrink-0 border ${
                   activeView === 'tasks-today'
-                    ? 'bg-[#facc15]/20 border-[#facc15]/55 text-[#facc15]'
+                    ? 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_6px_rgba(250,204,21,0.25)]'
                     : 'bg-[#18181c] border-white/10 text-neutral-200'
                 }`}
               >
@@ -239,7 +239,7 @@ export default function Sidebar({
               <span
                 className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded border ${
                   activeView === 'tasks-today'
-                    ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/35'
+                    ? 'bg-white/15 text-white border-white/30'
                     : 'bg-[#18181c] text-neutral-400 border-white/10'
                 }`}
               >
@@ -253,7 +253,7 @@ export default function Sidebar({
             onClick={() => handleSelectView('tasks-inbox')}
             className={`w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs font-semibold transition-all border ${
               activeView === 'tasks-inbox'
-                ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/45'
+                ? 'bg-white/10 text-white border-white/20'
                 : 'text-neutral-300 hover:bg-[#1a1a1e] border-transparent'
             }`}
           >
@@ -261,7 +261,7 @@ export default function Sidebar({
               <div
                 className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 ${
                   activeView === 'tasks-inbox'
-                    ? 'bg-[#facc15]/20 border-[#facc15]/50 text-[#facc15]'
+                    ? 'bg-white/15 border-white/30 text-white'
                     : 'bg-[#18181c] border-white/10 text-neutral-300'
                 }`}
               >
@@ -281,7 +281,7 @@ export default function Sidebar({
             onClick={() => handleSelectView('stats')}
             className={`w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs font-semibold transition-all border ${
               activeView === 'stats'
-                ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/50'
+                ? 'bg-white/10 text-white border-white/20'
                 : 'text-neutral-200 hover:bg-[#1a1a20] border-transparent'
             }`}
           >
@@ -289,14 +289,14 @@ export default function Sidebar({
               <div
                 className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 p-1 border ${
                   activeView === 'stats'
-                    ? 'bg-[#facc15]/20 border-[#facc15]/50'
+                    ? 'bg-white/15 border-white/30'
                     : 'bg-[#18181c] border-white/10'
                 }`}
               >
                 <RankShield2D tier={gamificationStats.currentRank.tier} size={20} showGlow={false} />
               </div>
               <div className="text-left min-w-0 flex-1">
-                <span className={`text-[13px] font-semibold block truncate ${activeView === 'stats' ? 'text-[#facc15]' : 'text-white'}`}>
+                <span className={`text-[13px] font-semibold block truncate ${activeView === 'stats' ? 'text-white' : 'text-white'}`}>
                   Ranking & XP
                 </span>
                 <span className="text-[10px] text-neutral-400 font-medium block truncate whitespace-nowrap">
@@ -375,7 +375,7 @@ export default function Sidebar({
                   </button>
                   <button
                     type="submit"
-                    className="text-xs px-2.5 py-1 bg-[#facc15]/15 border border-[#facc15]/50 text-[#facc15] font-bold rounded-md"
+                    className="text-xs px-2.5 py-1 bg-white hover:bg-neutral-200 text-black font-bold rounded-md transition-colors"
                   >
                     Salvar
                   </button>
@@ -406,7 +406,7 @@ export default function Sidebar({
                 onClick={() => handleSelectView(`project-${proj.id}`)}
                 className={`group flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs transition-all cursor-pointer border ${
                   isActive
-                    ? 'bg-[#facc15]/12 text-[#facc15] font-semibold border-[#facc15]/45'
+                    ? 'bg-white/10 text-white font-semibold border-white/20'
                     : 'text-neutral-300 hover:bg-[#1a1a1e] border-transparent'
                 }`}
               >
@@ -414,7 +414,7 @@ export default function Sidebar({
                   <div
                     className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 ${
                       isActive
-                        ? 'bg-[#facc15]/20 border-[#facc15]/45 text-[#facc15]'
+                        ? 'bg-white/15 border-white/30 text-white'
                         : 'bg-[#18181c] border-white/10 text-neutral-300'
                     }`}
                   >
@@ -478,7 +478,7 @@ export default function Sidebar({
                 onClick={() => handleSelectView(tool.id)}
                 className={`w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition-all border ${
                   isActive
-                    ? 'bg-[#facc15]/12 text-[#facc15] font-semibold border-[#facc15]/45'
+                    ? 'bg-white/10 text-white font-semibold border-white/20'
                     : 'text-neutral-300 hover:bg-[#1a1a1e] border-transparent'
                 }`}
               >
@@ -486,7 +486,7 @@ export default function Sidebar({
                   <div
                     className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 ${
                       isActive
-                        ? 'bg-[#facc15]/20 border-[#facc15]/50 text-[#facc15]'
+                        ? 'bg-white/15 border-white/30 text-white'
                         : 'bg-[#18181c] border-white/10 text-neutral-300'
                     }`}
                   >
@@ -507,7 +507,7 @@ export default function Sidebar({
             onClick={() => handleSelectView('tasks-completed')}
             className={`w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition-all border ${
               activeView === 'tasks-completed'
-                ? 'bg-[#facc15]/12 text-[#facc15] font-semibold border-[#facc15]/45'
+                ? 'bg-white/10 text-white font-semibold border-white/20'
                 : 'text-neutral-300 hover:bg-[#1a1a1e] border-transparent'
             }`}
           >
@@ -515,7 +515,7 @@ export default function Sidebar({
               <div
                 className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 ${
                   activeView === 'tasks-completed'
-                    ? 'bg-[#facc15]/20 border-[#facc15]/50 text-[#facc15]'
+                    ? 'bg-white/15 border-white/30 text-white'
                     : 'bg-[#18181c] border-white/10 text-neutral-300'
                 }`}
               >
@@ -532,7 +532,7 @@ export default function Sidebar({
             onClick={() => handleSelectView('tasks-trash')}
             className={`w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition-all border ${
               activeView === 'tasks-trash'
-                ? 'bg-[#facc15]/12 text-[#facc15] font-semibold border-[#facc15]/45'
+                ? 'bg-white/10 text-white font-semibold border-white/20'
                 : 'text-neutral-400 hover:bg-[#1a1a1e] border-transparent'
             }`}
           >
@@ -540,7 +540,7 @@ export default function Sidebar({
               <div
                 className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 ${
                   activeView === 'tasks-trash'
-                    ? 'bg-[#facc15]/20 border-[#facc15]/50 text-[#facc15]'
+                    ? 'bg-white/15 border-white/30 text-white'
                     : 'bg-[#18181c] border-white/10 text-neutral-400'
                 }`}
               >
@@ -576,7 +576,7 @@ export default function Sidebar({
           onClick={() => setIsAddingProject(true)}
           className="flex items-center gap-1.5 text-xs font-semibold text-neutral-200 hover:text-white px-3 py-1.5 rounded-md bg-[#18181c] border border-white/10 active:scale-95 transition-transform"
         >
-          <Plus className="w-3.5 h-3.5 text-[#facc15]" />
+          <Plus className="w-3.5 h-3.5 text-neutral-300" />
           <span>Criar Lista</span>
         </button>
 
@@ -596,11 +596,11 @@ export default function Sidebar({
       <div className="px-3 py-1.5 bg-[#0a0a0c] border-t border-[#1c1c20] flex items-center justify-between text-[10px] text-neutral-400 select-none">
         <div className="flex items-center gap-1.5">
           {syncStatus === 'syncing' ? (
-            <RefreshCw className="w-3 h-3 text-[#facc15] animate-spin" />
+            <RefreshCw className="w-3 h-3 text-neutral-300 animate-spin" />
           ) : isOnline ? (
             <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
           ) : (
-            <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" />
+            <span className="w-2 h-2 rounded-full bg-neutral-400" />
           )}
           <span className="font-medium">
             {syncStatus === 'syncing'

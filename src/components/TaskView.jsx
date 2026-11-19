@@ -139,8 +139,8 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
   const priorityColors = {
     0: 'text-neutral-600',
     1: 'text-neutral-400',
-    2: 'text-amber-400',
-    3: 'text-rose-400 fill-rose-400'
+    2: 'text-neutral-200',
+    3: 'text-white'
   };
 
   const handleQuickAdd = (e) => {
@@ -424,7 +424,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                           <button
                             type="button"
                             onClick={() => restoreTask(task.id)}
-                            className="px-2 py-1 rounded-[4px] bg-[#1c1c20] hover:bg-[#facc15]/15 border border-white/10 hover:border-[#facc15]/45 text-neutral-300 hover:text-[#facc15] text-[10px] font-bold flex items-center gap-1"
+                            className="px-2 py-1 rounded-[4px] bg-[#1c1c20] hover:bg-white/10 border border-white/10 hover:border-white/30 text-neutral-300 hover:text-white text-[10px] font-semibold flex items-center gap-1"
                             title="Restaurar tarefa"
                           >
                             <RotateCcw className="w-3 h-3" />
@@ -473,7 +473,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                     <button
                       type="button"
                       onClick={() => setIsCustomDateModalOpen(true)}
-                      className="px-3 py-1.5 bg-[#18181c] hover:bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] font-bold text-[11px] rounded-[4px] flex items-center gap-1.5"
+                      className="px-3 py-1.5 bg-[#18181c] hover:bg-white/10 border border-white/20 text-white font-semibold text-[11px] rounded-[4px] flex items-center gap-1.5"
                     >
                       <CalendarIcon className="w-3.5 h-3.5" />
                       <span>Agendar no Calendário</span>
@@ -575,9 +575,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                   e.stopPropagation();
                                   toggleTaskCompleted(task.id);
                                 }}
-                                className="w-4 h-4 rounded-[3px] bg-[#facc15]/20 border border-[#facc15] flex items-center justify-center shrink-0"
+                                className="w-4 h-4 rounded-[3px] bg-white/20 border border-white flex items-center justify-center shrink-0"
                               >
-                                <Check className="w-2.5 h-2.5 text-[#facc15] stroke-[3]" />
+                                <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
                               </button>
                               <span className="text-xs text-neutral-400 line-through truncate">
                                 {task.title}
@@ -637,7 +637,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                 }}
                                 className="w-4 h-4 rounded-[3px] border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
                               >
-                                {task.completed && <Check className="w-3 h-3 text-[#facc15] stroke-[3]" />}
+                                {task.completed && <Check className="w-3 h-3 text-white stroke-[3]" />}
                               </button>
                               <span className="text-sm font-medium text-neutral-100 truncate block">
                                 {task.title}
@@ -688,7 +688,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                   }}
                                   className="w-5 h-5 rounded-md border-2 border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
                                 >
-                                  {task.completed && <Check className="w-3.5 h-3.5 text-[#facc15] stroke-[3]" />}
+                                  {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
                                 </button>
                                 <div className="flex-1 min-w-0">
                                   <span className="text-sm sm:text-base font-medium text-neutral-100 truncate block">
@@ -852,9 +852,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
         {viewLayout === 'kanban' && activeView !== 'tasks-trash' && (
           <div className="flex-1 overflow-x-auto p-4 flex gap-4 pb-32">
             {[
-              { id: 'todo', label: 'A Fazer', color: 'border-[#facc15]/30', badge: 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30', tasks: kanbanTodo },
-              { id: 'in_progress', label: 'Em Andamento', color: 'border-[#facc15]/30', badge: 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30', tasks: kanbanInProgress },
-              { id: 'done', label: 'Concluído', color: 'border-[#facc15]/30', badge: 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/30', tasks: kanbanDone }
+              { id: 'todo', label: 'A Fazer', color: 'border-white/20', badge: 'bg-white/10 text-white border border-white/20', tasks: kanbanTodo },
+              { id: 'in_progress', label: 'Em Andamento', color: 'border-white/20', badge: 'bg-white/10 text-white border border-white/20', tasks: kanbanInProgress },
+              { id: 'done', label: 'Concluído', color: 'border-white/20', badge: 'bg-white/10 text-white border border-white/20', tasks: kanbanDone }
             ].map(col => (
               <div 
                 key={col.id} 
@@ -885,7 +885,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
                       {task.dueDate && (
                         <div className="flex items-center gap-1 text-[10px] text-neutral-400">
-                          <CalendarIcon className="w-3 h-3 text-[#facc15]" />
+                          <CalendarIcon className="w-3 h-3 text-neutral-400" />
                           <span className="truncate">{task.dueDate} {getTaskTimes(task).length > 0 ? ` às ${getTaskTimes(task).join(', ')}` : ''}</span>
                         </div>
                       )}
@@ -1002,7 +1002,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                     type="button"
                     onClick={() => {
                       if (inlineListName.trim()) {
-                        const newProj = addProject({ name: inlineListName.trim(), color: '#facc15' });
+                        const newProj = addProject({ name: inlineListName.trim(), color: '#ffffff' });
                         updateTask(selectedTask.id, { projectId: newProj.id });
                       }
                       setInlineListName('');
@@ -1174,8 +1174,12 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                         type="button"
                         onClick={() => handleToggleDateInTask(dStr)}
                         className={`h-7 w-7 mx-auto rounded-full text-[11px] font-bold flex items-center justify-center transition-all ${
-                          isMarked
-                            ? 'border border-[#facc15]/80 text-[#facc15] font-bold bg-[#facc15]/10'
+                          dStr === todayStr
+                            ? isMarked
+                              ? 'bg-[#facc15] text-black font-black ring-2 ring-[#facc15] shadow-[0_0_8px_rgba(250,204,21,0.3)]'
+                              : 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_8px_rgba(250,204,21,0.25)]'
+                            : isMarked
+                            ? 'border border-white/40 text-white font-semibold'
                             : 'text-neutral-300 hover:bg-[#28282e]'
                         }`}
                       >

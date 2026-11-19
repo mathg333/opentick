@@ -6,13 +6,13 @@ const tomorrow = addDaysYMD(today, 1);
 const inTwoDays = addDaysYMD(today, 2);
 
 export const INITIAL_PROJECTS = [
-  { id: 'inbox', name: 'Caixa de Entrada', color: '#facc15', isDefault: true, icon: 'Inbox' },
-  { id: 'proj-tech', name: 'Trilha Tecnologia — Aprender...', color: '#facc15', icon: 'BookOpen' },
-  { id: 'proj-sprint', name: 'Sprint de dias — Limpeza e Neg...', color: '#facc15', icon: 'Rocket' },
-  { id: 'proj-alta', name: 'Alta Prioridade', color: '#facc15', icon: 'Flame' },
-  { id: 'proj-media', name: 'Média Prioridade', color: '#facc15', icon: 'Zap' },
-  { id: 'proj-leitura', name: 'Leitura', color: '#facc15', icon: 'BookOpen' },
-  { id: 'proj-nao-fazer', name: 'O QUE NÃO FAZER', color: '#facc15', icon: 'Slash' }
+  { id: 'inbox', name: 'Caixa de Entrada', color: '#ffffff', isDefault: true, icon: 'Inbox' },
+  { id: 'proj-tech', name: 'Trilha Tecnologia — Aprender...', color: '#ffffff', icon: 'BookOpen' },
+  { id: 'proj-sprint', name: 'Sprint de dias — Limpeza e Neg...', color: '#ffffff', icon: 'Rocket' },
+  { id: 'proj-alta', name: 'Alta Prioridade', color: '#ffffff', icon: 'Flame' },
+  { id: 'proj-media', name: 'Média Prioridade', color: '#ffffff', icon: 'Zap' },
+  { id: 'proj-leitura', name: 'Leitura', color: '#ffffff', icon: 'BookOpen' },
+  { id: 'proj-nao-fazer', name: 'O QUE NÃO FAZER', color: '#ffffff', icon: 'Slash' }
 ];
 
 export const INITIAL_TASKS = [
@@ -96,7 +96,7 @@ export const INITIAL_HABITS = [
   {
     id: 'h-1',
     name: 'Estudo Diário (1h)',
-    color: '#facc15',
+    color: '#ffffff',
     frequency: 'daily',
     checkIns: {
       [today]: true,
@@ -108,7 +108,7 @@ export const INITIAL_HABITS = [
   {
     id: 'h-2',
     name: 'Treino de Força',
-    color: '#facc15',
+    color: '#ffffff',
     frequency: 'daily',
     checkIns: {
       [yesterday]: true
@@ -119,7 +119,7 @@ export const INITIAL_HABITS = [
   {
     id: 'h-3',
     name: 'Leitura 20 Páginas',
-    color: '#facc15',
+    color: '#ffffff',
     frequency: 'daily',
     checkIns: {},
     currentStreak: 2,

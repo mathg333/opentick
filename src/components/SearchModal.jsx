@@ -69,7 +69,7 @@ export default function SearchModal({ isOpen, onClose, store }) {
               )}
             </div>
             {task.priority > 0 && (
-              <Flag className={`w-3.5 h-3.5 ${task.priority === 3 ? "text-[#facc15] fill-[#facc15]" : task.priority === 2 ? "text-[#facc15]" : "text-[#facc15]/60"}`} />
+              <Flag className={`w-3.5 h-3.5 ${task.priority === 3 ? "text-white fill-white" : task.priority === 2 ? "text-neutral-200" : "text-neutral-400"}`} />
             )}
           </div>
         ))}

@@ -85,8 +85,8 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
       <div className="bg-[#121215] border border-white/15 rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="p-4 border-b border-white/10 flex items-center justify-between bg-[#0e0e11]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-md bg-[#18181c] border border-[#facc15]/40 flex items-center justify-center">
-              <ShieldAlert className="w-4 h-4 text-[#facc15]" />
+            <div className="w-8 h-8 rounded-md bg-[#18181c] border border-white/20 flex items-center justify-center">
+              <ShieldAlert className="w-4 h-4 text-white" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Permissões de Alarme</h3>
@@ -109,7 +109,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
           {permissions.notificationsGranted === false && (
             <div className="p-3 rounded-md bg-[#18181c] border border-white/10 flex items-center justify-between gap-3">
               <div className="flex items-start gap-2.5">
-                <Bell className="w-4 h-4 text-[#facc15] mt-0.5 shrink-0" />
+                <Bell className="w-4 h-4 text-neutral-300 mt-0.5 shrink-0" />
                 <div>
                   <h4 className="text-xs font-bold text-white">Permitir Notificações</h4>
                   <p className="text-[11px] text-neutral-400 mt-0.5">
@@ -119,7 +119,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
               </div>
               <button
                 onClick={handleGrantNotifications}
-                className="px-2.5 py-1.5 bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] font-bold text-xs rounded-md shrink-0 flex items-center gap-1"
+                className="px-2.5 py-1.5 bg-white/10 border border-white/20 text-white font-semibold text-xs rounded-md shrink-0 flex items-center gap-1"
               >
                 Ativar <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -129,7 +129,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
           {!permissions.overlayGranted && (
             <div className="p-3 rounded-md bg-[#18181c] border border-white/10 flex items-center justify-between gap-3">
               <div className="flex items-start gap-2.5">
-                <Layers className="w-4 h-4 text-[#facc15] mt-0.5 shrink-0" />
+                <Layers className="w-4 h-4 text-neutral-300 mt-0.5 shrink-0" />
                 <div>
                   <h4 className="text-xs font-bold text-white">Sobrepor Outros Apps</h4>
                   <p className="text-[11px] text-neutral-400 mt-0.5">
@@ -139,7 +139,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
               </div>
               <button
                 onClick={handleGrantOverlay}
-                className="px-2.5 py-1.5 bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] font-bold text-xs rounded-md shrink-0 flex items-center gap-1"
+                className="px-2.5 py-1.5 bg-white/10 border border-white/20 text-white font-semibold text-xs rounded-md shrink-0 flex items-center gap-1"
               >
                 Ativar <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -149,7 +149,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
           {permissions.fullScreenIntentGranted === false && (
             <div className="p-3 rounded-md bg-[#18181c] border border-white/10 flex items-center justify-between gap-3">
               <div className="flex items-start gap-2.5">
-                <AlarmClock className="w-4 h-4 text-[#facc15] mt-0.5 shrink-0" />
+                <AlarmClock className="w-4 h-4 text-neutral-300 mt-0.5 shrink-0" />
                 <div>
                   <h4 className="text-xs font-bold text-white">Alerta em Tela Cheia (Android 14+)</h4>
                   <p className="text-[11px] text-neutral-400 mt-0.5">
@@ -159,7 +159,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
               </div>
               <button
                 onClick={handleGrantFullScreen}
-                className="px-2.5 py-1.5 bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] font-bold text-xs rounded-md shrink-0 flex items-center gap-1"
+                className="px-2.5 py-1.5 bg-white/10 border border-white/20 text-white font-semibold text-xs rounded-md shrink-0 flex items-center gap-1"
               >
                 Ativar <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -169,7 +169,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
           {!permissions.exactAlarmGranted && (
             <div className="p-3 rounded-md bg-[#18181c] border border-white/10 flex items-center justify-between gap-3">
               <div className="flex items-start gap-2.5">
-                <AlarmClock className="w-4 h-4 text-[#facc15] mt-0.5 shrink-0" />
+                <AlarmClock className="w-4 h-4 text-neutral-300 mt-0.5 shrink-0" />
                 <div>
                   <h4 className="text-xs font-bold text-white">Alarmes e Lembretes Exatos</h4>
                   <p className="text-[11px] text-neutral-400 mt-0.5">
@@ -179,7 +179,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
               </div>
               <button
                 onClick={handleGrantExactAlarm}
-                className="px-2.5 py-1.5 bg-[#facc15]/15 border border-[#facc15]/55 text-[#facc15] font-bold text-xs rounded-md shrink-0 flex items-center gap-1"
+                className="px-2.5 py-1.5 bg-white/10 border border-white/20 text-white font-semibold text-xs rounded-md shrink-0 flex items-center gap-1"
               >
                 Ativar <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -189,7 +189,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
           {permissions.batteryOptimized && (
             <div className="p-3 rounded-md bg-[#18181c] border border-white/10 flex items-center justify-between gap-3">
               <div className="flex items-start gap-2.5">
-                <BatteryCharging className="w-4 h-4 text-[#facc15] mt-0.5 shrink-0" />
+                <BatteryCharging className="w-4 h-4 text-neutral-300 mt-0.5 shrink-0" />
                 <div>
                   <h4 className="text-xs font-bold text-white">Remover Restrição de Bateria</h4>
                   <p className="text-[11px] text-neutral-400 mt-0.5">
@@ -207,7 +207,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
           )}
 
           {isAllGranted && !permissions.batteryOptimized && (
-            <div className="p-3 rounded-md bg-[#facc15]/10 border border-[#facc15]/35 flex items-center gap-2.5 text-[#facc15]">
+            <div className="p-3 rounded-md bg-white/10 border border-white/20 flex items-center gap-2.5 text-white">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span className="text-xs font-semibold">Todas as permissões de alarme estão ativas!</span>
             </div>
@@ -223,7 +223,7 @@ export default function AlarmPermissionModal({ isOpen, onClose }) {
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/55 text-[#facc15] font-bold text-xs rounded-md"
+            className="px-4 py-1.5 bg-white hover:bg-neutral-200 text-black font-semibold text-xs rounded-md"
           >
             {isAllGranted ? 'Concluir' : 'Entendi'}
           </button>

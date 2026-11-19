@@ -118,9 +118,9 @@ export default function GlobalQuickAddModal({
 
   const priorityColors = {
     0: 'text-neutral-500',
-    1: 'text-[#facc15]/60',
-    2: 'text-[#facc15]',
-    3: 'text-[#facc15] fill-[#facc15]'
+    1: 'text-neutral-400',
+    2: 'text-neutral-200',
+    3: 'text-white fill-white'
   };
 
   const hasCustomActive = recurringDates.length > 1 || Boolean(recurrencePattern);
@@ -220,9 +220,9 @@ export default function GlobalQuickAddModal({
                 <button
                   type="button"
                   onClick={() => setIsTimePickerOpen(true)}
-                  className="px-3 py-1.5 rounded-lg bg-[#0c0c0e] border border-white/12 hover:border-[#facc15]/45 text-neutral-200 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all"
+                  className="px-3 py-1.5 rounded-lg bg-[#0c0c0e] border border-white/12 hover:border-white/30 text-neutral-200 text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all"
                 >
-                  <Clock className="w-3.5 h-3.5 text-[#facc15]" />
+                  <Clock className="w-3.5 h-3.5 text-neutral-400" />
                   <span>+ Horário</span>
                 </button>
                 <button
@@ -230,7 +230,7 @@ export default function GlobalQuickAddModal({
                   onClick={() => setIsCustomPickerOpen(true)}
                   className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all ${
                     hasCustomActive
-                      ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
+                      ? 'bg-white/15 border-white/40 text-white'
                       : 'bg-[#0c0c0e] border-white/12 text-neutral-200 hover:border-white/25'
                   }`}
                 >
@@ -246,13 +246,13 @@ export default function GlobalQuickAddModal({
                   {recurringTimes.map(tm => (
                     <span
                       key={tm}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#facc15]/12 border border-[#facc15]/45 text-[#facc15] text-xs font-mono font-bold"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 border border-white/20 text-neutral-200 text-xs font-mono font-bold"
                     >
                       {tm}
                       <button
                         type="button"
                         onClick={() => setRecurringTimes(prev => prev.filter(x => x !== tm))}
-                        className="text-[#facc15] hover:text-white"
+                        className="text-neutral-400 hover:text-white"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -264,7 +264,7 @@ export default function GlobalQuickAddModal({
                 <div className="pt-2 border-t border-white/[0.06] space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-neutral-300 font-semibold flex items-center gap-2">
-                      <Bell className="w-3.5 h-3.5 text-[#facc15]" />
+                      <Bell className="w-3.5 h-3.5 text-neutral-300" />
                       Alarme despertador neste horário
                     </span>
                     <button
@@ -272,7 +272,7 @@ export default function GlobalQuickAddModal({
                       onClick={() => setAlarmEnabled(p => !p)}
                       className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors ${
                         alarmEnabled
-                          ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15]'
+                          ? 'bg-white/15 border-white/30 text-white'
                           : 'bg-[#0c0c0e] border-white/10 text-neutral-400'
                       }`}
                     >
@@ -288,7 +288,7 @@ export default function GlobalQuickAddModal({
                           onClick={() => setReminderOffset(opt.value)}
                           className={`px-3 py-1.5 rounded-lg text-xs shrink-0 border transition-all ${
                             reminderOffset === opt.value
-                              ? 'bg-[#facc15]/20 border-[#facc15]/60 text-[#facc15] font-bold'
+                              ? 'bg-white/20 border-white/50 text-white font-bold'
                               : 'bg-[#0c0c0e] border-white/10 text-neutral-400 hover:text-white'
                           }`}
                         >
@@ -313,7 +313,7 @@ export default function GlobalQuickAddModal({
                     onClick={() => setPriority(p)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all ${
                       priority === p
-                        ? 'bg-[#facc15]/20 border-[#facc15]/50 text-[#facc15] font-bold'
+                        ? 'bg-white/20 border-white/50 text-white font-bold'
                         : 'text-neutral-400 hover:text-neutral-200 border-transparent'
                     }`}
                   >
@@ -330,7 +330,7 @@ export default function GlobalQuickAddModal({
                 onClick={() => setUrgent(!urgent)}
                 className={`text-xs px-3 py-2 rounded-xl border font-bold flex items-center gap-1.5 transition-all ${
                   urgent
-                    ? 'bg-[#facc15]/20 border-[#facc15]/60 text-[#facc15]'
+                    ? 'bg-white/20 border-white/50 text-white'
                     : 'bg-[#151518] border-[#27272a] text-neutral-400 hover:text-white'
                 }`}
               >
@@ -342,7 +342,7 @@ export default function GlobalQuickAddModal({
                 onClick={() => setImportant(!important)}
                 className={`text-xs px-3 py-2 rounded-xl border font-bold flex items-center gap-1.5 transition-all ${
                   important
-                    ? 'bg-[#facc15]/20 border-[#facc15]/60 text-[#facc15]'
+                    ? 'bg-white/20 border-white/50 text-white'
                     : 'bg-[#151518] border-[#27272a] text-neutral-400 hover:text-white'
                 }`}
               >

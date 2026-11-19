@@ -1,6 +1,6 @@
 {
-  "name": "OpenTick - Produtividade Dark",
-  "short_name": "OpenTick",
+  "name": "OpenTask - Produtividade Dark",
+  "short_name": "OpenTask",
   "description": "Seu clone 100% gratuito e ilimitado do TickTick com Calendário, Matriz de Eisenhower, Hábitos e Pomodoro.",
   "start_url": "/",
   "display": "standalone",

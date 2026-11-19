@@ -468,12 +468,14 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                     className="flex flex-col items-center justify-center py-1.5 rounded-lg transition-all"
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                      isSelected
+                      isToday
+                        ? isSelected
+                          ? 'bg-[#facc15] text-black font-black ring-2 ring-[#facc15] shadow-[0_0_8px_rgba(250,204,21,0.3)]'
+                          : 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_8px_rgba(250,204,21,0.25)]'
+                        : isSelected
                         ? 'bg-white text-black font-bold'
                         : hasTasks
-                        ? `border border-[#facc15]/80 text-[#facc15] font-bold bg-[#facc15]/10`
-                        : isToday
-                        ? 'border border-white/30 text-white font-bold'
+                        ? 'border border-white/40 text-white font-semibold'
                         : 'text-neutral-300 hover:bg-[#1c1c1e]'
                     }`}>
                       {day.getDate()}
@@ -497,7 +499,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
 
             <div className="space-y-2.5">
               {selectedDayTasks.map(task => {
-                const leftBarColor = task.priority === 3 ? 'bg-[#facc15]' : task.priority === 2 ? 'bg-[#facc15]/80' : task.priority === 1 ? 'bg-[#facc15]/50' : 'bg-neutral-600';
+                const leftBarColor = task.priority === 3 ? 'bg-white' : task.priority === 2 ? 'bg-neutral-300' : task.priority === 1 ? 'bg-neutral-500' : 'bg-neutral-700';
                 return (
                   <div
                     key={task.id}
@@ -513,40 +515,40 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                         {task.description && (
                           <p className="text-[11px] text-neutral-400 truncate mt-0.5">{task.description}</p>
                         )}
-                        <div className="flex items-center flex-wrap gap-2 mt-1 text-xs text-[#facc15] font-semibold">
+                        <div className="flex items-center flex-wrap gap-2 mt-1 text-xs text-neutral-300 font-medium">
                           <span>{selectedDayStr === todayStr ? 'Hoje' : (task.dueDate || selectedDayStr)}</span>
                           {getTaskTimes(task).length > 0 && (
                             <span>• {getTaskTimes(task).join(', ')}{task.endTime && getTaskTimes(task).length === 1 ? ` - ${task.endTime}` : ''}</span>
                           )}
                           {getTaskDates(task).length > 1 && (
-                            <span className="text-[10px] text-[#facc15]/80 font-medium flex items-center gap-0.5">
-                              <Repeat className="w-2.5 h-2.5 text-[#facc15]" />
+                            <span className="text-[10px] text-neutral-400 font-medium flex items-center gap-0.5">
+                              <Repeat className="w-2.5 h-2.5 text-neutral-400" />
                               {getTaskDates(task).length} dias
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 text-[#facc15] shrink-0">
+                      <div className="flex items-center gap-2 text-neutral-400 shrink-0">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOpenCustomModal(task);
                           }}
-                          className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                          className="p-1 hover:bg-white/10 rounded-lg transition-colors text-neutral-400 hover:text-white"
                           title="Personalizar dias e horários"
                         >
-                          <Repeat className="w-4 h-4 text-[#facc15]" />
+                          <Repeat className="w-4 h-4" />
                         </button>
-                        <Bell className="w-4 h-4 text-[#facc15]/70" />
+                        <Bell className="w-4 h-4 text-neutral-500" />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleTaskCompleted(task.id);
                           }}
                           className={`w-4 h-4 rounded-[3px] border flex items-center justify-center transition-colors ${
-                            task.completed ? 'bg-[#facc15] border-[#facc15] text-black' : 'border-neutral-500'
+                            task.completed ? 'bg-white border-white text-black' : 'border-neutral-500 hover:border-neutral-300'
                           }`}
                         >
                           {task.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -583,7 +585,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                     key={hour}
                     onClick={() => handleHourCellPress(hour, selectedDayStr, 'single')}
                     className={`flex items-start gap-3 py-1.5 border-b border-[#141416] cursor-pointer rounded-[4px] px-1 transition-colors ${
-                      isFocused ? 'bg-[#facc15]/5' : ''
+                      isFocused ? 'bg-white/5' : ''
                     }`}
                   >
                     <span className="w-14 text-xs font-mono font-semibold text-neutral-400 pt-1">
@@ -597,15 +599,15 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                             e.stopPropagation();
                             openTaskDetail(st.id);
                           }}
-                          className="px-2.5 py-2 bg-[#facc15]/15 border border-[#facc15]/35 rounded-[4px] text-xs text-[#facc15] font-bold flex items-center justify-between gap-2 cursor-pointer"
+                          className="px-2.5 py-2 bg-white/10 border border-white/20 rounded-[4px] text-xs text-white font-semibold flex items-center justify-between gap-2 cursor-pointer"
                         >
                           <div className="min-w-0 flex-1">
                             <span className="truncate block">{st.title}</span>
                             {st.description && (
-                              <span className="text-[10px] text-neutral-300 font-normal truncate block">{st.description}</span>
+                              <span className="text-[10px] text-neutral-400 font-normal truncate block">{st.description}</span>
                             )}
                           </div>
-                          <span className="text-[10px] font-mono shrink-0">{getTaskTimesInHour(st, hour).join(', ')}</span>
+                          <span className="text-[10px] font-mono text-neutral-300 shrink-0">{getTaskTimesInHour(st, hour).join(', ')}</span>
                         </div>
                       ))}
                       <button
@@ -614,7 +616,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                           e.stopPropagation();
                           handleOpenBookingSlot(hour, selectedDayStr, 'single');
                         }}
-                        className="w-full text-left py-1.5 px-2.5 rounded-[4px] text-xs text-neutral-500 hover:text-[#facc15] hover:bg-[#141417] cursor-pointer transition-colors"
+                        className="w-full text-left py-1.5 px-2.5 rounded-[4px] text-xs text-neutral-500 hover:text-white hover:bg-[#141417] cursor-pointer transition-colors"
                       >
                         + Reservar horário
                       </button>
@@ -652,20 +654,20 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                   className="flex flex-col items-center justify-center py-1.5 transition-all"
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all ${
-                    isSelected
+                    isToday
+                      ? isSelected
+                        ? 'bg-[#facc15] text-black font-black ring-2 ring-[#facc15] shadow-[0_0_8px_rgba(250,204,21,0.3)]'
+                        : 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_8px_rgba(250,204,21,0.25)]'
+                      : isSelected
                       ? 'bg-white text-black font-bold'
                       : hasTasks
-                      ? `border border-[#facc15]/80 font-bold bg-[#facc15]/10 ${
+                      ? `border border-white/40 font-semibold ${
                           !item.isCurrentMonth
-                            ? 'text-[#facc15]/60'
-                            : isToday
-                            ? 'text-[#facc15] ring-1 ring-[#facc15]'
-                            : 'text-[#facc15]'
+                            ? 'text-neutral-500 border-white/20'
+                            : 'text-white'
                         }`
                       : !item.isCurrentMonth
-                      ? 'text-neutral-600 font-semibold'
-                      : isToday
-                      ? 'text-white font-bold ring-1 ring-white/40'
+                      ? 'text-neutral-600 font-normal'
                       : 'text-neutral-200 font-semibold hover:bg-[#1c1c1e]'
                   }`}>
                     {item.date.getDate()}
@@ -770,12 +772,18 @@ export default function CalendarView({ store, onQuickCreateAt }) {
           <div className="min-w-[700px] p-3 space-y-2">
             <div className="grid grid-cols-8 gap-1 border-b border-[#222226] pb-2 text-center text-xs text-neutral-400 font-semibold sticky top-0 bg-[#000000] z-10">
               <div>Hora</div>
-              {weekDays.map(d => (
-                <div key={formatDate(d)} className={formatDate(d) === selectedDayStr ? 'text-[#facc15] font-bold' : ''}>
-                  <div>{d.toLocaleDateString('pt-BR', { weekday: 'short' })}</div>
-                  <div>{d.getDate()}</div>
-                </div>
-              ))}
+              {weekDays.map(d => {
+                const isDToday = formatDate(d) === todayStr;
+                const isDSel = formatDate(d) === selectedDayStr;
+                return (
+                  <div key={formatDate(d)} className={isDToday ? 'text-[#facc15] font-black' : isDSel ? 'text-white font-bold' : ''}>
+                    <div>{d.toLocaleDateString('pt-BR', { weekday: 'short' })}</div>
+                    <div className={isDToday ? 'w-6 h-6 rounded-full border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 mx-auto flex items-center justify-center shadow-[0_0_8px_rgba(250,204,21,0.25)]' : ''}>
+                      {d.getDate()}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {hours.map(hour => (
@@ -791,7 +799,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                       key={dStr}
                       onClick={() => handleHourCellPress(hour, dStr, 'single')}
                       className={`bg-[#141416] hover:bg-[#1c1c1e] rounded-lg p-1 min-h-10 cursor-pointer border space-y-0.5 transition-colors relative group ${
-                        focusedSlotKey === `${dStr}-${hour}` ? 'border-[#facc15]/50' : 'border-transparent hover:border-[#facc15]/30'
+                        focusedSlotKey === `${dStr}-${hour}` ? 'border-white/50' : 'border-transparent hover:border-white/20'
                       }`}
                     >
                       {focusedSlotKey === `${dStr}-${hour}` && (
@@ -801,7 +809,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                             e.stopPropagation();
                             handleOpenBookingSlot(hour, dStr, 'single');
                           }}
-                          className="absolute top-0.5 right-0.5 z-10 px-1 py-0.5 rounded-[3px] bg-[#18181c] border border-[#facc15]/60 text-[#facc15] text-[8px] font-bold"
+                          className="absolute top-0.5 right-0.5 z-10 px-1 py-0.5 rounded-[3px] bg-[#18181c] border border-white/40 text-white text-[8px] font-bold"
                           title="Reservar com repetição"
                         >
                           +
@@ -814,7 +822,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                             e.stopPropagation();
                             openTaskDetail(t.id);
                           }}
-                          className="bg-[#facc15]/15 border border-[#facc15]/40 text-[#facc15] font-semibold rounded-[3px] p-1 text-[10px] truncate shadow-sm"
+                          className="bg-white/10 border border-white/20 text-white font-semibold rounded-[3px] p-1 text-[10px] truncate shadow-sm"
                         >
                           {getTaskTimesInHour(t, hour)[0]} {t.title}
                         </div>
@@ -834,12 +842,18 @@ export default function CalendarView({ store, onQuickCreateAt }) {
           <div className="min-w-[340px] p-3 space-y-2">
             <div className="grid grid-cols-4 gap-2 border-b border-[#222226] pb-2 text-center text-xs text-neutral-400 font-semibold sticky top-0 bg-[#000000] z-10">
               <div>Hora</div>
-              {threeDays.map(d => (
-                <div key={formatDate(d)} className={formatDate(d) === selectedDayStr ? 'text-[#facc15] font-bold' : ''}>
-                  <div>{d.toLocaleDateString('pt-BR', { weekday: 'short' })}</div>
-                  <div>{d.getDate()}</div>
-                </div>
-              ))}
+              {threeDays.map(d => {
+                const isDToday = formatDate(d) === todayStr;
+                const isDSel = formatDate(d) === selectedDayStr;
+                return (
+                  <div key={formatDate(d)} className={isDToday ? 'text-[#facc15] font-black' : isDSel ? 'text-white font-bold' : ''}>
+                    <div>{d.toLocaleDateString('pt-BR', { weekday: 'short' })}</div>
+                    <div className={isDToday ? 'w-6 h-6 rounded-full border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 mx-auto flex items-center justify-center shadow-[0_0_8px_rgba(250,204,21,0.25)]' : ''}>
+                      {d.getDate()}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {hours.map(hour => (
@@ -855,7 +869,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                       key={dStr}
                       onClick={() => handleHourCellPress(hour, dStr, 'single')}
                       className={`relative bg-[#141416] hover:bg-[#1c1c1e] rounded-[4px] p-1.5 min-h-12 cursor-pointer border transition-colors ${
-                        focusedSlotKey === `${dStr}-${hour}` ? 'border-[#facc15]/50' : 'border-[#222226] hover:border-[#facc15]/30'
+                        focusedSlotKey === `${dStr}-${hour}` ? 'border-white/50' : 'border-[#222226] hover:border-white/20'
                       }`}
                     >
                       {focusedSlotKey === `${dStr}-${hour}` && (
@@ -865,7 +879,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                             e.stopPropagation();
                             handleOpenBookingSlot(hour, dStr, 'single');
                           }}
-                          className="absolute top-0.5 right-0.5 z-10 px-1.5 py-0.5 rounded-[3px] bg-[#18181c] border border-[#facc15]/60 text-[#facc15] text-[9px] font-bold"
+                          className="absolute top-0.5 right-0.5 z-10 px-1.5 py-0.5 rounded-[3px] bg-[#18181c] border border-white/40 text-white text-[9px] font-bold"
                         >
                           + Reservar
                         </button>
@@ -877,7 +891,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                             e.stopPropagation();
                             openTaskDetail(t.id);
                           }}
-                          className="bg-[#facc15]/15 border border-[#facc15]/40 text-[#facc15] font-semibold rounded-[3px] p-1 text-[11px] truncate mb-1"
+                          className="bg-white/10 border border-white/20 text-white font-semibold rounded-[3px] p-1 text-[11px] truncate mb-1"
                         >
                           {getTaskTimesInHour(t, hour)[0]} {t.title}
                         </div>
@@ -894,8 +908,15 @@ export default function CalendarView({ store, onQuickCreateAt }) {
       {/* VIEW 5: DIA */}
       {viewMode === 'day' && (
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 pb-32">
-          <div className="text-sm font-bold text-white mb-2">
-            {selectedDayDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          <div className="flex items-center gap-2 mb-2">
+            {selectedDayStr === todayStr && (
+              <span className="w-7 h-7 rounded-full border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 flex items-center justify-center text-xs shadow-[0_0_8px_rgba(250,204,21,0.25)]">
+                {selectedDayDate.getDate()}
+              </span>
+            )}
+            <span className="text-sm font-bold text-white capitalize">
+              {selectedDayDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
           </div>
           {hours.map(hour => {
             const hourFormatted = `${String(hour).padStart(2, '0')}:00`;
@@ -909,7 +930,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                   <div
                     onClick={() => handleHourCellPress(hour, selectedDayStr, 'single')}
                     className={`space-y-1.5 min-h-[28px] rounded-[4px] cursor-pointer transition-colors ${
-                      focusedSlotKey === `${selectedDayStr}-${hour}` ? 'bg-[#facc15]/5 p-1' : ''
+                      focusedSlotKey === `${selectedDayStr}-${hour}` ? 'bg-white/5 p-1' : ''
                     }`}
                   >
                     {tasksInSlot.map(t => (
@@ -919,7 +940,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                           e.stopPropagation();
                           openTaskDetail(t.id);
                         }}
-                        className="bg-[#1c1c1e] border border-[#2c2c2e] hover:border-[#facc15]/40 p-3 rounded-[4px] flex items-center justify-between gap-2 cursor-pointer transition-colors"
+                        className="bg-[#1c1c1e] border border-[#2c2c2e] hover:border-white/40 p-3 rounded-[4px] flex items-center justify-between gap-2 cursor-pointer transition-colors"
                       >
                         <div className="min-w-0 flex-1">
                           <span className="text-xs font-bold text-white truncate block">{t.title}</span>
@@ -927,7 +948,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                             <span className="text-[11px] text-neutral-400 truncate block mt-0.5">{t.description}</span>
                           )}
                         </div>
-                        <span className="text-[11px] text-[#facc15] font-mono shrink-0">{getTaskTimesInHour(t, hour).join(', ')}</span>
+                        <span className="text-[11px] text-white font-mono shrink-0">{getTaskTimesInHour(t, hour).join(', ')}</span>
                       </div>
                     ))}
                     <button
@@ -938,8 +959,8 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                       }}
                       className={`w-full text-left py-1.5 px-2 rounded-[4px] text-xs cursor-pointer transition-colors ${
                         tasksInSlot.length === 0
-                          ? 'text-neutral-500 hover:text-[#facc15] hover:bg-[#141417]'
-                          : 'text-[11px] text-neutral-600 hover:text-[#facc15]'
+                          ? 'text-neutral-500 hover:text-white hover:bg-[#141417]'
+                          : 'text-[11px] text-neutral-500 hover:text-white'
                       }`}
                     >
                       + Reservar este horário
@@ -959,7 +980,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
             <button
               type="button"
               onClick={() => handleOpenCustomModal(null)}
-              className="flex-1 py-2.5 px-3 rounded-[6px] bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/40 text-[#facc15] text-xs font-black flex items-center justify-center gap-1.5 transition-all"
+              className="flex-1 py-2.5 px-3 rounded-[6px] bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>Personalizar Anual</span>
@@ -969,7 +990,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
               onClick={() => setIsScheduleOverviewOpen(true)}
               className="flex-1 py-2.5 px-3 rounded-[6px] bg-[#141417] hover:bg-[#1c1c20] border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
             >
-              <Layers className="w-3.5 h-3.5 text-[#facc15]" />
+              <Layers className="w-3.5 h-3.5 text-neutral-300" />
               <span>Todas Agendadas</span>
             </button>
           </div>
@@ -1006,11 +1027,11 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                           handleDateCellPress(dStr, new Date(year, mIdx, dayNum));
                         }}
                         className={`w-[18px] h-[18px] mx-auto rounded-full flex items-center justify-center leading-none cursor-pointer transition-colors ${
-                          hasTask
-                            ? `bg-[#facc15]/25 border border-[#facc15]/60 font-bold ${isTodayCell ? 'text-[#facc15] ring-1 ring-[#facc15]' : 'text-white'}`
-                            : isTodayCell
-                            ? 'border border-[#facc15] text-[#facc15] font-bold'
-                            : 'text-neutral-300 hover:bg-white/10'
+                          isTodayCell
+                            ? 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_6px_rgba(250,204,21,0.25)]'
+                            : hasTask
+                            ? 'border border-white/40 text-white font-semibold'
+                            : 'text-neutral-400 hover:bg-white/10'
                         }`}
                       >
                         {dayNum}
