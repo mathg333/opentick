@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Check, 
   Trash2, 
@@ -17,6 +17,8 @@ import {
   Kanban,
   List as ListIcon,
   Edit2,
+  Edit3,
+  Eye,
   Tag as TagIcon,
   Repeat,
   SlidersHorizontal,
@@ -33,6 +35,121 @@ import TimePickerModal from './TimePickerModal';
 import SegmentedProgressCard from './SegmentedProgressCard';
 import HomeHabitCard from './HomeHabitCard';
 import { ObsidianSelect } from './ObsidianControls';
+
+// WhatsApp-style inline formatter: *bold*, _italic_, ~strikethrough~, ```code```
+function parseWhatsAppInline(text) {
+  if (!text) return null;
+  const tokenRegex = /(```[\s\S]*?```|\*[^*\n]+\*|_[^_\n]+_|~[^~\n]+~)/g;
+  const parts = text.split(tokenRegex);
+  return parts.map((part, idx) => {
+    if (!part) return null;
+    if (part.startsWith('```') && part.endsWith('```')) {
+      return (
+        <code key={idx} className="font-mono text-xs bg-white/10 px-1.5 py-0.5 rounded text-neutral-200">
+          {part.slice(3, -3)}
+        </code>
+      );
+    }
+    if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+      return (
+        <strong key={idx} className="font-bold text-white">
+          {parseWhatsAppInline(part.slice(1, -1))}
+        </strong>
+      );
+    }
+    if (part.startsWith('_') && part.endsWith('_') && part.length > 2) {
+      return (
+        <em key={idx} className="italic text-neutral-200">
+          {parseWhatsAppInline(part.slice(1, -1))}
+        </em>
+      );
+    }
+    if (part.startsWith('~') && part.endsWith('~') && part.length > 2) {
+      return (
+        <del key={idx} className="line-through text-neutral-400">
+          {parseWhatsAppInline(part.slice(1, -1))}
+        </del>
+      );
+    }
+    return <span key={idx}>{part}</span>;
+  });
+}
+
+// WhatsApp-style line renderer: [ ] checklist, - / * bullets, 1. numbered lists
+function renderWhatsAppFormatted(fullText, onToggleCheck) {
+  if (!fullText) return null;
+  const lines = fullText.split('\n');
+  return lines.map((line, lIdx) => {
+    // Checklist [ ] or [x]
+    const checkMatch = line.match(/^(\s*)\[([ xX])\]\s*(.*)$/);
+    if (checkMatch) {
+      const isChecked = checkMatch[2].toLowerCase() === 'x';
+      const content = checkMatch[3];
+      return (
+        <div
+          key={lIdx}
+          onClick={(e) => {
+            if (onToggleCheck) {
+              e.stopPropagation();
+              onToggleCheck(lIdx, !isChecked);
+            }
+          }}
+          className="flex items-start gap-2.5 my-1.5 cursor-pointer group"
+        >
+          <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+            isChecked ? 'bg-white/20 border-white/40 text-white' : 'border-neutral-500 group-hover:border-neutral-300'
+          }`}>
+            {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
+          </div>
+          <span className={`text-sm sm:text-base leading-relaxed ${isChecked ? 'line-through text-neutral-400' : 'text-neutral-100'}`}>
+            {parseWhatsAppInline(content)}
+          </span>
+        </div>
+      );
+    }
+
+    // Bullet point: - item or * item
+    const bulletMatch = line.match(/^(\s*)[-*]\s+(.*)$/);
+    if (bulletMatch) {
+      const content = bulletMatch[2];
+      return (
+        <div key={lIdx} className="flex items-start gap-2.5 my-1.5 pl-1">
+          <span className="text-white text-base leading-none select-none shrink-0 mt-0.5">•</span>
+          <span className="text-sm sm:text-base leading-relaxed text-neutral-100">
+            {parseWhatsAppInline(content)}
+          </span>
+        </div>
+      );
+    }
+
+    // Numbered list: 1. item
+    const numMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
+    if (numMatch) {
+      const num = numMatch[2];
+      const content = numMatch[3];
+      return (
+        <div key={lIdx} className="flex items-start gap-2.5 my-1.5 pl-1">
+          <span className="text-neutral-400 font-mono text-xs select-none shrink-0 mt-1">{num}.</span>
+          <span className="text-sm sm:text-base leading-relaxed text-neutral-100">
+            {parseWhatsAppInline(content)}
+          </span>
+        </div>
+      );
+    }
+
+    // Empty line
+    if (!line.trim()) {
+      return <div key={lIdx} className="h-3" />;
+    }
+
+    // Normal paragraph line
+    return (
+      <p key={lIdx} className="text-sm sm:text-base leading-relaxed text-neutral-100 my-0.5 min-h-[1.25rem]">
+        {parseWhatsAppInline(line)}
+      </p>
+    );
+  });
+}
 
 export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMenu }) {
   const { 
@@ -75,6 +192,14 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
   const [quickPriority, setQuickPriority] = useState(0);
   const [confirmEmptyTrash, setConfirmEmptyTrash] = useState(false);
   const [confirmPermanentDeleteId, setConfirmPermanentDeleteId] = useState(null);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+
+  useEffect(() => {
+    if (selectedTaskId) {
+      const task = (state.tasks || []).find(t => t.id === selectedTaskId);
+      setIsEditingNotes(!task?.description?.trim());
+    }
+  }, [selectedTaskId]);
 
   const [collapsedSections, setCollapsedSections] = useState({
     noDate: false,
@@ -996,14 +1121,14 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               </div>
             </div>
 
-          <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-4 pb-28 md:pb-8 flex flex-col">
-            {/* Title & Checkbox */}
-            <div className="bg-[#121215] p-3.5 rounded-xl border border-white/10 flex items-center gap-3 shadow-xs shrink-0">
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-24 md:pb-6 flex flex-col">
+            {/* Title & Complete Checkbox */}
+            <div className="flex items-center gap-3 pt-1 pb-2 border-b border-white/[0.08] shrink-0">
               <button
                 type="button"
                 onClick={() => toggleTaskCompleted(selectedTask.id)}
                 className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors shrink-0 ${
-                  selectedTask.completed ? 'bg-white/15 border-white/40 text-white' : 'border-neutral-500 hover:border-neutral-300'
+                  selectedTask.completed ? 'bg-white/20 border-white/40 text-white' : 'border-neutral-500 hover:border-neutral-300'
                 }`}
               >
                 {selectedTask.completed && <Check className="w-4 h-4 stroke-[3]" />}
@@ -1013,388 +1138,146 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 value={selectedTask.title}
                 placeholder="Título da tarefa..."
                 onChange={(e) => updateTask(selectedTask.id, { title: e.target.value })}
-                className="flex-1 bg-transparent text-base sm:text-lg font-bold text-white focus:outline-none placeholder-neutral-500"
+                className="flex-1 bg-transparent text-xl font-bold text-white focus:outline-none placeholder-neutral-600"
               />
             </div>
 
-            {/* Informações da Tarefa: Dia e Hora (Sem calendário volumoso!) */}
-            <div className="grid grid-cols-2 gap-2.5 shrink-0">
-              {/* Dia da Tarefa */}
+            {/* Informações da Tarefa: Fita Minimalista de Metadados (Dia, Hora, Categoria, Alarme) */}
+            <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none shrink-0">
+              {/* Dia Chip */}
               <button
                 type="button"
                 onClick={() => setIsCustomDateModalOpen(true)}
-                className="bg-[#121215] hover:bg-[#18181d] border border-white/10 hover:border-white/20 p-3 rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141417] hover:bg-[#1c1c22] border border-white/10 hover:border-white/20 text-xs text-neutral-200 transition-all active:scale-95 shrink-0"
               >
-                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-white">
-                  <CalendarIcon className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">Dia</span>
-                  <span className="text-xs sm:text-sm font-bold text-white truncate block">
-                    {formatTaskDateInfo()}
-                  </span>
-                </div>
+                <CalendarIcon className="w-3.5 h-3.5 text-neutral-400" />
+                <span className="font-medium">{formatTaskDateInfo()}</span>
               </button>
 
-              {/* Hora da Tarefa */}
+              {/* Hora Chip */}
               <button
                 type="button"
                 onClick={() => {
                   setEditingTimeSlot(taskTimes[0] || null);
                   setIsTimePickerOpen(true);
                 }}
-                className="bg-[#121215] hover:bg-[#18181d] border border-white/10 hover:border-white/20 p-3 rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141417] hover:bg-[#1c1c22] border border-white/10 hover:border-white/20 text-xs text-neutral-200 transition-all active:scale-95 shrink-0"
               >
-                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-white">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">Hora</span>
-                  <span className="text-xs sm:text-sm font-bold text-white truncate block">
-                    {timeDisplay}
-                  </span>
-                </div>
+                <Clock className="w-3.5 h-3.5 text-neutral-400" />
+                <span className="font-medium">{timeDisplay}</span>
+              </button>
+
+              {/* Categoria Selector Chip (Discreet, NO "+ Nova Categoria" button) */}
+              <div className="shrink-0 min-w-[130px]">
+                <ObsidianSelect
+                  title="Categoria"
+                  compact={true}
+                  value={selectedTask.projectId || 'inbox'}
+                  onChange={(val) => updateTask(selectedTask.id, { projectId: val })}
+                  options={[
+                    { value: 'inbox', label: 'Sem categoria' },
+                    ...state.projects.filter(p => p.id !== 'inbox').map(p => ({ value: p.id, label: p.name }))
+                  ]}
+                />
+              </div>
+
+              {/* Alarme Chip */}
+              <button
+                type="button"
+                onClick={() => updateTask(selectedTask.id, { alarmEnabled: selectedTask.alarmEnabled === false })}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all active:scale-95 shrink-0 ${
+                  selectedTask.alarmEnabled !== false
+                    ? 'bg-white/10 border-white/20 text-white'
+                    : 'bg-[#141417] border-white/10 text-neutral-500'
+                }`}
+              >
+                {selectedTask.alarmEnabled !== false ? (
+                  <Bell className="w-3.5 h-3.5 text-white" />
+                ) : (
+                  <BellOff className="w-3.5 h-3.5 text-neutral-500" />
+                )}
+                <span>{selectedTask.alarmEnabled !== false ? 'Alarme' : 'Sem alarme'}</span>
               </button>
             </div>
 
-            {/* Aproveitamento de Tela: Notas, Texto Longo, Subtarefas e Bullet Points */}
-            <div className="bg-[#121215] border border-white/10 rounded-2xl p-4 sm:p-5 space-y-3 shadow-lg flex flex-col flex-1 min-h-[260px]">
-              <div className="flex items-center justify-between pb-2 border-b border-white/[0.07] shrink-0">
-                <span className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
-                  <AlignLeft className="w-3.5 h-3.5 text-neutral-400" />
-                  Texto & Anotações
-                </span>
-
-                {/* Barra de Ferramentas de Inserção Rápida */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const prev = selectedTask.description || '';
-                      const addition = (prev && !prev.endsWith('\n') ? '\n' : '') + '• ';
-                      updateTask(selectedTask.id, { description: prev + addition });
-                    }}
-                    className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1"
-                    title="Inserir Bullet Point"
-                  >
-                    <span className="text-base leading-none">•</span>
-                    <span>Bullet</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const prev = selectedTask.description || '';
-                      const addition = (prev && !prev.endsWith('\n') ? '\n' : '') + '[ ] ';
-                      updateTask(selectedTask.id, { description: prev + addition });
-                    }}
-                    className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1"
-                    title="Inserir Checklist"
-                  >
-                    <span className="font-mono text-xs">[ ]</span>
-                    <span>Check</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const prev = selectedTask.description || '';
-                      const lines = prev.split('\n').filter(l => l.trim());
-                      const nextNum = lines.length + 1;
-                      const addition = (prev && !prev.endsWith('\n') ? '\n' : '') + `${nextNum}. `;
-                      updateTask(selectedTask.id, { description: prev + addition });
-                    }}
-                    className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1"
-                    title="Inserir Número"
-                  >
-                    <span className="font-mono text-xs">1.</span>
-                    <span>Lista</span>
-                  </button>
-                </div>
-              </div>
-
-              <textarea
-                rows={9}
-                placeholder="Digite livremente textos longos, notas, subtarefas ou bullet points com total aproveitamento de tela..."
-                value={selectedTask.description || ''}
-                onChange={(e) => updateTask(selectedTask.id, { description: e.target.value })}
-                className="w-full flex-1 bg-transparent text-sm sm:text-base text-neutral-100 placeholder-neutral-500 focus:outline-none leading-relaxed min-h-[220px] resize-y font-normal"
-              />
-            </div>
-
-            {/* Seleção de Categoria / Lista (Discreta) */}
-            <div className="bg-[#121215] p-3.5 rounded-xl border border-white/10 space-y-2.5 shrink-0">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-neutral-300 font-semibold flex items-center gap-1.5">
-                  <Folder className="w-3.5 h-3.5 text-neutral-400" />
-                  Categoria / Lista
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setInlineListName('');
-                    setIsCreatingListInline((p) => !p);
-                  }}
-                  className="text-xs text-neutral-300 hover:text-white font-semibold active:scale-95 transition-transform"
-                >
-                  + Nova Categoria
-                </button>
-              </div>
-
-              {isCreatingListInline && (
+            {/* Aproveitamento Total de Tela: Notas com Formatação WhatsApp */}
+            <div className="flex-1 w-full bg-[#0d0d10] border border-white/10 rounded-2xl p-4 flex flex-col min-h-[440px] md:min-h-[560px] shadow-lg">
+              <div className="flex items-center justify-between pb-2.5 mb-2 border-b border-white/[0.08] shrink-0">
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder="Nome da nova categoria..."
-                    value={inlineListName}
-                    onChange={(e) => setInlineListName(e.target.value)}
-                    className="flex-1 bg-[#0A0A0C] border border-white/20 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-500 outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (inlineListName.trim()) {
-                        const newProj = addProject({ name: inlineListName.trim(), color: '#ffffff' });
-                        updateTask(selectedTask.id, { projectId: newProj.id });
-                      }
-                      setInlineListName('');
-                      setIsCreatingListInline(false);
-                    }}
-                    className="px-3.5 py-2 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs font-semibold shrink-0"
-                  >
-                    Criar
-                  </button>
-                </div>
-              )}
-
-              <ObsidianSelect
-                title="Escolher Categoria"
-                value={selectedTask.projectId || 'inbox'}
-                onChange={(val) => updateTask(selectedTask.id, { projectId: val })}
-                options={[
-                  { value: 'inbox', label: 'Sem categoria' },
-                  ...state.projects.filter(p => p.id !== 'inbox').map(p => ({ value: p.id, label: p.name }))
-                ]}
-              />
-            </div>
-
-            {/* Custom Tags */}
-            <div className="bg-[#161619] p-3.5 rounded-xl border border-[#26262a] space-y-2">
-              <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
-                <TagIcon className="w-4 h-4 text-neutral-400" />
-                Etiquetas Personalizadas
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {(selectedTask.tags || []).map(tg => (
-                  <span key={tg} className="text-xs bg-[#141416] text-neutral-300 px-2.5 py-1 rounded-lg border border-[#2c2c2e] flex items-center gap-1 font-medium">
-                    #{tg}
-                    <button
-                      type="button"
-                      onClick={() => updateTask(selectedTask.id, { tags: selectedTask.tags.filter(t => t !== tg) })}
-                      className="text-neutral-500 hover:text-rose-400 ml-1"
-                    >
-                      ✕
-                    </button>
+                  <AlignLeft className="w-4 h-4 text-neutral-400" />
+                  <span className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">
+                    Notas & Detalhes
                   </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Nova tag (ex: urgente, estudo)..."
-                  value={newTagInput}
-                  onChange={e => setNewTagInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && newTagInput.trim()) {
-                      e.preventDefault();
-                      const clean = newTagInput.trim().replace(/^#/, '');
-                      updateTask(selectedTask.id, { tags: [...(selectedTask.tags || []), clean] });
-                      setNewTagInput('');
-                    }
-                  }}
-                  className="flex-1 bg-[#141416] border border-[#2c2c2e] rounded-lg px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-white/20"
-                />
+                </div>
+                
+                {/* View/Edit Mode Pill (NO formatting buttons!) */}
                 <button
                   type="button"
-                  onClick={() => {
-                    if (newTagInput.trim()) {
-                      const clean = newTagInput.trim().replace(/^#/, '');
-                      updateTask(selectedTask.id, { tags: [...(selectedTask.tags || []), clean] });
-                      setNewTagInput('');
-                    }
-                  }}
-                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/15 text-neutral-200 rounded-lg text-xs font-semibold"
+                  onPointerDown={(e) => e.preventDefault()}
+                  onClick={() => setIsEditingNotes(prev => !prev)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/15 border border-white/20 text-xs text-white transition-all active:scale-95"
                 >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Alarme & Lembrete por Tarefa */}
-            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] space-y-3 shadow-xs">
-              <div className="flex items-center justify-between gap-2">
-                <label className="text-xs sm:text-sm text-neutral-300 font-semibold flex items-center gap-2">
-                  {selectedTask.alarmEnabled !== false ? (
-                    <Bell className="w-4 h-4 text-neutral-300" />
+                  {isEditingNotes ? (
+                    <>
+                      <Eye className="w-3.5 h-3.5 text-white" />
+                      <span>Visualizar</span>
+                    </>
                   ) : (
-                    <BellOff className="w-4 h-4 text-neutral-500" />
+                    <>
+                      <Edit3 className="w-3.5 h-3.5 text-white" />
+                      <span>Editar</span>
+                    </>
                   )}
-                  Alarme &amp; Lembrete
-                </label>
-                <button
-                  type="button"
-                  onClick={() => updateTask(selectedTask.id, { alarmEnabled: selectedTask.alarmEnabled === false })}
-                  className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
-                    selectedTask.alarmEnabled !== false
-                      ? 'bg-white/10 border-white/20 text-white'
-                      : 'bg-[#111114] border-white/10 text-neutral-400'
-                  }`}
-                >
-                  {selectedTask.alarmEnabled !== false ? 'Ativado' : 'Desativado'}
                 </button>
               </div>
-              {selectedTask.alarmEnabled !== false && (
-                <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                  {[
-                    { val: 0, label: 'Na hora' },
-                    { val: 5, label: '5m antes' },
-                    { val: 10, label: '10m antes' },
-                    { val: 15, label: '15m antes' },
-                    { val: 30, label: '30m antes' }
-                  ].map(opt => {
-                    const isActive = (selectedTask.reminderOffset ?? 0) === opt.val;
-                    return (
-                      <button
-                        key={opt.val}
-                        type="button"
-                        onClick={() => updateTask(selectedTask.id, { reminderOffset: opt.val })}
-                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
-                          isActive
-                            ? 'bg-white/15 border-white/30 text-white'
-                            : 'bg-[#111114] border-white/10 text-neutral-400 hover:text-white'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
+
+              {isEditingNotes ? (
+                <textarea
+                  autoFocus
+                  rows={14}
+                  placeholder="Escreva livremente notas, tarefas ou textos longos...&#10;&#10;Formatação WhatsApp:&#10;*negrito*&#10;_itálico_&#10;~tachado~&#10;```código```&#10;- bullet point&#10;1. lista numerada&#10;[ ] checklist interativo"
+                  value={selectedTask.description || ''}
+                  onChange={(e) => updateTask(selectedTask.id, { description: e.target.value })}
+                  className="w-full flex-1 bg-transparent text-sm sm:text-base text-neutral-100 placeholder-neutral-500 focus:outline-none leading-relaxed resize-none font-normal"
+                />
+              ) : (
+                <div
+                  onClick={() => setIsEditingNotes(true)}
+                  className="w-full flex-1 cursor-text overflow-y-auto"
+                >
+                  {selectedTask.description && selectedTask.description.trim() ? (
+                    renderWhatsAppFormatted(selectedTask.description, (lineIdx, checked) => {
+                      const lines = (selectedTask.description || '').split('\n');
+                      if (lineIdx >= 0 && lineIdx < lines.length) {
+                        const sym = checked ? '[x]' : '[ ]';
+                        lines[lineIdx] = lines[lineIdx].replace(/^(\s*)\[([ xX])\]/, `$1${sym}`);
+                        updateTask(selectedTask.id, { description: lines.join('\n') });
+                      }
+                    })
+                  ) : (
+                    <div className="h-full min-h-[260px] flex flex-col items-center justify-center text-center text-neutral-500 py-10">
+                      <AlignLeft className="w-8 h-8 text-neutral-600 mb-2 stroke-[1.5]" />
+                      <p className="text-sm font-semibold text-neutral-400">Nenhuma anotação ainda</p>
+                      <p className="text-xs text-neutral-500 mt-1 max-w-xs">
+                        Toque aqui para digitar. Use formatação estilo WhatsApp: *negrito*, _itálico_, ~tachado~, - bullets e [ ] checklists.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Priority */}
-            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] space-y-3 shadow-xs">
-              <label className="text-xs sm:text-sm text-neutral-300 font-semibold">Prioridade</label>
-              <div className="grid grid-cols-4 gap-2">
-                {[0, 1, 2, 3].map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => updateTask(selectedTask.id, { priority: p })}
-                    className={`py-2.5 text-xs sm:text-sm rounded-lg border flex items-center justify-center gap-1.5 transition-all min-w-0 font-semibold ${
-                      selectedTask.priority === p
-                        ? 'bg-[#28282e] border-white/30 text-white font-bold shadow-sm'
-                        : 'border-[#262629] bg-[#141416] text-neutral-400 hover:text-white'
-                    }`}
-                  >
-                    <Flag className={`w-4 h-4 ${priorityColors[p]} shrink-0`} />
-                    <span className="truncate">{p === 0 ? 'Sem' : p === 1 ? 'Baixa' : p === 2 ? 'Média' : 'Alta'}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Subtasks */}
-            <div className="bg-[#161619] p-3.5 rounded-xl border border-[#26262a] space-y-2">
-              <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
-                <ListTree className="w-4 h-4 text-neutral-400" />
-                Subtarefas
-              </label>
-
-              <div className="space-y-2">
-                {(selectedTask.subtasks || []).map((sub) => (
-                  <div key={sub.id} className="flex items-center justify-between gap-2 p-2 bg-[#141416] rounded-lg border border-[#262629]">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <button
-                        onClick={() => toggleSubtask(selectedTask.id, sub.id)}
-                        className={`w-4 h-4 rounded border flex items-center justify-center ${
-                          sub.completed ? 'bg-white/15 border-white/40 text-white' : 'border-neutral-500'
-                        }`}
-                      >
-                        {sub.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                      </button>
-                      <span className={`text-xs truncate ${sub.completed ? 'line-through text-neutral-500' : 'text-neutral-200'}`}>
-                        {sub.title}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => deleteSubtask(selectedTask.id, sub.id)}
-                      className="text-neutral-500 hover:text-rose-400 p-1"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-
-                {isAddingSubtaskInline ? (
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="text"
-                      autoFocus
-                      placeholder="Título da subtarefa..."
-                      value={inlineSubtaskTitle}
-                      onChange={(e) => setInlineSubtaskTitle(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && inlineSubtaskTitle.trim()) {
-                          e.preventDefault();
-                          addSubtask(selectedTask.id, inlineSubtaskTitle.trim());
-                          setInlineSubtaskTitle('');
-                          setIsAddingSubtaskInline(false);
-                        }
-                      }}
-                      className="flex-1 bg-[#0A0A0C] border border-white/20 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-500 outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (inlineSubtaskTitle.trim()) {
-                          addSubtask(selectedTask.id, inlineSubtaskTitle.trim());
-                        }
-                        setInlineSubtaskTitle('');
-                        setIsAddingSubtaskInline(false);
-                      }}
-                      className="px-3 py-2 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs font-semibold shrink-0"
-                    >
-                      Salvar
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setInlineSubtaskTitle('');
-                      setIsAddingSubtaskInline(true);
-                    }}
-                    className="w-full py-2 bg-[#141416] hover:bg-[#222226] text-neutral-300 rounded-lg text-xs flex items-center justify-center gap-1.5 border border-[#262629]"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-neutral-400" />
-                    <span>Adicionar subtarefa</span>
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Pomodoro Focus Action */}
+            {/* Iniciar Pomodoro Nesta Tarefa */}
             <button
               type="button"
               onClick={() => {
                 setSelectedTaskId(null);
                 onStartPomodoroForTask(selectedTask);
               }}
-              className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/15 text-neutral-200 hover:text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 active:scale-98 transition-colors"
+              className="w-full py-3 px-4 bg-white/10 hover:bg-white/15 border border-white/20 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 active:scale-98 transition-all shrink-0"
             >
               <Play className="w-4 h-4 fill-current" />
-              Iniciar Pomodoro Nesta Tarefa
+              <span>Iniciar Pomodoro Nesta Tarefa</span>
             </button>
           </div>
         </div>
