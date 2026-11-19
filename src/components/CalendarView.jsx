@@ -380,14 +380,14 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                 className="p-1 text-neutral-400 hover:text-white"
                 title="Anterior"
               >
-                <ChevronLeft className="w-4 h-4 text-[#facc15]" />
+                <ChevronLeft className="w-4 h-4 text-neutral-400 hover:text-white" />
               </button>
               <button 
                 onClick={nextPeriod}
                 className="p-1 text-neutral-400 hover:text-white"
                 title="Próximo"
               >
-                <ChevronRight className="w-4 h-4 text-[#facc15]" />
+                <ChevronRight className="w-4 h-4 text-neutral-400 hover:text-white" />
               </button>
             </div>
           </div>
@@ -409,10 +409,10 @@ export default function CalendarView({ store, onQuickCreateAt }) {
 
           <button
             onClick={() => handleOpenCustomModal(null)}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[4px] bg-[#141417] hover:bg-[#1e1e22] border border-white/15 hover:border-[#facc15]/45 text-neutral-200 hover:text-[#facc15] font-bold text-[11px] shrink-0 active:scale-95 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#141417] hover:bg-[#1e1e22] border border-white/15 text-neutral-200 hover:text-white font-semibold text-xs shrink-0 active:scale-95 transition-all"
             title="Personalizar dias, repetição e vários horários"
           >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-[#facc15]/80" />
+            <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-400" />
             <span>Personalizar</span>
           </button>
         </div>
@@ -420,7 +420,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
 
       {/* Spacious Segmented Mode Bar (Dia | Semanal | Mês | Anual | Lista) */}
       <div className="px-3 py-2 bg-[#070709] border-b border-[#18181c] shrink-0">
-        <div className="grid grid-cols-5 gap-1 bg-[#111114] p-1 rounded-[6px] border border-white/10">
+        <div className="grid grid-cols-5 gap-1 bg-[#111114] p-1 rounded-lg border border-white/10">
           {[
             { id: 'day', label: 'Dia' },
             { id: 'week', label: 'Semanal' },
@@ -431,9 +431,9 @@ export default function CalendarView({ store, onQuickCreateAt }) {
             <button
               key={m.id}
               onClick={() => setViewMode(m.id)}
-              className={`py-2 rounded-[4px] text-[11px] font-extrabold transition-all text-center ${
+              className={`py-2 rounded-md text-xs font-semibold transition-all text-center ${
                 viewMode === m.id
-                  ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/45'
+                  ? 'bg-white/10 text-white border border-white/20'
                   : 'text-neutral-400 hover:text-white border border-transparent'
               }`}
             >
@@ -465,16 +465,16 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                   <button
                     key={dStr}
                     onClick={() => handleDateCellPress(dStr, day)}
-                    className="flex flex-col items-center justify-center py-1.5 rounded-[4px] transition-all"
+                    className="flex flex-col items-center justify-center py-1.5 rounded-lg transition-all"
                   >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
                       isSelected
-                        ? 'bg-[#facc15] text-black font-black'
+                        ? 'bg-white text-black font-bold'
                         : hasTasks
-                        ? `bg-[#facc15]/22 border border-[#facc15]/60 ${isToday ? 'text-[#facc15] ring-1 ring-[#facc15]' : 'text-white'}`
+                        ? `border border-[#facc15]/80 text-[#facc15] font-bold bg-[#facc15]/10`
                         : isToday
-                        ? 'border border-[#facc15]/80 text-[#facc15]'
-                        : 'text-neutral-200 hover:bg-[#1c1c1e]'
+                        ? 'border border-white/30 text-white font-bold'
+                        : 'text-neutral-300 hover:bg-[#1c1c1e]'
                     }`}>
                       {day.getDate()}
                     </div>
@@ -560,7 +560,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
               {selectedDayTasks.length === 0 && (
                 <div className="py-14 text-center text-neutral-500">
                   <div className="w-16 h-16 rounded-[6px] bg-[#141416] border border-[#262629] mx-auto mb-3 flex items-center justify-center">
-                    <CalendarIcon className="w-8 h-8 text-[#facc15]/60" />
+                    <CalendarIcon className="w-8 h-8 text-neutral-600" />
                   </div>
                   <p className="text-sm font-semibold text-neutral-300">Essa data está livre de tarefas</p>
                   <p className="text-xs text-neutral-500 mt-1">Dê 2 toques em qualquer dia ou toque em Reservar Horário</p>
@@ -653,19 +653,19 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all ${
                     isSelected
-                      ? 'bg-[#facc15] text-black font-black'
+                      ? 'bg-white text-black font-bold'
                       : hasTasks
-                      ? `bg-[#facc15]/22 border border-[#facc15]/60 font-bold ${
+                      ? `border border-[#facc15]/80 font-bold bg-[#facc15]/10 ${
                           !item.isCurrentMonth
-                            ? 'text-neutral-300 opacity-75'
+                            ? 'text-[#facc15]/60'
                             : isToday
                             ? 'text-[#facc15] ring-1 ring-[#facc15]'
-                            : 'text-white'
+                            : 'text-[#facc15]'
                         }`
                       : !item.isCurrentMonth
                       ? 'text-neutral-600 font-semibold'
                       : isToday
-                      ? 'text-[#facc15] font-bold ring-1 ring-[#facc15]'
+                      ? 'text-white font-bold ring-1 ring-white/40'
                       : 'text-neutral-200 font-semibold hover:bg-[#1c1c1e]'
                   }`}>
                     {item.date.getDate()}
@@ -684,7 +684,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
               <button
                 type="button"
                 onClick={() => handleOpenBookingSlot(9, selectedDayStr, 'monthly')}
-                className="px-2.5 py-1 rounded-[4px] bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/40 text-[#facc15] text-[11px] font-black flex items-center gap-1 shrink-0"
+                className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 text-neutral-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Reservar Horário</span>
@@ -712,11 +712,11 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                         </span>
                       )}
                       {(timesList.length > 0 || datesCount > 1) && (
-                        <div className="text-[11px] text-[#facc15] mt-0.5 font-medium flex items-center flex-wrap gap-2">
+                        <div className="text-[11px] text-neutral-300 mt-0.5 font-medium flex items-center flex-wrap gap-2">
                           {timesList.length > 0 && <span>{timesList.join(' • ')}</span>}
                           {datesCount > 1 && (
-                            <span className="text-[10px] text-[#facc15]/80 flex items-center gap-0.5">
-                              <Repeat className="w-3 h-3 text-[#facc15]" /> {datesCount}d
+                            <span className="text-[10px] text-neutral-400 flex items-center gap-0.5">
+                              <Repeat className="w-3 h-3 text-neutral-400" /> {datesCount}d
                             </span>
                           )}
                         </div>
@@ -729,10 +729,10 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                         e.stopPropagation();
                         handleOpenCustomModal(t);
                       }}
-                      className="p-1.5 rounded-lg hover:bg-white/10 text-[#facc15]"
+                      className="p-1.5 rounded-lg hover:bg-white/10 text-neutral-400 hover:text-white"
                       title="Personalizar repetição e horários"
                     >
-                      <Repeat className="w-3.5 h-3.5 text-[#facc15]" />
+                      <Repeat className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={(e) => {
@@ -740,7 +740,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                         toggleTaskCompleted(t.id);
                       }}
                       className={`w-4 h-4 rounded-[3px] border flex items-center justify-center ${
-                        t.completed ? 'bg-[#facc15]/20 border-[#facc15] text-[#facc15]' : 'border-neutral-500'
+                        t.completed ? 'bg-white/15 border-white/40 text-white' : 'border-neutral-500'
                       }`}
                     >
                       {t.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -754,7 +754,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
               /* Empty state */
               <div className="py-8 text-center text-neutral-500">
                 <div className="w-16 h-16 rounded-[6px] bg-[#141416] border border-[#262629] mx-auto mb-3 flex items-center justify-center">
-                  <CalendarIcon className="w-8 h-8 text-[#facc15]/60" />
+                  <CalendarIcon className="w-8 h-8 text-neutral-600" />
                 </div>
                 <p className="text-sm font-semibold text-neutral-300">Essa data está livre de tarefas</p>
                 <p className="text-xs text-neutral-500 mt-1">Toque em Personalizado acima para programar</p>

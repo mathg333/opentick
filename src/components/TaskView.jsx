@@ -295,7 +295,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 <button
                   onClick={() => setViewLayout('list')}
                   className={`px-2.5 py-1 rounded-[4px] text-[11px] font-bold flex items-center gap-1.5 transition-all ${
-                    viewLayout === 'list' ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/45' : 'text-neutral-400 hover:text-white border border-transparent'
+                    viewLayout === 'list' ? 'bg-white/10 text-white border border-white/20' : 'text-neutral-400 hover:text-white border border-transparent'
                   }`}
                   title="Visualização em Lista"
                 >
@@ -305,7 +305,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 <button
                   onClick={() => setViewLayout('kanban')}
                   className={`px-2.5 py-1 rounded-[4px] text-[11px] font-bold flex items-center gap-1.5 transition-all ${
-                    viewLayout === 'kanban' ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/45' : 'text-neutral-400 hover:text-white border border-transparent'
+                    viewLayout === 'kanban' ? 'bg-white/10 text-white border border-white/20' : 'text-neutral-400 hover:text-white border border-transparent'
                   }`}
                   title="Visualização em Quadro Trello"
                 >
@@ -317,7 +317,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               {currentProject && (
                 <button
                   onClick={() => setIsEditListModalOpen(true)}
-                  className="p-1.5 text-neutral-300 hover:text-[#facc15] bg-[#141417] hover:bg-[#1e1e22] border border-white/10 rounded-[4px] active:scale-95 transition-all"
+                  className="p-1.5 text-neutral-300 hover:text-white bg-[#141417] hover:bg-[#1e1e22] border border-white/10 rounded-[4px] active:scale-95 transition-all"
                   title="Renomear ou Editar Lista"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
@@ -327,10 +327,10 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
             <button
               onClick={() => setIsCustomDateModalOpen(true)}
-              className="px-2.5 py-1.5 text-neutral-200 hover:text-[#facc15] bg-[#111114] hover:bg-[#1c1c20] border border-white/15 hover:border-[#facc15]/45 rounded-[4px] transition-all flex items-center gap-1.5 text-[11px] font-bold shrink-0 active:scale-95"
+              className="px-2.5 py-1.5 text-neutral-200 hover:text-white bg-[#141417] hover:bg-[#1c1c20] border border-white/15 hover:border-white/30 rounded-[4px] transition-all flex items-center gap-1.5 text-[11px] font-bold shrink-0 active:scale-95"
               title="Personalizado: Dias, Datas & Vários Horários"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5 text-[#facc15]/80" />
+              <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-400" />
               <span>Personalizado</span>
             </button>
           </div>
@@ -343,28 +343,28 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               {activeView !== 'tasks-trash' && (
                 <form
                   onSubmit={handleQuickAdd}
-                  className="bg-[#141417] border border-[#26262a] rounded-[4px] px-2.5 py-1.5 flex items-center gap-2"
+                  className="bg-[#141417] border border-[#2a2a30] hover:border-[#383842] focus-within:border-white/30 rounded-xl px-3.5 py-2.5 sm:py-3 flex items-center gap-3 shadow-sm transition-all"
                 >
-                  <Plus className="w-3.5 h-3.5 text-neutral-400 shrink-0 ml-0.5" />
+                  <Plus className="w-5 h-5 text-neutral-400 shrink-0 ml-0.5" />
                   <input
                     type="text"
                     placeholder={`Adicionar em "${viewTitle}"...`}
                     value={quickTitle}
                     onChange={e => setQuickTitle(e.target.value)}
-                    className="flex-1 min-w-0 bg-transparent text-xs text-white placeholder-neutral-500 focus:outline-none"
+                    className="flex-1 min-w-0 bg-transparent text-sm sm:text-base text-white placeholder-neutral-400 focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setIsCustomDateModalOpen(true)}
-                    className="p-1 text-neutral-400 hover:text-[#facc15]"
+                    className="p-1.5 text-neutral-400 hover:text-white rounded-lg transition-colors"
                     title="Escolher datas múltiplas / horário"
                   >
-                    <CalendarIcon className="w-3.5 h-3.5" />
+                    <CalendarIcon className="w-4 h-4" />
                   </button>
                   <button
                     type="submit"
                     disabled={!quickTitle.trim()}
-                    className="px-2.5 py-1 bg-[#facc15]/15 hover:bg-[#facc15]/25 disabled:opacity-30 text-[#facc15] border border-[#facc15]/40 text-[11px] font-bold rounded-[4px] shrink-0 transition-colors"
+                    className="px-3.5 py-1.5 bg-white hover:bg-neutral-200 disabled:opacity-30 text-black text-xs sm:text-sm font-semibold rounded-lg shrink-0 transition-colors shadow-xs"
                   >
                     Salvar
                   </button>
@@ -480,7 +480,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-1.5">
+                  <div className="space-y-2.5">
                     {todayTasks.map(task => {
                       const recurCount = task.recurringDates ? task.recurringDates.length : 0;
                       const timesList = getTaskTimes(task);
@@ -488,36 +488,36 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                         <div
                           key={task.id}
                           onClick={() => setSelectedTaskId(task.id)}
-                          className="bg-[#141417] hover:bg-[#1a1a1e] border border-[#26262a] rounded-[4px] px-3 py-2 flex items-center justify-between gap-2.5 cursor-pointer transition-colors"
+                          className="bg-[#141417] hover:bg-[#1a1a1e] border border-[#26262a] rounded-xl px-3.5 py-3 sm:px-4 sm:py-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all shadow-xs"
                         >
-                          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleTaskCompleted(task.id);
                               }}
-                              className={`w-4 h-4 rounded-[3px] border flex items-center justify-center transition-colors shrink-0 ${
-                                task.completed ? 'bg-[#facc15]/20 border-[#facc15] text-[#facc15]' : 'border-neutral-500 hover:border-neutral-300'
+                              className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors shrink-0 ${
+                                task.completed ? 'bg-white/15 border-white/40 text-white' : 'border-neutral-500 hover:border-neutral-300'
                               }`}
                             >
-                              {task.completed && <Check className="w-3 h-3 stroke-[3]" />}
+                              {task.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                             </button>
                             <div className="flex-1 min-w-0">
-                              <span className="text-[13px] font-medium text-neutral-100 truncate block">
+                              <span className="text-sm sm:text-base font-medium text-neutral-100 truncate block">
                                 {task.title}
                               </span>
                               {(timesList.length > 0 || recurCount > 1) && (
-                                <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
+                                <div className="flex items-center flex-wrap gap-2 mt-1">
                                   {timesList.length > 0 && (
-                                    <span className="text-[11px] text-neutral-300 flex items-center gap-1 font-medium">
-                                      <Clock className="w-3 h-3 text-[#facc15]/80" />
+                                    <span className="text-xs text-neutral-300 flex items-center gap-1.5 font-medium px-2 py-0.5 rounded-md bg-white/5 border border-white/10">
+                                      <Clock className="w-3.5 h-3.5 text-neutral-400" />
                                       {timesList.join(', ')}
                                     </span>
                                   )}
                                   {recurCount > 1 && (
-                                    <span className="text-[10px] bg-white/5 text-neutral-400 font-medium px-1.5 py-0.5 rounded-[3px] border border-white/10 flex items-center gap-1">
-                                      <Repeat className="w-2.5 h-2.5 text-neutral-400" />
+                                    <span className="text-xs bg-white/5 text-neutral-300 font-medium px-2 py-0.5 rounded-md border border-white/10 flex items-center gap-1.5">
+                                      <Repeat className="w-3 h-3 text-neutral-400" />
                                       {recurCount} datas
                                     </span>
                                   )}
@@ -526,9 +526,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex items-center gap-2 shrink-0">
                             {task.priority > 0 && (
-                              <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
+                              <Flag className={`w-4 h-4 ${priorityColors[task.priority]} shrink-0`} />
                             )}
                             <button
                               type="button"
@@ -536,10 +536,10 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                 e.stopPropagation();
                                 onStartPomodoroForTask(task);
                               }}
-                              className="p-1 text-neutral-500 hover:text-[#facc15] rounded-[3px] transition-colors"
+                              className="p-1.5 text-neutral-400 hover:text-white rounded-md transition-colors"
                               title="Iniciar Foco"
                             >
-                              <Play className="w-3.5 h-3.5" />
+                              <Play className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
@@ -677,33 +677,33 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                             <div
                               key={task.id}
                               onClick={() => setSelectedTaskId(task.id)}
-                              className="bg-[#101013] hover:bg-[#19191d] border border-[#242429] rounded-[4px] px-2.5 py-2 flex items-center justify-between gap-2 cursor-pointer"
+                              className="bg-[#101013] hover:bg-[#19191d] border border-[#242429] rounded-xl px-3.5 py-3 flex items-center justify-between gap-3 cursor-pointer shadow-xs transition-colors"
                             >
-                              <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
                                 <button
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     toggleTaskCompleted(task.id);
                                   }}
-                                  className="w-4 h-4 rounded-[3px] border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                                  className="w-5 h-5 rounded-md border-2 border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
                                 >
-                                  {task.completed && <Check className="w-3 h-3 text-[#facc15] stroke-[3]" />}
+                                  {task.completed && <Check className="w-3.5 h-3.5 text-[#facc15] stroke-[3]" />}
                                 </button>
                                 <div className="flex-1 min-w-0">
-                                  <span className="text-xs font-medium text-neutral-100 truncate block">
+                                  <span className="text-sm sm:text-base font-medium text-neutral-100 truncate block">
                                     {task.title}
                                   </span>
                                   {(task.dueDate || timesList.length > 0 || recurCount > 1) && (
-                                    <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
+                                    <div className="flex items-center flex-wrap gap-2 mt-1">
                                       {(task.dueDate || timesList.length > 0) && (
-                                        <span className={`text-[10px] ${task.dueDate && task.dueDate < todayStr ? 'text-rose-400' : 'text-neutral-400'}`}>
+                                        <span className={`text-xs ${task.dueDate && task.dueDate < todayStr ? 'text-rose-400' : 'text-neutral-300'} font-medium`}>
                                           {task.dueDate || 'Hoje'}{timesList.length > 0 ? ` às ${timesList.join(', ')}` : ''}
                                         </span>
                                       )}
                                       {recurCount > 1 && (
-                                        <span className="text-[10px] bg-white/5 text-neutral-400 px-1.5 py-0.5 rounded-[3px] border border-white/10 flex items-center gap-1">
-                                          <Repeat className="w-2.5 h-2.5" />
+                                        <span className="text-xs bg-white/5 text-neutral-300 px-2 py-0.5 rounded-md border border-white/10 flex items-center gap-1.5 font-medium">
+                                          <Repeat className="w-3 h-3" />
                                           {recurCount} datas
                                         </span>
                                       )}
@@ -712,7 +712,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                 </div>
                               </div>
                               {task.priority > 0 && (
-                                <Flag className={`w-3.5 h-3.5 ${priorityColors[task.priority]} shrink-0`} />
+                                <Flag className={`w-4 h-4 ${priorityColors[task.priority]} shrink-0`} />
                               )}
                             </div>
                           );
@@ -752,9 +752,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                     e.stopPropagation();
                                     toggleTaskCompleted(task.id);
                                   }}
-                                  className="w-4 h-4 rounded-[3px] border border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
+                                  className="w-5 h-5 rounded-md border-2 border-neutral-500 hover:border-neutral-300 flex items-center justify-center transition-colors shrink-0"
                                 >
-                                  {task.completed && <Check className="w-3 h-3 text-[#facc15] stroke-[3]" />}
+                                  {task.completed && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
                                 </button>
                                 <div className="flex-1 min-w-0">
                                   <span className="text-sm font-medium text-neutral-100 truncate block">
@@ -765,8 +765,8 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                       {task.dueDate} {getTaskTimes(task).length > 0 ? ` às ${getTaskTimes(task).join(', ')}` : ''}
                                     </span>
                                     {recurCount > 1 && (
-                                      <span className="text-[10px] bg-[#facc15]/20 text-[#facc15] font-bold px-1.5 py-0.2 rounded border border-[#facc15]/30 flex items-center gap-1">
-                                        <Repeat className="w-2.5 h-2.5" />
+                                      <span className="text-xs bg-white/5 text-neutral-300 font-medium px-2 py-0.5 rounded-md border border-white/10 flex items-center gap-1.5">
+                                        <Repeat className="w-3 h-3 text-neutral-400" />
                                         {recurCount} datas
                                       </span>
                                     )}
@@ -787,12 +787,12 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
                 {/* Section: Concluído */}
                 {completedTasks.length > 0 && (
-                  <div className="bg-[#141417] rounded-[6px] p-3 border border-[#26262a]">
+                  <div className="bg-[#141417] rounded-xl p-3.5 border border-[#26262a]">
                     <div 
                       onClick={() => toggleSection('completed')}
                       className="flex items-center justify-between cursor-pointer select-none pb-2"
                     >
-                      <span className="text-sm font-bold text-neutral-300">Concluído e Não Farei.</span>
+                      <span className="text-sm font-bold text-neutral-300">Concluído e Não Farei</span>
                       <div className="flex items-center gap-1 text-xs text-neutral-400">
                         <span className="font-mono">{completedTasks.length}</span>
                         <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${collapsedSections.completed ? '-rotate-90' : ''}`} />
@@ -814,12 +814,12 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                                   e.stopPropagation();
                                   toggleTaskCompleted(task.id);
                                 }}
-                                className="mt-0.5 w-4 h-4 rounded-[3px] bg-[#facc15]/20 border border-[#facc15] flex items-center justify-center transition-colors shrink-0"
+                                className="mt-0.5 w-5 h-5 rounded-md bg-white/10 border border-white/30 flex items-center justify-center transition-colors shrink-0"
                               >
-                                <Check className="w-2.5 h-2.5 text-[#facc15] stroke-[3]" />
+                                <Check className="w-3 h-3 text-white stroke-[3]" />
                               </button>
                               <div className="flex-1 min-w-0">
-                                <span className="text-xs font-medium text-neutral-300 uppercase tracking-wide block truncate line-through">
+                                <span className="text-xs font-medium text-neutral-300 block truncate line-through">
                                   {task.title}
                                 </span>
                                 <span className="text-[11px] text-neutral-500 mt-1 block">
@@ -954,49 +954,49 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
           <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 pb-28 md:pb-8">
             {/* Title & Checkbox */}
-            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] flex items-start gap-3">
+            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] flex items-center gap-3.5 shadow-xs">
               <button
                 type="button"
                 onClick={() => toggleTaskCompleted(selectedTask.id)}
-                className={`mt-1 w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                  selectedTask.completed ? 'bg-[#facc15]/20 border-[#facc15] text-[#facc15]' : 'border-neutral-500'
+                className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors shrink-0 ${
+                  selectedTask.completed ? 'bg-white/15 border-white/40 text-white' : 'border-neutral-500 hover:border-neutral-300'
                 }`}
               >
-                {selectedTask.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                {selectedTask.completed && <Check className="w-4 h-4 stroke-[3]" />}
               </button>
               <input
                 type="text"
                 value={selectedTask.title}
                 onChange={(e) => updateTask(selectedTask.id, { title: e.target.value })}
-                className="flex-1 bg-transparent text-sm font-semibold text-white focus:outline-none"
+                className="flex-1 bg-transparent text-base sm:text-lg font-bold text-white focus:outline-none placeholder-neutral-500"
               />
             </div>
 
             {/* List / Category Selector - Custom Obsidian Select + Inline List Creation */}
-            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2.5">
+            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
-                <label className="text-xs text-neutral-400 font-medium">Lista / Categoria</label>
+                <label className="text-xs sm:text-sm text-neutral-300 font-semibold">Lista / Categoria</label>
                 <button
                   type="button"
                   onClick={() => {
                     setInlineListName('');
                     setIsCreatingListInline((p) => !p);
                   }}
-                  className="text-xs text-[#facc15] hover:text-[#eab308] font-bold flex items-center gap-1 active:scale-95 transition-transform"
+                  className="text-xs sm:text-sm text-neutral-300 hover:text-white font-semibold flex items-center gap-1 active:scale-95 transition-transform"
                 >
                   + Nova Lista
                 </button>
               </div>
 
               {isCreatingListInline && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <input
                     type="text"
                     autoFocus
                     placeholder="Nome da nova lista..."
                     value={inlineListName}
                     onChange={(e) => setInlineListName(e.target.value)}
-                    className="flex-1 bg-[#0A0A0C] border border-[#facc15]/40 rounded-[4px] px-3 py-2 text-xs text-white placeholder-neutral-500 outline-none"
+                    className="flex-1 bg-[#0A0A0C] border border-white/20 rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 outline-none"
                   />
                   <button
                     type="button"
@@ -1008,7 +1008,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       setInlineListName('');
                       setIsCreatingListInline(false);
                     }}
-                    className="px-3 py-2 rounded-[4px] bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] text-xs font-bold shrink-0"
+                    className="px-4 py-2.5 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs sm:text-sm font-semibold shrink-0"
                   >
                     Criar
                   </button>
@@ -1024,44 +1024,44 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             </div>
 
             {/* Description Notes */}
-            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-1.5">
-              <label className="text-xs text-neutral-400 font-medium">Notas / Descrição</label>
+            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] space-y-2.5 shadow-xs">
+              <label className="text-xs sm:text-sm text-neutral-300 font-semibold">Notas / Descrição</label>
               <textarea
                 rows={3}
                 placeholder="Adicione anotações, links ou detalhes..."
                 value={selectedTask.description || ''}
                 onChange={(e) => updateTask(selectedTask.id, { description: e.target.value })}
-                className="w-full bg-[#141416] border border-[#2c2c2e] rounded-[4px] p-3 text-xs text-white placeholder-neutral-500 focus:outline-none"
+                className="w-full bg-[#111114] border border-[#28282e] rounded-lg p-3.5 text-sm sm:text-[15px] text-white placeholder-neutral-500 focus:outline-none focus:border-white/30 leading-relaxed min-h-[95px]"
               />
             </div>
 
             {/* Date & Multiple Times Picker + Personalizado Button */}
-            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-3">
+            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] space-y-3.5 shadow-xs">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
-                  <CalendarIcon className="w-4 h-4 text-[#facc15]" />
+                <span className="text-xs sm:text-sm text-neutral-300 font-semibold flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-neutral-400" />
                   Data Principal
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-white font-bold">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-sm font-bold text-white">
                     {selectedTask.dueDate || 'Sem data'}
                   </span>
                   <button
                     type="button"
                     onClick={() => setIsCustomDateModalOpen(true)}
-                    className="px-2.5 py-1 rounded-[4px] bg-[#18181c] hover:bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] text-[11px] font-bold flex items-center gap-1 shadow-sm"
+                    className="px-3 py-1.5 rounded-lg bg-[#18181c] hover:bg-[#222228] border border-white/15 hover:border-white/30 text-neutral-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
                   >
-                    <SlidersHorizontal className="w-3 h-3 text-black" />
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-400" />
                     <span>Personalizado</span>
                   </button>
                 </div>
               </div>
 
               {/* Multi-Time Chips Section */}
-              <div className="pt-2.5 border-t border-[#262629] space-y-2">
+              <div className="pt-2.5 border-t border-[#262629] space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-neutral-400 font-medium flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-[#facc15]" />
+                  <span className="text-xs sm:text-sm text-neutral-300 font-semibold flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-neutral-400" />
                     Horários ({getTaskTimes(selectedTask).length})
                   </span>
                   <button
@@ -1070,19 +1070,19 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       setEditingTimeSlot(null);
                       setIsTimePickerOpen(true);
                     }}
-                    className="bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/40 rounded-[4px] px-2.5 py-1 text-[11px] text-[#facc15] font-bold flex items-center gap-1"
+                    className="bg-white/5 hover:bg-white/10 border border-white/15 rounded-lg px-3 py-1.5 text-xs text-neutral-200 hover:text-white font-semibold flex items-center gap-1.5 active:scale-95 transition-all"
                   >
-                    <Plus className="w-3.5 h-3.5 text-[#facc15]" />
+                    <Plus className="w-3.5 h-3.5 text-neutral-400" />
                     <span>Adicionar Horário</span>
                   </button>
                 </div>
 
                 {getTaskTimes(selectedTask).length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     {getTaskTimes(selectedTask).map(tm => (
                       <div
                         key={tm}
-                        className="flex items-center gap-1 bg-[#141416] border border-[#facc15]/40 text-[#facc15] rounded-lg px-2.5 py-1 text-xs font-mono font-bold"
+                        className="flex items-center gap-1.5 bg-[#141416] border border-white/15 text-neutral-200 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-mono font-medium shadow-xs"
                       >
                         <button
                           type="button"
@@ -1103,15 +1103,15 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                               startTime: remaining[0] || ''
                             });
                           }}
-                          className="p-0.5 hover:bg-[#facc15]/20 rounded text-[#facc15]"
+                          className="p-0.5 hover:bg-white/10 rounded text-neutral-400 hover:text-white"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-neutral-500">
+                  <p className="text-xs text-neutral-400">
                     Nenhum horário definido — toque em + Adicionar Horário.
                   </p>
                 )}
@@ -1119,13 +1119,13 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             </div>
 
             {/* FULL MONTH CALENDAR VIEW OF RECURRING DATES WITH MONTH NAVIGATION */}
-            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2">
+            <div className="bg-[#161619] p-3.5 rounded-xl border border-[#26262a] space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-white font-bold flex items-center gap-1.5">
-                  <CalendarIcon className="w-4 h-4 text-[#facc15]" />
+                  <CalendarIcon className="w-4 h-4 text-neutral-400" />
                   Calendário de Repetições
                 </span>
-                <span className="text-[10px] text-[#facc15] font-mono font-bold">
+                <span className="text-[10px] text-neutral-400 font-mono font-medium">
                   {getTaskDates(selectedTask).length} datas marcadas
                 </span>
               </div>
@@ -1133,7 +1133,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 <button
                   type="button"
                   onClick={() => setDetailCalMonth(new Date(year, month - 1, 1))}
-                  className="p-1 rounded-lg bg-[#141416] border border-[#2c2c2e] text-[#facc15]"
+                  className="p-1 rounded-lg bg-[#141416] border border-[#2c2c2e] text-neutral-400 hover:text-white"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -1143,13 +1143,13 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 <button
                   type="button"
                   onClick={() => setDetailCalMonth(new Date(year, month + 1, 1))}
-                  className="p-1 rounded-lg bg-[#141416] border border-[#2c2c2e] text-[#facc15]"
+                  className="p-1 rounded-lg bg-[#141416] border border-[#2c2c2e] text-neutral-400 hover:text-white"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
               <p className="text-[11px] text-neutral-400">
-                Toque nos dias para marcar ou use <strong className="text-[#facc15]">Personalizado</strong> acima:
+                Toque nos dias para marcar ou use <strong className="text-neutral-200">Personalizado</strong> acima:
               </p>
 
               {/* Mini Month Grid */}
@@ -1175,7 +1175,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                         onClick={() => handleToggleDateInTask(dStr)}
                         className={`h-7 w-7 mx-auto rounded-full text-[11px] font-bold flex items-center justify-center transition-all ${
                           isMarked
-                            ? 'bg-[#facc15] text-black font-bold  scale-105'
+                            ? 'border border-[#facc15]/80 text-[#facc15] font-bold bg-[#facc15]/10'
                             : 'text-neutral-300 hover:bg-[#28282e]'
                         }`}
                       >
@@ -1188,14 +1188,14 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             </div>
 
             {/* Custom Tags */}
-            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2">
+            <div className="bg-[#161619] p-3.5 rounded-xl border border-[#26262a] space-y-2">
               <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
                 <TagIcon className="w-4 h-4 text-neutral-400" />
                 Etiquetas Personalizadas
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {(selectedTask.tags || []).map(tg => (
-                  <span key={tg} className="text-xs bg-[#141416] text-[#facc15] px-2.5 py-1 rounded-lg border border-[#2c2c2e] flex items-center gap-1 font-semibold">
+                  <span key={tg} className="text-xs bg-[#141416] text-neutral-300 px-2.5 py-1 rounded-lg border border-[#2c2c2e] flex items-center gap-1 font-medium">
                     #{tg}
                     <button
                       type="button"
@@ -1221,7 +1221,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       setNewTagInput('');
                     }
                   }}
-                  className="flex-1 bg-[#141416] border border-[#2c2c2e] rounded-[4px] px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none"
+                  className="flex-1 bg-[#141416] border border-[#2c2c2e] rounded-lg px-3 py-1.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-white/20"
                 />
                 <button
                   type="button"
@@ -1232,7 +1232,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       setNewTagInput('');
                     }
                   }}
-                  className="px-3 py-1.5 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/45 text-[#facc15] rounded-[4px] text-xs font-bold"
+                  className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/15 text-neutral-200 rounded-lg text-xs font-semibold"
                 >
                   +
                 </button>
@@ -1240,22 +1240,22 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             </div>
 
             {/* Alarme & Lembrete por Tarefa */}
-            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2">
+            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] space-y-3 shadow-xs">
               <div className="flex items-center justify-between gap-2">
-                <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
+                <label className="text-xs sm:text-sm text-neutral-300 font-semibold flex items-center gap-2">
                   {selectedTask.alarmEnabled !== false ? (
-                    <Bell className="w-3.5 h-3.5 text-[#facc15]" />
+                    <Bell className="w-4 h-4 text-neutral-300" />
                   ) : (
-                    <BellOff className="w-3.5 h-3.5 text-neutral-500" />
+                    <BellOff className="w-4 h-4 text-neutral-500" />
                   )}
                   Alarme &amp; Lembrete
                 </label>
                 <button
                   type="button"
                   onClick={() => updateTask(selectedTask.id, { alarmEnabled: selectedTask.alarmEnabled === false })}
-                  className={`px-2.5 py-1 rounded-[4px] border text-[11px] font-bold transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-95 ${
                     selectedTask.alarmEnabled !== false
-                      ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15]'
+                      ? 'bg-white/10 border-white/20 text-white'
                       : 'bg-[#111114] border-white/10 text-neutral-400'
                   }`}
                 >
@@ -1263,7 +1263,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 </button>
               </div>
               {selectedTask.alarmEnabled !== false && (
-                <div className="flex items-center gap-1 flex-wrap pt-1">
+                <div className="flex items-center gap-1.5 flex-wrap pt-1">
                   {[
                     { val: 0, label: 'Na hora' },
                     { val: 5, label: '5m antes' },
@@ -1277,9 +1277,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                         key={opt.val}
                         type="button"
                         onClick={() => updateTask(selectedTask.id, { reminderOffset: opt.val })}
-                        className={`px-2 py-1 rounded-[4px] border text-[10px] font-bold transition-colors ${
+                        className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
                           isActive
-                            ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15]'
+                            ? 'bg-white/15 border-white/30 text-white'
                             : 'bg-[#111114] border-white/10 text-neutral-400 hover:text-white'
                         }`}
                       >
@@ -1292,29 +1292,29 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             </div>
 
             {/* Priority */}
-            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2">
-              <label className="text-xs text-neutral-400 font-medium">Prioridade</label>
-              <div className="grid grid-cols-4 gap-1.5">
+            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] space-y-3 shadow-xs">
+              <label className="text-xs sm:text-sm text-neutral-300 font-semibold">Prioridade</label>
+              <div className="grid grid-cols-4 gap-2">
                 {[0, 1, 2, 3].map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => updateTask(selectedTask.id, { priority: p })}
-                    className={`py-2 text-xs rounded-[4px] border flex items-center justify-center gap-1 transition-colors min-w-0 ${
+                    className={`py-2.5 text-xs sm:text-sm rounded-lg border flex items-center justify-center gap-1.5 transition-all min-w-0 font-semibold ${
                       selectedTask.priority === p
-                        ? 'bg-[#28282e] border-[#facc15] text-white font-bold shadow-sm'
-                        : 'border-[#262629] bg-[#141416] text-neutral-400'
+                        ? 'bg-[#28282e] border-white/30 text-white font-bold shadow-sm'
+                        : 'border-[#262629] bg-[#141416] text-neutral-400 hover:text-white'
                     }`}
                   >
-                    <Flag className={`w-3.5 h-3.5 ${priorityColors[p]} shrink-0`} />
-                    <span className="truncate text-[11px]">{p === 0 ? 'Sem' : p === 1 ? 'Baixa' : p === 2 ? 'Média' : 'Alta'}</span>
+                    <Flag className={`w-4 h-4 ${priorityColors[p]} shrink-0`} />
+                    <span className="truncate">{p === 0 ? 'Sem' : p === 1 ? 'Baixa' : p === 2 ? 'Média' : 'Alta'}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Subtasks */}
-            <div className="bg-[#161619] p-3.5 rounded-[4px] border border-[#26262a] space-y-2">
+            <div className="bg-[#161619] p-3.5 rounded-xl border border-[#26262a] space-y-2">
               <label className="text-xs text-neutral-400 font-medium flex items-center gap-1.5">
                 <ListTree className="w-4 h-4 text-neutral-400" />
                 Subtarefas
@@ -1322,12 +1322,12 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
 
               <div className="space-y-2">
                 {(selectedTask.subtasks || []).map((sub) => (
-                  <div key={sub.id} className="flex items-center justify-between gap-2 p-2 bg-[#141416] rounded-[4px] border border-[#262629]">
+                  <div key={sub.id} className="flex items-center justify-between gap-2 p-2 bg-[#141416] rounded-lg border border-[#262629]">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <button
                         onClick={() => toggleSubtask(selectedTask.id, sub.id)}
                         className={`w-4 h-4 rounded border flex items-center justify-center ${
-                          sub.completed ? 'bg-[#facc15]/20 border-[#facc15] text-[#facc15]' : 'border-neutral-500'
+                          sub.completed ? 'bg-white/15 border-white/40 text-white' : 'border-neutral-500'
                         }`}
                       >
                         {sub.completed && <Check className="w-2.5 h-2.5 stroke-[3]" />}
@@ -1361,7 +1361,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                           setIsAddingSubtaskInline(false);
                         }
                       }}
-                      className="flex-1 bg-[#0A0A0C] border border-[#facc15]/45 rounded-[4px] px-3 py-2 text-xs text-white placeholder-neutral-500 outline-none"
+                      className="flex-1 bg-[#0A0A0C] border border-white/20 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-500 outline-none"
                     />
                     <button
                       type="button"
@@ -1372,7 +1372,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                         setInlineSubtaskTitle('');
                         setIsAddingSubtaskInline(false);
                       }}
-                      className="px-3 py-2 rounded-[4px] bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] text-xs font-bold shrink-0"
+                      className="px-3 py-2 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs font-semibold shrink-0"
                     >
                       Salvar
                     </button>
@@ -1383,9 +1383,9 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       setInlineSubtaskTitle('');
                       setIsAddingSubtaskInline(true);
                     }}
-                    className="w-full py-2 bg-[#141416] hover:bg-[#222226] text-neutral-300 rounded-[4px] text-xs flex items-center justify-center gap-1.5 border border-[#262629]"
+                    className="w-full py-2 bg-[#141416] hover:bg-[#222226] text-neutral-300 rounded-lg text-xs flex items-center justify-center gap-1.5 border border-[#262629]"
                   >
-                    <Plus className="w-3.5 h-3.5 text-[#facc15]" />
+                    <Plus className="w-3.5 h-3.5 text-neutral-400" />
                     <span>Adicionar subtarefa</span>
                   </button>
                 )}
@@ -1399,7 +1399,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 setSelectedTaskId(null);
                 onStartPomodoroForTask(selectedTask);
               }}
-              className="w-full py-2.5 bg-[#facc15]/15 hover:bg-[#facc15]/25 border border-[#facc15]/50 text-[#facc15] font-bold rounded-[4px] text-xs font-bold flex items-center justify-center gap-2  active:scale-98 transition-colors"
+              className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/15 text-neutral-200 hover:text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 active:scale-98 transition-colors"
             >
               <Play className="w-4 h-4 fill-current" />
               Iniciar Pomodoro Nesta Tarefa

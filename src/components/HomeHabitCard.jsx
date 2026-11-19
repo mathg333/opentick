@@ -324,7 +324,7 @@ export default function HomeHabitCard({ store }) {
             onClick={() => setViewScope('overview')}
             className={`py-1.5 px-2 rounded-[4px] text-[11px] font-semibold transition-all ${
               viewScope === 'overview'
-                ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/45'
+                ? 'bg-white/10 text-white border border-white/20'
                 : 'text-neutral-400 hover:text-neutral-200 border border-transparent'
             }`}
           >
@@ -335,7 +335,7 @@ export default function HomeHabitCard({ store }) {
             onClick={() => setViewScope('specific')}
             className={`py-1.5 px-2 rounded-[4px] text-[11px] font-semibold transition-all ${
               viewScope === 'specific'
-                ? 'bg-[#facc15]/15 text-[#facc15] border border-[#facc15]/45'
+                ? 'bg-white/10 text-white border border-white/20'
                 : 'text-neutral-400 hover:text-neutral-200 border border-transparent'
             }`}
           >
@@ -504,7 +504,7 @@ export default function HomeHabitCard({ store }) {
               onClick={() => handleToggleDate(todayStr)}
               className={`flex-1 py-2 px-3 rounded-md font-semibold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 border ${
                 isDoneToday
-                  ? 'bg-[#facc15]/15 border-[#facc15]/55 text-[#facc15]'
+                  ? 'bg-white/10 border-white/20 text-white'
                   : 'bg-[#121215] hover:bg-[#1a1a1f] border-white/12 text-neutral-200'
               }`}
             >

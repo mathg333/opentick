@@ -961,7 +961,7 @@ export default function CustomDatePickerModal({
                         onClick={() => applyMonthlyHorizonToSelected(opt.h)}
                         className={`py-1.5 px-1 rounded-lg text-[10px] font-bold border transition-all ${
                           monthlyHorizon === opt.h
-                            ? 'bg-[#facc15]/20 text-[#facc15] border-[#facc15]/50'
+                            ? 'bg-white/10 text-white border-white/30'
                             : 'bg-[#0A0A0C] text-[#A1A1AA] border-white/10 hover:text-white'
                         }`}
                       >
@@ -975,11 +975,11 @@ export default function CustomDatePickerModal({
           )}
 
           {/* SHARED ACROSS ALL MODES: MULTIPLE TIMES PER DAY */}
-          <div className="bg-[#141417] border border-[#facc15]/25 rounded-lg p-3 space-y-2.5">
+          <div className="bg-[#141417] border border-white/10 rounded-xl p-3.5 space-y-2.5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <Clock size={15} className="text-[#facc15]" />
-                <span className="text-xs font-black text-white">
+                <Clock size={15} className="text-neutral-400" />
+                <span className="text-xs font-semibold text-white">
                   Horários ({selectedTimes.length})
                 </span>
               </div>
@@ -989,9 +989,9 @@ export default function CustomDatePickerModal({
                   setEditingTimeTarget(null);
                   setShowTimePicker(true);
                 }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#18181c] hover:bg-[#facc15]/15 border border-[#facc15]/40 text-[#facc15] text-[11px] font-bold transition-all"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/15 text-neutral-200 text-xs font-semibold transition-all active:scale-95"
               >
-                <Plus size={13} strokeWidth={3} />
+                <Plus size={13} />
                 Adicionar Horário
               </button>
             </div>
@@ -1002,7 +1002,7 @@ export default function CustomDatePickerModal({
                 {selectedTimes.map(timeStr => (
                   <div
                     key={timeStr}
-                    className="flex items-center gap-1 bg-[#facc15]/15 border border-[#facc15]/45 text-[#facc15] rounded-md px-2.5 py-1 text-xs font-black"
+                    className="flex items-center gap-1.5 bg-[#141416] border border-white/15 text-neutral-200 rounded-lg px-2.5 py-1 text-xs font-mono font-medium"
                   >
                     <button
                       type="button"
@@ -1018,7 +1018,7 @@ export default function CustomDatePickerModal({
                     <button
                       type="button"
                       onClick={() => setSelectedTimes(prev => prev.filter(t => t !== timeStr))}
-                      className="p-0.5 hover:bg-[#facc15]/20 rounded text-[#facc15]"
+                      className="p-0.5 hover:bg-white/10 rounded text-neutral-400 hover:text-white"
                       aria-label={`Remover ${timeStr}`}
                     >
                       <X size={12} />
@@ -1035,19 +1035,19 @@ export default function CustomDatePickerModal({
                 }}
                 className="w-full text-left text-[11px] text-[#8E8E93] hover:text-neutral-200 py-1 transition-colors"
               >
-                Sem horário fixo — toque em <span className="text-[#facc15] font-semibold">+ Adicionar Horário</span> para escolher no relógio analógico.
+                Sem horário fixo — toque em <span className="text-neutral-200 font-semibold">+ Adicionar Horário</span> para escolher no relógio analógico.
               </button>
             )}
           </div>
 
           {/* Selected Summary Bar */}
-          <div className="bg-[#141417] border border-white/10 rounded-md px-2.5 py-2 flex flex-wrap items-center justify-between gap-2">
+          <div className="bg-[#141417] border border-white/10 rounded-xl px-3 py-2 flex flex-wrap items-center justify-between gap-2">
             <button
               type="button"
               onClick={() => setAlarmEnabled(prev => !prev)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] border text-[11px] font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold transition-all ${
                 alarmEnabled
-                  ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15]'
+                  ? 'bg-white/10 border-white/20 text-white'
                   : 'bg-[#0A0A0C] border-white/10 text-[#8e8e93]'
               }`}
             >
@@ -1067,9 +1067,9 @@ export default function CustomDatePickerModal({
                     key={opt.val}
                     type="button"
                     onClick={() => setReminderOffset(opt.val)}
-                    className={`px-2 py-0.5 rounded-[4px] border text-[10px] font-bold transition-all ${
+                    className={`px-2 py-0.5 rounded-[4px] border text-[10px] font-semibold transition-all ${
                       reminderOffset === opt.val
-                        ? 'bg-[#facc15]/15 border-[#facc15]/50 text-[#facc15]'
+                        ? 'bg-white/15 border-white/30 text-white'
                         : 'bg-[#0A0A0C] border-white/10 text-[#8e8e93] hover:text-white'
                     }`}
                   >
@@ -1080,14 +1080,14 @@ export default function CustomDatePickerModal({
             )}
           </div>
 
-          <div className="bg-[#111114] border border-white/10 rounded-md px-3 py-2 flex items-center justify-between gap-2">
+          <div className="bg-[#111114] border border-white/10 rounded-xl px-3 py-2.5 flex items-center justify-between gap-2">
             <div className="text-[11px] text-[#E4E4E7] font-semibold truncate">
-              <span className="text-[#facc15] font-black">{selectedDates.length}</span>{' '}
+              <span className="text-white font-bold">{selectedDates.length}</span>{' '}
               {selectedDates.length === 1 ? 'dia marcado' : 'dias marcados'}
               {selectedTimes.length > 0 && (
                 <>
                   {' · '}
-                  <span className="text-[#facc15] font-black">{selectedTimes.length}</span>{' '}
+                  <span className="text-white font-bold">{selectedTimes.length}</span>{' '}
                   {selectedTimes.length === 1 ? 'horário' : 'horários'}
                 </>
               )}
@@ -1098,7 +1098,7 @@ export default function CustomDatePickerModal({
                   <button
                     type="button"
                     onClick={() => setSelectedDates([])}
-                    className="text-[10px] font-bold text-[#8e8e93] hover:text-red-400 px-2 py-1 rounded-[4px] bg-white/5 border border-white/5"
+                    className="text-[10px] font-semibold text-[#8e8e93] hover:text-red-400 px-2 py-1 rounded-[4px] bg-white/5 border border-white/5"
                   >
                     Limpar
                   </button>
@@ -1106,7 +1106,7 @@ export default function CustomDatePickerModal({
                 <button
                   type="button"
                   onClick={() => setSelectedDates([todayStr])}
-                  className="text-[10px] font-bold text-[#8e8e93] hover:text-[#facc15] px-2 py-1 rounded-[4px] bg-white/5 border border-white/5"
+                  className="text-[10px] font-semibold text-[#8e8e93] hover:text-white px-2 py-1 rounded-[4px] bg-white/5 border border-white/5"
                 >
                   Resetar p/ Hoje
                 </button>
@@ -1121,9 +1121,9 @@ export default function CustomDatePickerModal({
             type="button"
             disabled={isConfirmDisabled}
             onClick={handleConfirm}
-            className="w-full py-2.5 rounded-md bg-[#facc15]/90 hover:bg-[#facc15] disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-white hover:bg-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed text-black font-semibold text-xs sm:text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
           >
-            <Check size={16} strokeWidth={3} />
+            <Check size={16} strokeWidth={2.5} />
             Confirmar ({selectedDates.length} {selectedDates.length === 1 ? 'dia' : 'dias'} · {selectedTimes.length || 0} {selectedTimes.length === 1 ? 'horário' : 'horários'})
           </button>
         </div>

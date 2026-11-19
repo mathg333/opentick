@@ -80,20 +80,20 @@ export function ObsidianSelect({
 
             {options.length > 5 && (
               <div className="px-3 pt-2.5 pb-1 shrink-0">
-                <div className="flex items-center gap-2 bg-[#141417] border border-white/10 focus-within:border-[#facc15]/50 rounded-md px-2.5 py-1.5">
-                  <Search size={13} className="text-neutral-400 shrink-0" />
+                <div className="flex items-center gap-2 bg-[#141417] border border-white/10 focus-within:border-[#facc15]/50 rounded-lg px-3 py-2">
+                  <Search size={14} className="text-neutral-400 shrink-0" />
                   <input
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Buscar opção..."
-                    className="w-full bg-transparent text-xs text-white placeholder-[#6b6b73] outline-none min-w-0"
+                    className="w-full bg-transparent text-sm text-white placeholder-[#6b6b73] outline-none min-w-0"
                   />
                 </div>
               </div>
             )}
 
-            <div className="flex-1 overflow-y-auto p-3 space-y-1.5 pb-6 sm:pb-3">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 pb-6 sm:pb-3">
               {filteredOptions.length === 0 ? (
                 <div className="py-8 text-center text-xs text-[#8E8E93]">
                   Nenhuma opção encontrada.
@@ -109,7 +109,7 @@ export function ObsidianSelect({
                         onChange(opt.value);
                         setIsOpen(false);
                       }}
-                      className={`w-full px-3 py-2 rounded-md border flex items-center justify-between gap-2.5 text-left transition-all ${
+                      className={`w-full px-3.5 py-2.5 rounded-lg border flex items-center justify-between gap-3 text-left transition-all ${
                         isSelected
                           ? 'bg-[#facc15]/12 border-[#facc15]/55'
                           : 'bg-[#121215] border-white/[0.08] hover:border-white/20'
@@ -123,7 +123,7 @@ export function ObsidianSelect({
                             </span>
                           )}
                           <span
-                            className={`text-xs font-semibold leading-snug truncate ${
+                            className={`text-sm font-semibold leading-snug truncate ${
                               isSelected ? 'text-[#facc15]' : 'text-neutral-200'
                             }`}
                           >
@@ -131,7 +131,7 @@ export function ObsidianSelect({
                           </span>
                         </div>
                         {opt.meta && (
-                          <span className="inline-block mt-0.5 text-[10px] font-mono text-[#8E8E93]">
+                          <span className="inline-block mt-0.5 text-xs font-mono text-[#8E8E93]">
                             {opt.meta}
                           </span>
                         )}
@@ -166,10 +166,10 @@ export function ObsidianSelect({
           setQuery('');
           setIsOpen(true);
         }}
-        className={`w-full flex items-center justify-between gap-2 text-left transition-all outline-none ${
+        className={`w-full flex items-center justify-between gap-2.5 text-left transition-all outline-none ${
           compact
-            ? 'bg-[#141417] hover:bg-[#1a1a1f] border border-white/10 hover:border-white/25 rounded-md px-2 py-1 text-[10px] font-semibold text-neutral-200'
-            : 'bg-[#0A0A0C] hover:bg-[#141417] border border-white/10 hover:border-white/25 rounded-md px-3 py-2 text-xs font-semibold text-white'
+            ? 'bg-[#141417] hover:bg-[#1a1a1f] border border-white/12 hover:border-white/25 rounded-lg px-3 py-2 text-xs font-semibold text-neutral-200'
+            : 'bg-[#0A0A0C] hover:bg-[#141417] border border-white/12 hover:border-white/25 rounded-xl px-4 py-3 text-sm font-semibold text-white'
         } ${className}`}
       >
         <span className="truncate flex-1 flex items-center gap-1.5 min-w-0">
@@ -352,10 +352,10 @@ export function ObsidianDateButton({
           e.stopPropagation();
           setIsOpen(true);
         }}
-        className={`flex items-center justify-between gap-2 transition-all outline-none ${
+        className={`flex items-center justify-between gap-2.5 transition-all outline-none ${
           compact
-            ? 'bg-[#141417] border border-white/12 hover:border-white/25 rounded-md px-2.5 py-1.5 text-[11px] font-semibold text-neutral-200'
-            : 'w-full bg-[#0A0A0C] border border-white/10 hover:border-white/25 rounded-md px-3 py-2 text-xs font-semibold text-white'
+            ? 'bg-[#141417] border border-white/12 hover:border-white/25 rounded-lg px-3 py-2 text-xs font-semibold text-neutral-200'
+            : 'w-full bg-[#0A0A0C] border border-white/12 hover:border-white/25 rounded-xl px-4 py-3 text-sm font-semibold text-white'
         } ${className}`}
       >
         <span className="truncate capitalize">{formattedLabel}</span>

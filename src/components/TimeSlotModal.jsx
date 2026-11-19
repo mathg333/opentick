@@ -279,10 +279,10 @@ export default function TimeSlotModal({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSave} className="flex-1 overflow-y-auto overflow-x-hidden px-3.5 py-3 space-y-3">
+        <form onSubmit={handleSave} className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3.5 space-y-4">
           {/* Title */}
           <div>
-            <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider block mb-1">
+            <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block mb-1.5">
               Título / Tarefa
             </label>
             <input
@@ -291,14 +291,14 @@ export default function TimeSlotModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={`O que você vai fazer às ${startTime}?`}
-              className="w-full bg-[#121216] border border-white/[0.08] focus:border-white/25 rounded-md px-3 py-2 text-xs text-white placeholder-neutral-600 outline-none font-medium transition-colors"
+              className="w-full bg-[#121216] border border-white/12 focus:border-[#facc15]/50 rounded-xl px-4 py-3 sm:py-3.5 text-base sm:text-lg text-white placeholder-neutral-500 outline-none font-medium transition-colors"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5 mb-1">
-              <AlignLeft size={12} className="text-neutral-500" />
+            <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+              <AlignLeft size={13} className="text-neutral-400" />
               <span>Descrição</span>
             </label>
             <textarea
@@ -306,58 +306,58 @@ export default function TimeSlotModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Adicione observações, link, local ou detalhes..."
-              className="w-full bg-[#121216] border border-white/[0.08] focus:border-white/25 rounded-md px-3 py-2 text-xs text-white placeholder-neutral-600 outline-none resize-none leading-relaxed transition-colors"
+              className="w-full bg-[#121216] border border-white/12 focus:border-[#facc15]/50 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 outline-none resize-none leading-relaxed min-h-[75px] transition-colors"
             />
           </div>
 
           {/* Time Configuration */}
-          <div className="bg-[#121216] border border-white/[0.08] rounded-md p-2.5 space-y-2">
+          <div className="bg-[#121216] border border-white/10 rounded-xl p-3.5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-semibold text-neutral-200 flex items-center gap-1.5">
-                <Clock size={13} className="text-neutral-400" />
+              <span className="text-xs font-semibold text-neutral-200 flex items-center gap-1.5">
+                <Clock size={14} className="text-neutral-400" />
                 <span>Horários</span>
               </span>
               <button
                 type="button"
                 onClick={() => setTimePickerTarget('extra')}
-                className="flex items-center gap-1 px-2 py-1 rounded-[4px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-neutral-300 hover:text-white text-[10px] font-medium transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-neutral-200 hover:text-white text-xs font-semibold transition-colors active:scale-95"
               >
-                <Plus size={11} />
+                <Plus size={13} />
                 <span>Horário</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <span className="text-[10px] text-neutral-500 font-medium block mb-1">Início</span>
+                <span className="text-xs text-neutral-400 font-medium block mb-1.5">Início</span>
                 <button
                   type="button"
                   onClick={() => setTimePickerTarget('start')}
-                  className="w-full bg-[#0B0B0E] border border-white/10 hover:border-white/25 rounded-md px-2.5 py-1.5 text-xs font-mono font-semibold text-white flex items-center justify-between transition-colors"
+                  className="w-full bg-[#0B0B0E] border border-white/12 hover:border-white/25 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-white flex items-center justify-between transition-colors"
                 >
                   <span>{startTime}</span>
-                  <Clock size={12} className="text-neutral-500" />
+                  <Clock size={14} className="text-neutral-400" />
                 </button>
               </div>
               <div>
-                <span className="text-[10px] text-neutral-500 font-medium block mb-1">Término (opcional)</span>
-                <div className="flex items-center gap-1">
+                <span className="text-xs text-neutral-400 font-medium block mb-1.5">Término (opcional)</span>
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => setTimePickerTarget('end')}
-                    className="flex-1 bg-[#0B0B0E] border border-white/10 hover:border-white/25 rounded-md px-2.5 py-1.5 text-xs font-mono font-medium text-neutral-200 flex items-center justify-between transition-colors"
+                    className="flex-1 bg-[#0B0B0E] border border-white/12 hover:border-white/25 rounded-xl px-3.5 py-2.5 text-sm font-mono font-medium text-neutral-200 flex items-center justify-between transition-colors"
                   >
                     <span>{endTime || '--:--'}</span>
-                    <Clock size={12} className="text-neutral-500" />
+                    <Clock size={14} className="text-neutral-400" />
                   </button>
                   {endTime && (
                     <button
                       type="button"
                       onClick={() => setEndTime('')}
-                      className="p-1.5 rounded-md bg-[#0B0B0E] border border-white/10 text-neutral-400 hover:text-white transition-colors"
+                      className="p-2.5 rounded-xl bg-[#0B0B0E] border border-white/12 text-neutral-400 hover:text-white transition-colors"
                       title="Limpar horário de término"
                     >
-                      <X size={13} />
+                      <X size={14} />
                     </button>
                   )}
                 </div>
@@ -408,7 +408,7 @@ export default function TimeSlotModal({
                     onClick={() => setRepeatMode(tab.id)}
                     className={`py-1.5 rounded-[4px] text-[11px] font-semibold transition-colors ${
                       active
-                        ? 'bg-[#facc15]/12 text-[#facc15] border border-[#facc15]/40'
+                        ? 'bg-white/10 text-white border border-white/20'
                         : 'text-neutral-500 hover:text-neutral-200 border border-transparent'
                     }`}
                   >
@@ -753,13 +753,13 @@ export default function TimeSlotModal({
                       key={opt.value}
                       type="button"
                       onClick={() => setPriority(opt.value)}
-                      className={`py-1.5 px-2 rounded-[4px] text-[11px] font-medium border flex items-center justify-center gap-1 transition-colors ${
+                      className={`py-2 px-2.5 rounded-lg text-xs sm:text-sm font-semibold border flex items-center justify-center gap-1.5 transition-colors ${
                         selected
-                          ? 'bg-[#facc15]/12 text-[#facc15] border-[#facc15]/40'
+                          ? 'bg-[#facc15]/15 text-[#facc15] border-[#facc15]/50 font-bold'
                           : 'bg-[#121216] text-neutral-400 border-white/[0.08] hover:text-white'
                       }`}
                     >
-                      <Flag size={10} className={selected ? 'text-[#facc15]' : 'text-neutral-500'} />
+                      <Flag size={12} className={selected ? 'text-[#facc15]' : 'text-neutral-500'} />
                       <span>{opt.label}</span>
                     </button>
                   );
@@ -769,17 +769,17 @@ export default function TimeSlotModal({
           </div>
 
           {/* Submit */}
-          <div className="pt-1">
+          <div className="pt-2">
             <button
               type="submit"
               disabled={!title.trim()}
-              className={`w-full py-2.5 rounded-md text-xs font-semibold tracking-wide border flex items-center justify-center gap-2 transition-colors active:scale-[0.99] ${
+              className={`w-full py-3.5 rounded-xl text-sm font-semibold tracking-wide border flex items-center justify-center gap-2 transition-all active:scale-[0.99] shadow-md ${
                 title.trim()
-                  ? 'bg-[#facc15]/15 hover:bg-[#facc15]/25 border-[#facc15]/50 text-[#facc15]'
+                  ? 'bg-white hover:bg-neutral-200 border-white text-black'
                   : 'bg-white/[0.04] border-white/[0.08] text-neutral-500 cursor-not-allowed'
               }`}
             >
-              <Check size={14} className="stroke-[2.5]" />
+              <Check size={16} className="stroke-[2.5]" />
               <span>
                 Confirmar ({resolvedDates.length} {resolvedDates.length === 1 ? 'dia' : 'dias'} · {allTimes.length} {allTimes.length === 1 ? 'horário' : 'horários'})
               </span>

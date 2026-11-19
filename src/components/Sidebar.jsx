@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Inbox,
   Laptop,
@@ -20,7 +20,10 @@ import {
   SlidersHorizontal,
   Folder,
   Camera,
-  MoreHorizontal
+  MoreHorizontal,
+  RefreshCw,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 import RankShield2D from './RankShield2D';
 import { calculateGamification } from '../utils/gamification';
@@ -35,6 +38,30 @@ export default function Sidebar({
   onOpenProfileModal
 }) {
   const { state, activeView, setActiveView, addProject, deleteProject } = store;
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+  const [syncStatus, setSyncStatus] = useState('synced'); // 'synced' | 'syncing' | 'offline'
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setSyncStatus('syncing');
+      setTimeout(() => {
+        setSyncStatus('synced');
+      }, 1500);
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      setSyncStatus('offline');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
   const [isAddingProject, setIsAddingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectColor, setNewProjectColor] = useState('#facc15');
@@ -563,6 +590,27 @@ export default function Sidebar({
         >
           <SlidersHorizontal className="w-4 h-4" />
         </button>
+      </div>
+
+      {/* Online / Offline Sync Status Badge */}
+      <div className="px-3 py-1.5 bg-[#0a0a0c] border-t border-[#1c1c20] flex items-center justify-between text-[10px] text-neutral-400 select-none">
+        <div className="flex items-center gap-1.5">
+          {syncStatus === 'syncing' ? (
+            <RefreshCw className="w-3 h-3 text-[#facc15] animate-spin" />
+          ) : isOnline ? (
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]" />
+          ) : (
+            <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" />
+          )}
+          <span className="font-medium">
+            {syncStatus === 'syncing'
+              ? 'Sincronizando...'
+              : isOnline
+              ? 'Online · Sincronizado'
+              : 'Offline · Salvo no PC'}
+          </span>
+        </div>
+        <span className="text-[9px] text-neutral-500 font-mono">PWA</span>
       </div>
     </aside>
   );
