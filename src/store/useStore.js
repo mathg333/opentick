@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { INITIAL_PROJECTS, INITIAL_TASKS, INITIAL_HABITS, INITIAL_POMODORO_SESSIONS } from './initialData';
-import { calculateGamification } from '../utils/gamification';
+import { calculateGamification, XP_REWARDS } from '../utils/gamification';
 import { clearAlarmDismissed, cancelNativeAlarm } from '../utils/nativeAlarm';
 import { getTodayYMD, formatDateYMD } from '../utils/taskSchedule';
 
@@ -36,7 +36,7 @@ export function useAppStore() {
               coverImage: null,
               ...(parsed.userProfile || {})
             },
-            bonusXp: parsed.bonusXp ?? 450,
+            bonusXp: (parsed.bonusXp && parsed.bonusXp !== 450) ? parsed.bonusXp : 0,
             settings: {
               theme: 'amoled',
               accentColor: '#ffffff',
@@ -73,7 +73,7 @@ export function useAppStore() {
         coverPreset: 'rain_glass',
         coverImage: null
       },
-      bonusXp: 450,
+      bonusXp: 0,
       settings: {
         theme: 'amoled',
         accentColor: '#ffffff',
@@ -314,7 +314,9 @@ export function useAppStore() {
     if (nextCompleted) {
       const nextGamification = calculateGamification(nextState);
       const nextTier = nextGamification.currentRank.tier;
-      const gainedXp = targetTask.priority === 3 ? 100 : 60;
+      const gainedXp = targetTask.priority === 3 
+        ? (XP_REWARDS.TASK_COMPLETED + XP_REWARDS.TASK_HIGH_PRIORITY_BONUS) 
+        : XP_REWARDS.TASK_COMPLETED;
       const isRankUp = prevTier !== nextTier;
 
       setTimeout(() => {

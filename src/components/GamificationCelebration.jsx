@@ -46,12 +46,12 @@ export default function GamificationCelebration() {
 
   return (
     <>
-      {/* Floating XP Gain Badges (+25 XP ⭐) */}
+      {/* Floating XP Gain Badges (+10 XP ⭐) */}
       <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[90] pointer-events-none flex flex-col items-center gap-2">
         {xpToasts.map(toast => (
           <div
             key={toast.id}
-            className="animate-float-xp bg-gradient-to-r from-amber-500/90 to-[#facc15]/95 text-black font-black text-sm px-4 py-1.5 rounded-full shadow-lg shadow-[#facc15]/30 flex items-center gap-1.5 border border-amber-300/60 backdrop-blur-md"
+            className="animate-float-xp bg-white text-black font-black text-sm px-4 py-1.5 rounded-full shadow-2xl shadow-black/50 flex items-center gap-1.5 border border-white/80 backdrop-blur-md"
           >
             <Sparkles className="w-4 h-4 fill-black" />
             <span>+{toast.xpGained} XP</span>
@@ -65,12 +65,12 @@ export default function GamificationCelebration() {
           {/* Radial Neon Flare Background */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
             <div 
-              className="w-[450px] h-[450px] rounded-full blur-[90px] opacity-40 animate-pulse"
-              style={{ background: rankUpData.newRank.color || '#facc15' }}
+              className="w-[450px] h-[450px] rounded-full blur-[90px] opacity-30 animate-pulse"
+              style={{ background: rankUpData.newRank.color || '#ffffff' }}
             />
           </div>
 
-          <div className="bg-[#121214] border border-[#facc15]/40 rounded-3xl w-full max-w-sm p-6 text-center text-white shadow-2xl relative overflow-hidden flex flex-col items-center">
+          <div className="bg-[#121214] border border-white/20 rounded-3xl w-full max-w-sm p-6 text-center text-white shadow-2xl relative overflow-hidden flex flex-col items-center">
             {/* Top Close Button */}
             <button
               onClick={() => setRankUpData(null)}
@@ -80,16 +80,16 @@ export default function GamificationCelebration() {
             </button>
 
             {/* Glowing Crown Pill */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold mb-4">
-              <Crown className="w-3.5 h-3.5 fill-amber-300" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold mb-4">
+              <Crown className="w-3.5 h-3.5 text-white" />
               <span>NOVO RANK CONQUISTADO!</span>
             </div>
 
             {/* Giant 3D Rank Shield with Glow */}
             <div className="relative my-2 py-4 flex items-center justify-center w-full">
               <div 
-                className="absolute inset-0 m-auto w-36 h-36 rounded-full blur-2xl opacity-50"
-                style={{ background: rankUpData.newRank.color || '#facc15' }}
+                className="absolute inset-0 m-auto w-36 h-36 rounded-full blur-2xl opacity-40"
+                style={{ background: rankUpData.newRank.color || '#ffffff' }}
               />
               <div className="relative animate-bounce-gentle">
                 <RankShield2D tier={rankUpData.newRank.tier} size={150} />
@@ -100,7 +100,7 @@ export default function GamificationCelebration() {
             <h2 className="text-2xl font-black text-white tracking-tight mt-2 mb-1">
               {rankUpData.newRank.name}
             </h2>
-            <div className="inline-block px-2.5 py-0.5 rounded-lg bg-[#1c1c22] border border-neutral-700 font-mono text-xs text-amber-400 font-bold mb-3">
+            <div className="inline-block px-2.5 py-0.5 rounded-lg bg-[#1c1c22] border border-neutral-700 font-mono text-xs text-white font-bold mb-3">
               Nível {rankUpData.level}
             </div>
 
@@ -111,7 +111,7 @@ export default function GamificationCelebration() {
             {/* Action Button */}
             <button
               onClick={() => setRankUpData(null)}
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-amber-500 via-[#facc15] to-[#ff3d00] hover:opacity-95 text-black font-black text-sm rounded-2xl shadow-lg shadow-[#facc15]/30 active:scale-95 transition-all flex items-center justify-center gap-2"
+              className="w-full py-3.5 px-4 bg-white hover:bg-neutral-200 text-black font-black text-sm rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               <span>Continuar Dominando! ⚔️</span>
               <ChevronRight className="w-4 h-4 stroke-[3]" />

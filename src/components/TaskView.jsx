@@ -22,7 +22,9 @@ import {
   SlidersHorizontal,
   Bell,
   BellOff,
-  RotateCcw
+  RotateCcw,
+  Folder,
+  AlignLeft
 } from 'lucide-react';
 import CustomDatePickerModal from './CustomDatePickerModal';
 import { getTaskTimes, getTaskDates, getTodayYMD } from '../utils/taskSchedule';
@@ -930,35 +932,77 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
       </div>
 
       {/* Task Detail Fullscreen Sheet / Drawer */}
-      {selectedTask && (
-        <div className="fixed inset-0 z-50 md:static md:w-96 md:z-auto bg-[#000000] border-l border-[#1c1c1e] flex flex-col h-full overflow-hidden shadow-2xl">
-          <div className="p-4 border-b border-[#1c1c1e] flex items-center justify-between bg-[#141416]">
-            <button
-              onClick={() => setSelectedTaskId(null)}
-              className="flex items-center gap-1.5 text-xs text-neutral-300 hover:text-white px-2.5 py-1.5 rounded-[4px] bg-[#1c1c1e] border border-[#2c2c2e]"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Voltar</span>
-            </button>
-            <span className="text-xs font-bold text-neutral-400">
-              Detalhes da Tarefa
-            </span>
-            <button
-              onClick={() => moveTaskToTrash(selectedTask.id)}
-              className="text-neutral-400 hover:text-rose-400 p-1.5 rounded-lg"
-              title="Excluir"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+      {selectedTask && (() => {
+        const selectedTaskProject = state.projects.find(p => p.id === selectedTask.projectId);
+        const hasCategory = Boolean(selectedTaskProject && selectedTaskProject.id !== 'inbox' && selectedTaskProject.id !== 'none' && selectedTaskProject.id !== '');
+        const taskTimes = getTaskTimes(selectedTask);
+        const timeDisplay = taskTimes.length > 0 ? taskTimes.join(', ') : 'Sem horário';
 
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-5 pb-28 md:pb-8">
+        const formatTaskDateInfo = () => {
+          if (Array.isArray(selectedTask.recurringDates) && selectedTask.recurringDates.length > 1) {
+            const sorted = [...selectedTask.recurringDates].sort();
+            const first = sorted[0];
+            const [y, m, d] = first.split('-');
+            return `${d}/${m}/${y} (+${selectedTask.recurringDates.length - 1} datas)`;
+          }
+          const dateStr = selectedTask.dueDate;
+          if (!dateStr) return 'Sem data definida';
+          const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+          const [y, m, d] = dateStr.split('-');
+          const monthName = months[parseInt(m, 10) - 1] || m;
+          if (dateStr === todayStr) {
+            return `Hoje, ${parseInt(d, 10)} de ${monthName}`;
+          }
+          return `${parseInt(d, 10)} de ${monthName} de ${y}`;
+        };
+
+        return (
+          <div className="fixed inset-0 z-50 md:static md:w-96 md:z-auto bg-[#000000] border-l border-[#1c1c1e] flex flex-col h-full overflow-hidden shadow-2xl">
+            <div className="p-3.5 border-b border-[#1c1c1e] flex items-center justify-between bg-[#111114] gap-2">
+              <button
+                onClick={() => setSelectedTaskId(null)}
+                className="flex items-center gap-1.5 text-xs text-neutral-300 hover:text-white px-2.5 py-1.5 rounded-lg bg-[#1a1a1f] border border-[#2a2a32] active:scale-95 transition-all shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Voltar</span>
+              </button>
+              <div className="flex-1 flex items-center justify-center min-w-0 px-1">
+                {hasCategory ? (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-semibold max-w-[190px] truncate shadow-xs">
+                    <Folder className="w-3.5 h-3.5 shrink-0 text-neutral-300" />
+                    <span className="truncate">{selectedTaskProject.name}</span>
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextP = (selectedTask.priority + 1) % 4;
+                    updateTask(selectedTask.id, { priority: nextP });
+                  }}
+                  className="p-2 rounded-lg bg-[#1a1a1f] border border-[#2a2a32] hover:text-white transition-colors"
+                  title="Alterar Prioridade"
+                >
+                  <Flag className={`w-4 h-4 ${priorityColors[selectedTask.priority]}`} />
+                </button>
+                <button
+                  onClick={() => moveTaskToTrash(selectedTask.id)}
+                  className="p-2 rounded-lg bg-[#1a1a1f] border border-[#2a2a32] text-neutral-400 hover:text-rose-400 transition-colors"
+                  title="Excluir Tarefa"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+          <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-4 pb-28 md:pb-8 flex flex-col">
             {/* Title & Checkbox */}
-            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] flex items-center gap-3.5 shadow-xs">
+            <div className="bg-[#121215] p-3.5 rounded-xl border border-white/10 flex items-center gap-3 shadow-xs shrink-0">
               <button
                 type="button"
                 onClick={() => toggleTaskCompleted(selectedTask.id)}
-                className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors shrink-0 ${
+                className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors shrink-0 ${
                   selectedTask.completed ? 'bg-white/15 border-white/40 text-white' : 'border-neutral-500 hover:border-neutral-300'
                 }`}
               >
@@ -967,24 +1011,133 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               <input
                 type="text"
                 value={selectedTask.title}
+                placeholder="Título da tarefa..."
                 onChange={(e) => updateTask(selectedTask.id, { title: e.target.value })}
                 className="flex-1 bg-transparent text-base sm:text-lg font-bold text-white focus:outline-none placeholder-neutral-500"
               />
             </div>
 
-            {/* List / Category Selector - Custom Obsidian Select + Inline List Creation */}
-            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] space-y-3 shadow-xs">
+            {/* Informações da Tarefa: Dia e Hora (Sem calendário volumoso!) */}
+            <div className="grid grid-cols-2 gap-2.5 shrink-0">
+              {/* Dia da Tarefa */}
+              <button
+                type="button"
+                onClick={() => setIsCustomDateModalOpen(true)}
+                className="bg-[#121215] hover:bg-[#18181d] border border-white/10 hover:border-white/20 p-3 rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 shadow-xs"
+              >
+                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-white">
+                  <CalendarIcon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">Dia</span>
+                  <span className="text-xs sm:text-sm font-bold text-white truncate block">
+                    {formatTaskDateInfo()}
+                  </span>
+                </div>
+              </button>
+
+              {/* Hora da Tarefa */}
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingTimeSlot(taskTimes[0] || null);
+                  setIsTimePickerOpen(true);
+                }}
+                className="bg-[#121215] hover:bg-[#18181d] border border-white/10 hover:border-white/20 p-3 rounded-xl flex items-center gap-3 text-left transition-all active:scale-98 shadow-xs"
+              >
+                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-white">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">Hora</span>
+                  <span className="text-xs sm:text-sm font-bold text-white truncate block">
+                    {timeDisplay}
+                  </span>
+                </div>
+              </button>
+            </div>
+
+            {/* Aproveitamento de Tela: Notas, Texto Longo, Subtarefas e Bullet Points */}
+            <div className="bg-[#121215] border border-white/10 rounded-2xl p-4 sm:p-5 space-y-3 shadow-lg flex flex-col flex-1 min-h-[260px]">
+              <div className="flex items-center justify-between pb-2 border-b border-white/[0.07] shrink-0">
+                <span className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
+                  <AlignLeft className="w-3.5 h-3.5 text-neutral-400" />
+                  Texto & Anotações
+                </span>
+
+                {/* Barra de Ferramentas de Inserção Rápida */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const prev = selectedTask.description || '';
+                      const addition = (prev && !prev.endsWith('\n') ? '\n' : '') + '• ';
+                      updateTask(selectedTask.id, { description: prev + addition });
+                    }}
+                    className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1"
+                    title="Inserir Bullet Point"
+                  >
+                    <span className="text-base leading-none">•</span>
+                    <span>Bullet</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const prev = selectedTask.description || '';
+                      const addition = (prev && !prev.endsWith('\n') ? '\n' : '') + '[ ] ';
+                      updateTask(selectedTask.id, { description: prev + addition });
+                    }}
+                    className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1"
+                    title="Inserir Checklist"
+                  >
+                    <span className="font-mono text-xs">[ ]</span>
+                    <span>Check</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const prev = selectedTask.description || '';
+                      const lines = prev.split('\n').filter(l => l.trim());
+                      const nextNum = lines.length + 1;
+                      const addition = (prev && !prev.endsWith('\n') ? '\n' : '') + `${nextNum}. `;
+                      updateTask(selectedTask.id, { description: prev + addition });
+                    }}
+                    className="px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 text-neutral-300 hover:text-white text-[11px] font-semibold transition-all active:scale-95 flex items-center gap-1"
+                    title="Inserir Número"
+                  >
+                    <span className="font-mono text-xs">1.</span>
+                    <span>Lista</span>
+                  </button>
+                </div>
+              </div>
+
+              <textarea
+                rows={9}
+                placeholder="Digite livremente textos longos, notas, subtarefas ou bullet points com total aproveitamento de tela..."
+                value={selectedTask.description || ''}
+                onChange={(e) => updateTask(selectedTask.id, { description: e.target.value })}
+                className="w-full flex-1 bg-transparent text-sm sm:text-base text-neutral-100 placeholder-neutral-500 focus:outline-none leading-relaxed min-h-[220px] resize-y font-normal"
+              />
+            </div>
+
+            {/* Seleção de Categoria / Lista (Discreta) */}
+            <div className="bg-[#121215] p-3.5 rounded-xl border border-white/10 space-y-2.5 shrink-0">
               <div className="flex items-center justify-between">
-                <label className="text-xs sm:text-sm text-neutral-300 font-semibold">Lista / Categoria</label>
+                <span className="text-xs text-neutral-300 font-semibold flex items-center gap-1.5">
+                  <Folder className="w-3.5 h-3.5 text-neutral-400" />
+                  Categoria / Lista
+                </span>
                 <button
                   type="button"
                   onClick={() => {
                     setInlineListName('');
                     setIsCreatingListInline((p) => !p);
                   }}
-                  className="text-xs sm:text-sm text-neutral-300 hover:text-white font-semibold flex items-center gap-1 active:scale-95 transition-transform"
+                  className="text-xs text-neutral-300 hover:text-white font-semibold active:scale-95 transition-transform"
                 >
-                  + Nova Lista
+                  + Nova Categoria
                 </button>
               </div>
 
@@ -993,10 +1146,10 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                   <input
                     type="text"
                     autoFocus
-                    placeholder="Nome da nova lista..."
+                    placeholder="Nome da nova categoria..."
                     value={inlineListName}
                     onChange={(e) => setInlineListName(e.target.value)}
-                    className="flex-1 bg-[#0A0A0C] border border-white/20 rounded-lg px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 outline-none"
+                    className="flex-1 bg-[#0A0A0C] border border-white/20 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-500 outline-none"
                   />
                   <button
                     type="button"
@@ -1008,7 +1161,7 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                       setInlineListName('');
                       setIsCreatingListInline(false);
                     }}
-                    className="px-4 py-2.5 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs sm:text-sm font-semibold shrink-0"
+                    className="px-3.5 py-2 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs font-semibold shrink-0"
                   >
                     Criar
                   </button>
@@ -1016,179 +1169,14 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
               )}
 
               <ObsidianSelect
-                title="Escolher Lista / Categoria"
+                title="Escolher Categoria"
                 value={selectedTask.projectId || 'inbox'}
                 onChange={(val) => updateTask(selectedTask.id, { projectId: val })}
-                options={state.projects.map(p => ({ value: p.id, label: p.name }))}
+                options={[
+                  { value: 'inbox', label: 'Sem categoria' },
+                  ...state.projects.filter(p => p.id !== 'inbox').map(p => ({ value: p.id, label: p.name }))
+                ]}
               />
-            </div>
-
-            {/* Description Notes */}
-            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] space-y-2.5 shadow-xs">
-              <label className="text-xs sm:text-sm text-neutral-300 font-semibold">Notas / Descrição</label>
-              <textarea
-                rows={3}
-                placeholder="Adicione anotações, links ou detalhes..."
-                value={selectedTask.description || ''}
-                onChange={(e) => updateTask(selectedTask.id, { description: e.target.value })}
-                className="w-full bg-[#111114] border border-[#28282e] rounded-lg p-3.5 text-sm sm:text-[15px] text-white placeholder-neutral-500 focus:outline-none focus:border-white/30 leading-relaxed min-h-[95px]"
-              />
-            </div>
-
-            {/* Date & Multiple Times Picker + Personalizado Button */}
-            <div className="bg-[#161619] p-4 rounded-xl border border-[#26262a] space-y-3.5 shadow-xs">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs sm:text-sm text-neutral-300 font-semibold flex items-center gap-2">
-                  <CalendarIcon className="w-4 h-4 text-neutral-400" />
-                  Data Principal
-                </span>
-                <div className="flex items-center gap-2.5">
-                  <span className="text-sm font-bold text-white">
-                    {selectedTask.dueDate || 'Sem data'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsCustomDateModalOpen(true)}
-                    className="px-3 py-1.5 rounded-lg bg-[#18181c] hover:bg-[#222228] border border-white/15 hover:border-white/30 text-neutral-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
-                  >
-                    <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-400" />
-                    <span>Personalizado</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Multi-Time Chips Section */}
-              <div className="pt-2.5 border-t border-[#262629] space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-sm text-neutral-300 font-semibold flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-neutral-400" />
-                    Horários ({getTaskTimes(selectedTask).length})
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingTimeSlot(null);
-                      setIsTimePickerOpen(true);
-                    }}
-                    className="bg-white/5 hover:bg-white/10 border border-white/15 rounded-lg px-3 py-1.5 text-xs text-neutral-200 hover:text-white font-semibold flex items-center gap-1.5 active:scale-95 transition-all"
-                  >
-                    <Plus className="w-3.5 h-3.5 text-neutral-400" />
-                    <span>Adicionar Horário</span>
-                  </button>
-                </div>
-
-                {getTaskTimes(selectedTask).length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {getTaskTimes(selectedTask).map(tm => (
-                      <div
-                        key={tm}
-                        className="flex items-center gap-1.5 bg-[#141416] border border-white/15 text-neutral-200 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-mono font-medium shadow-xs"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingTimeSlot(tm);
-                            setIsTimePickerOpen(true);
-                          }}
-                          className="hover:underline"
-                        >
-                          {tm}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const remaining = getTaskTimes(selectedTask).filter(x => x !== tm);
-                            updateTask(selectedTask.id, {
-                              recurringTimes: remaining,
-                              startTime: remaining[0] || ''
-                            });
-                          }}
-                          className="p-0.5 hover:bg-white/10 rounded text-neutral-400 hover:text-white"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-neutral-400">
-                    Nenhum horário definido — toque em + Adicionar Horário.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* FULL MONTH CALENDAR VIEW OF RECURRING DATES WITH MONTH NAVIGATION */}
-            <div className="bg-[#161619] p-3.5 rounded-xl border border-[#26262a] space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-white font-bold flex items-center gap-1.5">
-                  <CalendarIcon className="w-4 h-4 text-neutral-400" />
-                  Calendário de Repetições
-                </span>
-                <span className="text-[10px] text-neutral-400 font-mono font-medium">
-                  {getTaskDates(selectedTask).length} datas marcadas
-                </span>
-              </div>
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  type="button"
-                  onClick={() => setDetailCalMonth(new Date(year, month - 1, 1))}
-                  className="p-1 rounded-lg bg-[#141416] border border-[#2c2c2e] text-neutral-400 hover:text-white"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="text-xs font-bold text-white">
-                  {detailMonthNames[month]} {year}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setDetailCalMonth(new Date(year, month + 1, 1))}
-                  className="p-1 rounded-lg bg-[#141416] border border-[#2c2c2e] text-neutral-400 hover:text-white"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-[11px] text-neutral-400">
-                Toque nos dias para marcar ou use <strong className="text-neutral-200">Personalizado</strong> acima:
-              </p>
-
-              {/* Mini Month Grid */}
-              <div className="pt-1">
-                <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-neutral-500 font-bold uppercase mb-1">
-                  {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <span key={i}>{d}</span>)}
-                </div>
-                <div className="grid grid-cols-7 gap-1 text-center">
-                  {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-                    <div key={`empty-${i}`} className="h-7" />
-                  ))}
-                  {Array.from({ length: daysInMonth }).map((_, i) => {
-                    const dayNum = i + 1;
-                    const mo = String(month + 1).padStart(2, '0');
-                    const dy = String(dayNum).padStart(2, '0');
-                    const dStr = `${year}-${mo}-${dy}`;
-                    const isMarked = selectedTask.recurringDates && selectedTask.recurringDates.includes(dStr);
-
-                    return (
-                      <button
-                        key={dStr}
-                        type="button"
-                        onClick={() => handleToggleDateInTask(dStr)}
-                        className={`h-7 w-7 mx-auto rounded-full text-[11px] font-bold flex items-center justify-center transition-all ${
-                          dStr === todayStr
-                            ? isMarked
-                              ? 'bg-[#facc15] text-black font-black ring-2 ring-[#facc15] shadow-[0_0_8px_rgba(250,204,21,0.3)]'
-                              : 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_8px_rgba(250,204,21,0.25)]'
-                            : isMarked
-                            ? 'border border-white/40 text-white font-semibold'
-                            : 'text-neutral-300 hover:bg-[#28282e]'
-                        }`}
-                      >
-                        {dayNum}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
 
             {/* Custom Tags */}
@@ -1410,7 +1398,8 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
             </button>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Custom Multi-Date & Multi-Time Picker Modal */}
       <CustomDatePickerModal

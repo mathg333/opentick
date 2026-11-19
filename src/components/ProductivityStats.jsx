@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import RankShield2D from './RankShield2D';
 import AchievementBadge from './AchievementBadge';
-import { calculateGamification, RANKS_CONFIG } from '../utils/gamification';
+import { calculateGamification, RANKS_CONFIG, XP_REWARDS } from '../utils/gamification';
 import ProfileCustomizeModal from './ProfileCustomizeModal';
 
 export default function ProductivityStats({ store }) {
@@ -219,7 +219,7 @@ export default function ProductivityStats({ store }) {
             {/* Barra Visual */}
             <div className="w-full h-3 rounded-full bg-[#1c1c24] border border-[#272730] overflow-hidden p-0.5">
               <div 
-                className="h-full rounded-full bg-gradient-to-r from-neutral-500 via-[#facc15] to-[#ff3d00] transition-all duration-500 shadow-[0_0_12px_rgba(255,107,0,0.5)]"
+                className="h-full rounded-full bg-gradient-to-r from-neutral-400 to-white transition-all duration-500 shadow-[0_0_8px_rgba(255,255,255,0.25)]"
                 style={{ width: `${stats.tierProgressPct}%` }}
               />
             </div>
@@ -330,7 +330,7 @@ export default function ProductivityStats({ store }) {
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{completedTasks}</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
-              +{completedTasks * 60} XP gerados
+              +{completedTasks * XP_REWARDS.TASK_COMPLETED} XP gerados
             </span>
           </div>
 
@@ -341,7 +341,7 @@ export default function ProductivityStats({ store }) {
             </div>
             <div className="text-2xl md:text-3xl font-black text-white">{totalFocusHours}h</div>
             <span className="text-[11px] text-neutral-400 mt-1 block">
-              {state.pomodoroSessions.length} sessões (+{state.pomodoroSessions.length * 120} XP)
+              {state.pomodoroSessions.length} sessões (+{state.pomodoroSessions.length * XP_REWARDS.POMODORO_SESSION} XP)
             </span>
           </div>
 
