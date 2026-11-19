@@ -1167,19 +1167,21 @@ export default function TaskView({ store, onStartPomodoroForTask, onOpenMobileMe
                 <span className="font-medium">{timeDisplay}</span>
               </button>
 
-              {/* Categoria Selector Chip (Discreet, NO "+ Nova Categoria" button) */}
-              <div className="shrink-0 min-w-[130px]">
-                <ObsidianSelect
-                  title="Categoria"
-                  compact={true}
-                  value={selectedTask.projectId || 'inbox'}
-                  onChange={(val) => updateTask(selectedTask.id, { projectId: val })}
-                  options={[
-                    { value: 'inbox', label: 'Sem categoria' },
-                    ...state.projects.filter(p => p.id !== 'inbox').map(p => ({ value: p.id, label: p.name }))
-                  ]}
-                />
-              </div>
+              {/* Categoria Chip: estritamente exibido APENAS se a tarefa possuir categoria real (conforme requisito) */}
+              {hasCategory && (
+                <div className="shrink-0 min-w-[120px]">
+                  <ObsidianSelect
+                    title="Categoria"
+                    compact={true}
+                    value={selectedTask.projectId || 'inbox'}
+                    onChange={(val) => updateTask(selectedTask.id, { projectId: val })}
+                    options={[
+                      { value: 'inbox', label: 'Remover da Categoria' },
+                      ...state.projects.filter(p => p.id !== 'inbox').map(p => ({ value: p.id, label: p.name }))
+                    ]}
+                  />
+                </div>
+              )}
 
               {/* Alarme Chip */}
               <button

@@ -465,7 +465,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                   <button
                     key={dStr}
                     onClick={() => handleDateCellPress(dStr, day)}
-                    className="flex flex-col items-center justify-center py-1.5 rounded-lg transition-all"
+                    className="flex flex-col items-center justify-center py-1 rounded-lg transition-all"
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
                       isToday
@@ -475,10 +475,15 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                         : isSelected
                         ? 'bg-white text-black font-bold'
                         : hasTasks
-                        ? 'border border-white/40 text-white font-semibold'
+                        ? 'text-white font-bold'
                         : 'text-neutral-300 hover:bg-[#1c1c1e]'
                     }`}>
                       {day.getDate()}
+                    </div>
+                    <div className="h-1 flex items-center justify-center mt-0.5">
+                      {hasTasks && !isToday && !isSelected && (
+                        <div className="w-1 h-1 rounded-full bg-white/70" />
+                      )}
                     </div>
                   </button>
                 );
@@ -651,7 +656,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                 <button
                   key={idx}
                   onClick={() => handleDateCellPress(dStr, item.date)}
-                  className="flex flex-col items-center justify-center py-1.5 transition-all"
+                  className="flex flex-col items-center justify-center py-1 transition-all"
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all ${
                     isToday
@@ -660,17 +665,18 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                         : 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_8px_rgba(250,204,21,0.25)]'
                       : isSelected
                       ? 'bg-white text-black font-bold'
-                      : hasTasks
-                      ? `border border-white/40 font-semibold ${
-                          !item.isCurrentMonth
-                            ? 'text-neutral-500 border-white/20'
-                            : 'text-white'
-                        }`
                       : !item.isCurrentMonth
                       ? 'text-neutral-600 font-normal'
+                      : hasTasks
+                      ? 'text-white font-bold'
                       : 'text-neutral-200 font-semibold hover:bg-[#1c1c1e]'
                   }`}>
                     {item.date.getDate()}
+                  </div>
+                  <div className="h-1 flex items-center justify-center mt-0.5">
+                    {hasTasks && !isToday && !isSelected && (
+                      <div className="w-1 h-1 rounded-full bg-white/70" />
+                    )}
                   </div>
                 </button>
               );
@@ -1030,7 +1036,7 @@ export default function CalendarView({ store, onQuickCreateAt }) {
                           isTodayCell
                             ? 'border-2 border-[#facc15] text-[#facc15] font-black bg-[#facc15]/10 shadow-[0_0_6px_rgba(250,204,21,0.25)]'
                             : hasTask
-                            ? 'border border-white/40 text-white font-semibold'
+                            ? 'text-white font-bold bg-white/15'
                             : 'text-neutral-400 hover:bg-white/10'
                         }`}
                       >
